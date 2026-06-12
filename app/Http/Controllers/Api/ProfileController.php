@@ -19,6 +19,10 @@ class ProfileController extends Controller
             return response()->json(['message' => 'Profile not found'], 404);
         }
 
+        if ($profile->image && !str_starts_with($profile->image, '/') && !str_starts_with($profile->image, 'http')) {
+            $profile->image = \Illuminate\Support\Facades\Storage::url($profile->image);
+        }
+
         return response()->json($profile);
     }
 }

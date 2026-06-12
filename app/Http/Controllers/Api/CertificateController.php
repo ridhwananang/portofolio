@@ -15,10 +15,14 @@ class CertificateController extends Controller
     {
         $certificates = Certificate::orderBy('id', 'asc')->get()->map(function ($cert) {
             $path = $cert->file_path;
-            if (str_starts_with($path, '/') || str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
-                $cert->file_url = $path;
+            if ($path) {
+                if (str_starts_with($path, '/') || str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+                    $cert->file_url = $path;
+                } else {
+                    $cert->file_url = \Illuminate\Support\Facades\Storage::url($path);
+                }
             } else {
-                $cert->file_url = '/storage/' . $path;
+                $cert->file_url = null;
             }
             return $cert;
         });

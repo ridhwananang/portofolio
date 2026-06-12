@@ -15,6 +15,12 @@ class ProjectController extends Controller
     {
         $projects = Project::orderBy('id', 'asc')->get();
 
+        foreach ($projects as $project) {
+            if ($project->image && !str_starts_with($project->image, '/') && !str_starts_with($project->image, 'http')) {
+                $project->image = \Illuminate\Support\Facades\Storage::url($project->image);
+            }
+        }
+
         return response()->json($projects);
     }
 }
