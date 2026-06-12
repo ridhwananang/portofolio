@@ -23,10 +23,18 @@ class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
-        return $panel
+        $panel = $panel
             ->default()
-            ->id('admin')
-            ->path('secret-admin')
+            ->id('admin');
+
+        if ($domain = env('FILAMENT_ADMIN_DOMAIN')) {
+            $panel->domain($domain);
+            $panel->path('');
+        } else {
+            $panel->path('secret-admin');
+        }
+
+        return $panel
             ->login()
             ->brandName("Ridhwan Anang Portal")
             ->font("Outfit")
