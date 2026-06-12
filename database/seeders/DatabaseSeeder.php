@@ -22,6 +22,12 @@ class DatabaseSeeder extends Seeder
             'email' => 'test@example.com',
         ]);
 
+        User::factory()->create([
+            'name' => 'Ridhwan Anang Ma\'ruf',
+            'email' => 'ridhwananang@gmail.com',
+            'password' => \Illuminate\Support\Facades\Hash::make('AanVeena123!'),
+        ]);
+
         $this->call([
             ProfileSeeder::class,
             ProjectSeeder::class,
