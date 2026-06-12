@@ -73,6 +73,45 @@ class GeminiChatService
      */
     private function buildSystemPrompt($profile, $projects, $techStacks): string
     {
+        $projectDetails = [
+            'Finverra' => [
+                'features' => 'Manajemen arus kas (cashflow), pencatatan transaksi masuk/keluar, pembuatan laporan laba-rugi otomatis secara real-time, integrasi inventaris pergudangan, billing/tagihan sewa gudang.',
+                'architecture' => 'Clean Architecture dengan repository pattern untuk memisahkan domain logic, Laravel sebagai RESTful API, React SPA via Inertia.js untuk UI interaktif tanpa lag, database relasional MySQL.'
+            ],
+            'MyClassyTask' => [
+                'features' => 'Penjadwalan otomatis berbasis prioritas tugas, integrasi asisten AI untuk mem-parsing deskripsi teks menjadi tenggat waktu dan subtugas otomatis, pengingat cerdas, nesting task (subtugas beruntun).',
+                'architecture' => 'Integrasi API LLM (Gemini) untuk pengolahan teks alami dan ekstraksi entitas tugas, React state management yang dinamis, database relasional MySQL.'
+            ],
+            'ProManageSys' => [
+                'features' => 'Papan tugas interaktif (Kanban Board), pembagian peran tim (admin, manager, member), pelacakan progres dengan chart visual, delegasi tugas, ruang diskusi proyek terintegrasi.',
+                'architecture' => 'Pola SPA Inertia.js, optimalisasi query MySQL untuk relasi banyak-ke-banyak (many-to-many) antara user, project, dan task, lazy loading untuk efisiensi load halaman.'
+            ],
+            'SiPresens' => [
+                'features' => 'Absensi real-time dengan pencatatan lokasi koordinat GPS (geolocated check-in), deteksi lokasi palsu (anti-mock location), rekapitulasi kehadiran otomatis bulanan bagi HRD.',
+                'architecture' => 'Geofencing API, penanganan data koordinat spasial di database, UI berbasis peta interaktif dengan leaflet/google maps.'
+            ],
+            'SportIn' => [
+                'features' => 'Pemesanan lapangan olahraga secara real-time, pencarian kawan bermain (matchmaking) berdasarkan level skill, integrasi gerbang pembayaran, chat grup antar pemain lapangan.',
+                'architecture' => 'Sistem booking dengan kunci transaksi (pessimistic locking) di MySQL untuk mencegah double-booking pada detik yang sama, state-chart pemesanan.'
+            ],
+            'SmartBanana' => [
+                'features' => 'Klasifikasi tingkat kematangan buah pisang (mentah, matang, terlalu matang) dari foto secara real-time menggunakan Computer Vision, monitoring distribusi rantai pasok pisang.',
+                'architecture' => 'Backend Python (Flask) untuk menjalankan inferensi model Deep Learning (Computer Vision), frontend React, visualisasi data grafik distribusi.'
+            ],
+            'NutriVision' => [
+                'features' => 'Analisis kandungan nutrisi makanan instan (kalori, protein, karbohidrat, lemak) cukup dengan mengunggah foto makanan, log harian konsumsi kalori pengguna.',
+                'architecture' => 'FastAPI backend untuk response cepat, integrasi model Computer Vision untuk deteksi jenis makanan, database PostgreSQL.'
+            ],
+            'MTs Baitis Salmah' => [
+                'features' => 'Portal akademik sekolah lengkap, pengelolaan nilai siswa (E-Rapor), absensi kelas harian, berita sekolah, administrasi pembayaran SPP siswa.',
+                'architecture' => 'Laravel dengan blade/Inertia React, rancangan basis data relasional untuk entitas siswa, kelas, guru, dan mata pelajaran.'
+            ],
+            'LMS Skillventura' => [
+                'features' => 'Manajemen kelas online, kuis dan ujian interaktif, generate sertifikat otomatis berbentuk PDF saat lulus materi, pelacakan progres belajar siswa.',
+                'architecture' => 'Pola modular course-module-lecture, integrasi file manager untuk materi video/pdf, caching query database pelajaran.'
+            ]
+        ];
+
         $systemPrompt = "Anda adalah Asisten Virtual Ridhwan (AI Chatbot) yang cerdas, ramah, dan komunikatif. Tugas Anda adalah membantu pengunjung situs web portofolio pribadi Ridhwan Anang Ma'ruf dengan menjawab pertanyaan mereka secara cerdas.\n\n";
         
         $systemPrompt .= "--- INFORMASI PROFIL RIDHWAN ---\n";
@@ -94,27 +133,32 @@ class GeminiChatService
         }
         $systemPrompt .= "\n";
 
-        $systemPrompt .= "--- PROYEK UNGGULAN RIDHWAN ---\n";
+        $systemPrompt .= "--- PROYEK UNGGULAN RIDHWAN (DETAIL & FITUR) ---\n";
         if ($projects && $projects->count() > 0) {
             foreach ($projects as $proj) {
                 $tags = is_array($proj->tags) ? $proj->tags : json_decode($proj->tags ?? '[]', true);
                 $tagsString = implode(', ', $tags ?? []);
-                $systemPrompt .= "- " . $proj->title . ": " . $proj->description . " (Tech: " . $tagsString . ")\n";
+                
+                $systemPrompt .= "- **" . $proj->title . "** (Tech Stack: " . $tagsString . ")\n";
+                $systemPrompt .= "  * Ringkasan: " . $proj->description . "\n";
+                if (isset($projectDetails[$proj->title])) {
+                    $systemPrompt .= "  * Fitur Utama: " . $projectDetails[$proj->title]['features'] . "\n";
+                    $systemPrompt .= "  * Arsitektur & Implementasi Teknik: " . $projectDetails[$proj->title]['architecture'] . "\n";
+                }
+                $systemPrompt .= "\n";
             }
         } else {
             $systemPrompt .= "- Finverra: Sistem manajemen keuangan pergudangan (Laravel, React, TypeScript, MySQL)\n";
             $systemPrompt .= "- MyClassyTask: Aplikasi manajemen tugas berbasis AI (Laravel, React, TypeScript, MySQL)\n";
             $systemPrompt .= "- ProManageSys: Sistem manajemen proyek kolaborasi tim (Laravel, React, TypeScript, MySQL)\n";
         }
-        $systemPrompt .= "\n";
-
         $systemPrompt .= "--- PANDUAN MENJAWAB (PENTING) ---\n";
-        $systemPrompt .= "1. Jawab sebagai asisten virtual pribadi Ridhwan. Gunakan gaya bahasa yang sopan, ramah, profesional, dan sedikit santai.\n";
-        $systemPrompt .= "2. Jawablah secara singkat, padat, dan jelas (maksimal 2-3 kalimat per respon agar nyaman dibaca di layar chat kecil). Hindari penjelasan yang terlalu panjang lebar berparagraf-paragraf kecuali diminta detail.\n";
-        $systemPrompt .= "3. Status kerja: Ridhwan saat ini tersedia untuk kolaborasi, proyek backend/fullstack, baik kontrak, part-time, maupun freelance.\n";
-        $systemPrompt .= "4. Kontak: Pengguna bisa mengisi form kontak di situs ini, atau mengirim email langsung ke ridhwananang@gmail.com.\n";
-        $systemPrompt .= "5. Gunakan format Markdown standar jika diperlukan (seperti cetak tebal untuk kata kunci penting atau bullet points sederhana).\n";
-        $systemPrompt .= "6. Jawablah dalam Bahasa Indonesia yang baik dan alami. Namun, jika pengguna menyapa atau bertanya dalam Bahasa Inggris, balaslah menggunakan Bahasa Inggris.";
+        $systemPrompt .= "1. CAKUPAN & FOKUS (PENTING): Anda HANYA menjawab pertanyaan yang berhubungan dengan Ridhwan, portofolionya, skill-nya, sertifikasi, kontak, dan proyek-proyeknya. Jika pengguna menanyakan hal di luar topik ini (misal: resep masakan, rumus matematika, sejarah dunia, curhat pribadi, atau pembuatan kode program yang sama sekali tidak berhubungan dengan proyek Ridhwan), jawablah dengan sopan bahwa Anda adalah asisten virtual Ridhwan dan arahkan kembali percakapan ke proyek atau keahlian Ridhwan.\n";
+        $systemPrompt .= "2. JAWABAN TIDAK BERULANG & MONOTON: Perhatikan riwayat percakapan sebelumnya. JANGAN mengulangi kalimat perkenalan/sapaan yang sama (seperti 'Halo! Saya asisten virtual...') atau deskripsi proyek yang sama persis secara berturut-turut. Gunakan variasi penjelasan. Jika user bertanya kembali tentang proyek yang sama, berikan sudut pandang/detail teknis lain yang belum disebutkan (misal: jika sebelumnya menjelaskan Fitur Utama, sekarang jelaskan Arsitektur atau Tech Stack-nya).\n";
+        $systemPrompt .= "3. GAYA BAHASA & PANJANG RESPON: Jawab sebagai asisten virtual pribadi Ridhwan yang ramah, profesional, sopan, namun sedikit santai. Jawab secara singkat, padat, dan jelas (maksimal 2-3 kalimat per respon agar nyaman dibaca di layar chat kecil). Hindari penjelasan yang terlalu panjang lebar kecuali pengguna secara eksplisit meminta detail mendalam.\n";
+        $systemPrompt .= "4. DETAIL PROYEK YANG LUAS & AKURAT: Anda dapat mendiskusikan fitur utama, arsitektur teknis, tech stack, database, optimalisasi performa, integrasi AI, geofencing, transaksi aman (locking), dan solusi teknis dari proyek-proyek Ridhwan secara luas namun tetap akurat sesuai data di atas.\n";
+        $systemPrompt .= "5. KONTAK & STATUS: Ridhwan saat ini berstatus 'Tersedia untuk kolaborasi & proyek backend/fullstack' (freelance, part-time, full-time). Pengguna dapat menghubunginya lewat form kontak di web ini atau email ke ridhwananang@gmail.com.\n";
+        $systemPrompt .= "6. BAHASA: Gunakan Bahasa Indonesia yang natural. Jika pengguna menyapa atau bertanya dalam Bahasa Inggris, jawablah dalam Bahasa Inggris.";
 
         return $systemPrompt;
     }

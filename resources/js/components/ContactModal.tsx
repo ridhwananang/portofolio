@@ -19,39 +19,47 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
     const [formMessage, setFormMessage] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
     if (!isOpen) {
-return null;
-}
+        return null;
+    }
 
-    const handleFormSubmit = (e: React.FormEvent) => {
+    const handleFormSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!formName || !formEmail || !formMessage) {
-return;
-}
+            return;
+        }
 
         setIsSubmitting(true);
-        setTimeout(() => {
-            // Save message to localStorage simulation
-            const submissions = JSON.parse(
-                localStorage.getItem('portfolio_messages') || '[]',
-            );
-            const newSubmission = {
-                id: Math.random().toString(36).substring(7),
-                name: formName,
-                email: formEmail,
-                subject: formSubject || 'Hubungi Saya',
-                message: formMessage,
-                timestamp: new Date().toISOString(),
-                read: false,
-            };
-            localStorage.setItem(
-                'portfolio_messages',
-                JSON.stringify([newSubmission, ...submissions]),
-            );
+        setErrorMessage('');
 
-            setIsSubmitting(false);
+        try {
+            const response = await fetch('/api/contact', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: formName,
+                    email: formEmail,
+                    subject: formSubject || undefined,
+                    message: formMessage,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                if (data.errors) {
+                    const validationErrors = Object.values(data.errors).flat().join(' ');
+                    throw new Error(validationErrors);
+                }
+                throw new Error(data.message || 'Gagal mengirim pesan.');
+            }
+
             setIsSubmitted(true);
 
             // Reset form
@@ -59,7 +67,11 @@ return;
             setFormEmail('');
             setFormSubject('');
             setFormMessage('');
-        }, 1200);
+        } catch (error: any) {
+            setErrorMessage(error.message || 'Koneksi terganggu. Silakan coba lagi.');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -111,7 +123,7 @@ return;
                                 Pesan Berhasil Dikirim!
                             </h4>
                             <p className="mb-6 max-w-sm text-slate-600 dark:text-slate-400 text-sm">
-                                Pesan Anda sudah disimpan dengan aman di local inbox. Ridhwan akan membalas segera melalui email yang diberikan.
+                                Pesan Anda sudah disimpan dengan aman di database. Ridhwan akan membalas segera melalui email yang diberikan.
                             </p>
                             <button
                                 onClick={() => setIsSubmitted(false)}
@@ -125,6 +137,11 @@ return;
                             onSubmit={handleFormSubmit}
                             className="space-y-4"
                         >
+                            {errorMessage && (
+                                <div className="rounded-2xl border border-red-200 bg-red-50/70 p-4 text-xs font-semibold text-red-600 dark:border-red-900/30 dark:bg-red-950/20 dark:text-red-400 animate-fade-in">
+                                    {errorMessage}
+                                </div>
+                            )}
                             <div>
                                 <label className="mb-1.5 block text-xs font-bold tracking-wider text-slate-500 uppercase dark:text-slate-400">
                                     Nama Lengkap *
