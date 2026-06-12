@@ -25,7 +25,7 @@ export default function CertificatePreviewModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="flex h-[92vh] w-[120vh] flex-col overflow-hidden rounded-2xl border-slate-200/50 bg-white/95 p-0 shadow-2xl backdrop-blur-md md:rounded-[2rem] dark:border-slate-800/80 dark:bg-slate-950/95">
+            <DialogContent className="flex h-[92vh] w-[95vw] sm:max-w-5xl flex-col overflow-hidden rounded-2xl border-slate-200/50 bg-white/95 p-0 shadow-2xl backdrop-blur-md md:rounded-[2rem] dark:border-slate-800/80 dark:bg-slate-950/95">
                 {/* Header Section */}
                 <div className="dark:border-slate-850 flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-6 py-4 dark:bg-slate-900/40">
                     <div className="flex items-center gap-3">
