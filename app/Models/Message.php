@@ -17,6 +17,8 @@ class Message extends Model
         'subject',
         'message',
         'is_read',
+        'reply_content',
+        'replied_at',
     ];
 
     /**
@@ -26,5 +28,6 @@ class Message extends Model
      */
     protected $casts = [
         'is_read' => 'boolean',
+        'replied_at' => 'datetime',
     ];
 }

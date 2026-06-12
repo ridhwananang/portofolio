@@ -50,3 +50,43 @@ test('contact api saves message and returns success response', function () {
         'is_read' => false
     ]);
 });
+
+test('contact message can be replied and triggers mailable', function () {
+    Mail::fake();
+
+    $message = Message::create([
+        'name' => 'Ahmad',
+        'email' => 'ahmad@example.com',
+        'subject' => 'Tanya Projek',
+        'message' => 'Apakah projek Finverra menggunakan repository pattern?',
+        'is_read' => false
+    ]);
+
+    // Send reply
+    Mail::to($message->email)->send(new \App\Mail\ContactReplyMailable(
+        originalName: $message->name,
+        originalSubject: $message->subject,
+        originalMessage: $message->message,
+        replyContent: 'Benar, Finverra menggunakan Repository Pattern pada Clean Architecture.'
+    ));
+
+    Mail::assertSent(\App\Mail\ContactReplyMailable::class, function ($mail) use ($message) {
+        return $mail->hasTo($message->email) &&
+               $mail->originalName === 'Ahmad' &&
+               $mail->originalSubject === 'Tanya Projek' &&
+               $mail->replyContent === 'Benar, Finverra menggunakan Repository Pattern pada Clean Architecture.';
+    });
+
+    $message->update([
+        'reply_content' => 'Benar, Finverra menggunakan Repository Pattern pada Clean Architecture.',
+        'replied_at' => now(),
+        'is_read' => true
+    ]);
+
+    $this->assertDatabaseHas('messages', [
+        'id' => $message->id,
+        'reply_content' => 'Benar, Finverra menggunakan Repository Pattern pada Clean Architecture.',
+        'is_read' => true
+    ]);
+    expect($message->replied_at)->not->toBeNull();
+});
