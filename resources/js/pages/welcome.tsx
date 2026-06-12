@@ -14,18 +14,35 @@ import ProfileCard from '../components/ProfileCard';
 import Projects from '../components/Projects';
 import TechStack from '../components/TechStack';
 
-export default function Welcome() {
+interface WelcomeProps {
+    initialProfile?: any;
+    initialProjects?: any[];
+    initialTechStacks?: any[];
+    initialCertificates?: any[];
+}
+
+export default function Welcome({
+    initialProfile,
+    initialProjects = [],
+    initialTechStacks = [],
+    initialCertificates = [],
+}: WelcomeProps) {
     const [activeSection, setActiveSection] = useState('hero');
     const [isContactOpen, setIsContactOpen] = useState(false);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
-    const [profile, setProfile] = useState<any>(null);
-    const [projects, setProjects] = useState<any[]>([]);
-    const [techStacks, setTechStacks] = useState<any[]>([]);
-    const [certificates, setCertificates] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [profile, setProfile] = useState<any>(initialProfile || null);
+    const [projects, setProjects] = useState<any[]>(initialProjects);
+    const [techStacks, setTechStacks] = useState<any[]>(initialTechStacks);
+    const [certificates, setCertificates] = useState<any[]>(initialCertificates);
+    const [loading, setLoading] = useState(!initialProfile);
 
     useEffect(() => {
+        if (initialProfile) {
+            setLoading(false);
+            return;
+        }
+
         Promise.all([
             fetch('/api/profile').then((res) => res.json()),
             fetch('/api/projects').then((res) => res.json()),
@@ -43,7 +60,7 @@ export default function Welcome() {
                 console.error('Error fetching dynamic data:', err);
                 setLoading(false);
             });
-    }, []);
+    }, [initialProfile]);
 
     // Track mouse cursor to create mouse-following ambient aura
     useEffect(() => {

@@ -18,7 +18,7 @@ class ProfileSeeder extends Seeder
             'bio' => 'Full Stack Developer yang berfokus pada arsitektur backend Laravel yang kokoh, integrasi React + TypeScript yang interaktif, dan optimasi database skala produksi.',
             'location' => 'Tangerang Selatan, Indonesia',
             'email' => 'ridhwananang@gmail.com',
-            'image' => '/images/me.jpeg',
+            'image' => '/images/me.webp',
             'github_url' => 'https://github.com/ridhwananang',
             'linkedin_url' => 'https://www.linkedin.com/in/ridhwan-anang-ma-ruf/',
             'education' => [

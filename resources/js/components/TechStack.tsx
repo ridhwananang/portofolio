@@ -1,6 +1,17 @@
 import { Terminal } from 'lucide-react';
 import { useState } from 'react';
-import * as SiIcons from 'react-icons/si';
+import { SiLaravel, SiPhp, SiReact, SiJavascript, SiMysql, SiMongodb, SiHtml5, SiCss } from 'react-icons/si';
+
+const iconsMap: Record<string, React.ComponentType<any>> = {
+    SiLaravel,
+    SiPhp,
+    SiReact,
+    SiJavascript,
+    SiMysql,
+    SiMongodb,
+    SiHtml5,
+    SiCss,
+};
 
 interface TechStackItem {
     name: string;
@@ -21,7 +32,7 @@ export default function TechStack({ techStacks, loading }: TechStackProps) {
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
     const renderIcon = (iconName: string) => {
-        const IconComponent = (SiIcons as any)[iconName];
+        const IconComponent = iconsMap[iconName];
 
         if (!IconComponent) {
             return <Terminal className="h-8 w-8 text-slate-500" />;
@@ -30,44 +41,44 @@ export default function TechStack({ techStacks, loading }: TechStackProps) {
         const iconClass = 'h-8 w-8';
 
         if (iconName === 'SiLaravel') {
-return <IconComponent className={`${iconClass} text-[#FF2D20]`} />;
-}
+            return <IconComponent className={`${iconClass} text-[#FF2D20]`} />;
+        }
 
         if (iconName === 'SiPhp') {
-return <IconComponent className={`${iconClass} text-[#777BB4]`} />;
-}
+            return <IconComponent className={`${iconClass} text-[#777BB4]`} />;
+        }
 
         if (iconName === 'SiReact') {
-return (
+            return (
                 <IconComponent
                     className={`${iconClass} animate-spin-slow text-[#61DAFB]`}
                 />
             );
-}
+        }
 
         if (iconName === 'SiJavascript') {
-return (
+            return (
                 <IconComponent
                     className={`${iconClass} rounded bg-black text-[#F7DF1E]`}
                 />
             );
-}
+        }
 
         if (iconName === 'SiMysql') {
-return <IconComponent className={`${iconClass} text-[#4479A1]`} />;
-}
+            return <IconComponent className={`${iconClass} text-[#4479A1]`} />;
+        }
 
         if (iconName === 'SiMongodb') {
-return <IconComponent className={`${iconClass} text-[#47A248]`} />;
-}
+            return <IconComponent className={`${iconClass} text-[#47A248]`} />;
+        }
 
         if (iconName === 'SiHtml5') {
-return <IconComponent className={`${iconClass} text-[#E34F26]`} />;
-}
+            return <IconComponent className={`${iconClass} text-[#E34F26]`} />;
+        }
 
         if (iconName === 'SiCss') {
-return <IconComponent className={`${iconClass} text-[#1572B6]`} />;
-}
+            return <IconComponent className={`${iconClass} text-[#1572B6]`} />;
+        }
 
         return <IconComponent className={iconClass} />;
     };
