@@ -58,4 +58,10 @@
     <FilesMatch "\.(ico|pdf|flv|jpg|jpeg|png|gif|webp|js|css|swf|svg|woff|woff2|ttf|otf)$">
         Header set Cache-Control "public, max-age=31536000, immutable"
     </FilesMatch>
+
+    # Remove X-Frame-Options for PDF files to allow iframe embedding in Chrome
+    <FilesMatch "\.pdf$">
+        Header unset X-Frame-Options
+        Header set Access-Control-Allow-Origin "*"
+    </FilesMatch>
 </IfModule>

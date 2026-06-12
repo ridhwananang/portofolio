@@ -23,11 +23,13 @@ interface CertificatesProps {
 
 export default function Certificates({ certificates, loading }: CertificatesProps) {
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [previewThumbnailUrl, setPreviewThumbnailUrl] = useState<string | null>(null);
     const [previewTitle, setPreviewTitle] = useState<string | null>(null);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
     const handlePreview = (cert: CertificateItem) => {
         setPreviewUrl(cert.file_url);
+        setPreviewThumbnailUrl(cert.thumbnail_url);
         setPreviewTitle(cert.title);
         setIsPreviewOpen(true);
     };
@@ -209,6 +211,7 @@ export default function Certificates({ certificates, loading }: CertificatesProp
                 isOpen={isPreviewOpen}
                 onClose={() => setIsPreviewOpen(false)}
                 fileUrl={previewUrl}
+                thumbnailUrl={previewThumbnailUrl}
                 title={previewTitle}
             />
         </section>

@@ -5,6 +5,7 @@ interface CertificatePreviewModalProps {
     isOpen: boolean;
     onClose: () => void;
     fileUrl: string | null;
+    thumbnailUrl: string | null;
     title: string | null;
 }
 
@@ -12,6 +13,7 @@ export default function CertificatePreviewModal({
     isOpen,
     onClose,
     fileUrl,
+    thumbnailUrl,
     title,
 }: CertificatePreviewModalProps) {
     if (!fileUrl) {
@@ -59,7 +61,15 @@ export default function CertificatePreviewModal({
 
                 {/* Main Preview Container */}
                 <div className="relative flex w-full flex-1 items-center justify-center overflow-hidden bg-slate-100/50 dark:bg-slate-900/30">
-                    {isPdf ? (
+                    {thumbnailUrl ? (
+                        <div className="flex h-full max-h-full w-full items-center justify-center overflow-auto p-6">
+                            <img
+                                src={thumbnailUrl}
+                                alt={`Sertifikat ${title}`}
+                                className="max-h-full max-w-full rounded-lg border border-slate-200/50 object-contain shadow-md dark:border-slate-800"
+                            />
+                        </div>
+                    ) : isPdf ? (
                         <iframe
                             src={`${fileUrl}#toolbar=0&navpanes=0`}
                             className="h-full w-full border-0 bg-white dark:bg-slate-900"
