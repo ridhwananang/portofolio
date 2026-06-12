@@ -61,6 +61,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
             }
 
             localStorage.setItem('user_contact_email', formEmail);
+            localStorage.setItem('user_contact_name', formName);
             setIsSubmitted(true);
 
             // Reset form

@@ -128,6 +128,44 @@ return;
         setIsTyping(true);
 
         try {
+            // Check if there is an active direct message thread with Ridhwan
+            const hasDirectThread = messages.some((m) => m.sender === 'ridhwan');
+            const contactEmail = localStorage.getItem('user_contact_email');
+
+            if (hasDirectThread && contactEmail) {
+                // Forward directly to contact message database instead of Gemini Chat
+                const response = await fetch('/api/contact', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: localStorage.getItem('user_contact_name') || 'Pengunjung Chat',
+                        email: contactEmail,
+                        subject: 'Pesan Lanjutan Chat',
+                        message: textToSend,
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('API Error');
+                }
+
+                setMessages((prev) => [
+                    ...prev,
+                    {
+                        sender: 'bot',
+                        text: 'Pesan Anda telah terkirim langsung ke Ridhwan. Ridhwan akan membalas segera melalui email atau di sini.',
+                        time: new Date().toLocaleTimeString('id-ID', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                        }),
+                    },
+                ]);
+                return;
+            }
+
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: {
