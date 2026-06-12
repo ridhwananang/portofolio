@@ -2,7 +2,6 @@ import { Award, ShieldCheck, Calendar, Eye, Clock } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 import CertificatePreviewModal from './CertificatePreviewModal';
-import PdfThumbnail from './PdfThumbnail';
 
 interface CertificateItem {
     id: number;
@@ -138,17 +137,14 @@ export default function Certificates({ certificates, loading }: CertificatesProp
                                 <div className="pointer-events-none absolute -right-12 -top-12 h-24 w-24 rounded-full bg-gradient-to-tr from-violet-500/5 to-indigo-500/5 blur-lg transition-all group-hover:scale-150"></div>
 
                                 <div className="space-y-3.5">
-                                    {/* Certificate Dynamic Thumbnail Preview */}
+                                    {/* Certificate Static Thumbnail Preview */}
                                     <div className="relative aspect-[1.414/1] w-full overflow-hidden rounded-xl border border-slate-200/40 bg-slate-50 dark:border-slate-800/60 dark:bg-slate-950 pointer-events-none select-none">
-                                        {!cert.file_url.toLowerCase().endsWith('.pdf') ? (
-                                            <img
-                                                src={cert.file_url}
-                                                alt={`Thumbnail ${cert.title}`}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        ) : (
-                                            <PdfThumbnail fileUrl={cert.file_url} title={cert.title} />
-                                        )}
+                                        <img
+                                            src={cert.thumbnail_url || cert.file_url}
+                                            alt={`Thumbnail ${cert.title}`}
+                                            className="w-full h-full object-cover"
+                                            loading="lazy"
+                                        />
                                         {/* Light overlay on hover */}
                                         <div className="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/[0.02] transition-colors duration-300"></div>
                                     </div>

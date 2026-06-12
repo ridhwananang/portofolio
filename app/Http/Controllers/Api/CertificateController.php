@@ -21,8 +21,19 @@ class CertificateController extends Controller
                 } else {
                     $cert->file_url = \Illuminate\Support\Facades\Storage::url($path);
                 }
+
+                // Generate thumbnail URL if webp thumbnail exists
+                $filename = basename($path);
+                $thumbnailName = pathinfo($filename, PATHINFO_FILENAME) . '.webp';
+                $thumbnailPath = 'images/Sertifikat/thumbnails/' . $thumbnailName;
+                if (file_exists(public_path($thumbnailPath))) {
+                    $cert->thumbnail_url = '/' . $thumbnailPath;
+                } else {
+                    $cert->thumbnail_url = $cert->file_url;
+                }
             } else {
                 $cert->file_url = null;
+                $cert->thumbnail_url = null;
             }
             return $cert;
         });
