@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useEffect, useRef } from 'react';
 
 interface ChatMessage {
-    sender: 'user' | 'bot';
+    sender: 'user' | 'bot' | 'ridhwan';
     text: string;
     time: string;
 }
@@ -51,6 +51,54 @@ export default function AIChatWidget() {
             chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
         }
     }, [messages, isTyping]);
+
+    // Autocheck reply in background if email exists in localStorage when chat is opened
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const email = localStorage.getItem('user_contact_email');
+        if (!email) return;
+
+        // Perform background check for Ridhwan's replies
+        setIsTyping(true);
+        fetch('/api/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+            },
+            body: JSON.stringify({
+                messages: [{ sender: 'user', text: email }],
+            }),
+        })
+            .then((res) => {
+                if (!res.ok) throw new Error('API Error');
+                return res.json();
+            })
+            .then((data) => {
+                if (data.reply) {
+                    setMessages((prev) => {
+                        // Avoid adding duplicate replies in the same session
+                        if (prev.some((m) => m.sender === 'ridhwan' && m.text === data.reply)) {
+                            return prev;
+                        }
+                        return [
+                            ...prev,
+                            {
+                                sender: 'ridhwan',
+                                text: data.reply,
+                                time: new Date().toLocaleTimeString('id-ID', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                }),
+                            },
+                        ];
+                    });
+                }
+            })
+            .catch((err) => console.error('Silent background reply check failed:', err))
+            .finally(() => setIsTyping(false));
+    }, [isOpen]);
 
     const handleSendMessage = async (customText?: string) => {
         const textToSend = (customText || chatInput).trim();
@@ -99,21 +147,45 @@ return;
             }
 
             const data = await response.json();
-            const botMessageText =
-                data.text ||
-                'Maaf, saya sedang kesulitan memproses respon saat ini.';
+            const newMsgs: ChatMessage[] = [];
 
-            setMessages((prev) => [
-                ...prev,
-                {
+            if (data.text) {
+                newMsgs.push({
                     sender: 'bot',
-                    text: botMessageText,
+                    text: data.text,
                     time: new Date().toLocaleTimeString('id-ID', {
                         hour: '2-digit',
                         minute: '2-digit',
                     }),
-                },
-            ]);
+                });
+            }
+
+            if (data.reply) {
+                newMsgs.push({
+                    sender: 'ridhwan',
+                    text: data.reply,
+                    time: new Date().toLocaleTimeString('id-ID', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                    }),
+                });
+            }
+
+            if (newMsgs.length > 0) {
+                setMessages((prev) => [...prev, ...newMsgs]);
+            } else {
+                setMessages((prev) => [
+                    ...prev,
+                    {
+                        sender: 'bot',
+                        text: 'Maaf, saya sedang kesulitan memproses respon saat ini.',
+                        time: new Date().toLocaleTimeString('id-ID', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                        }),
+                    },
+                ]);
+            }
         } catch (error) {
             console.error('Chat error:', error);
             setMessages((prev) => [
@@ -311,27 +383,45 @@ return;
                                     }`}
                                 >
                                     {/* Icon */}
-                                    <div
-                                        className={`flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-xl border shadow-sm ${
-                                            m.sender === 'user'
-                                                ? 'dark:text-slate-350 border-slate-200/50 bg-slate-50 text-slate-600 dark:border-slate-800 dark:bg-slate-900'
-                                                : 'border-violet-100/50 bg-violet-50/60 text-violet-600 dark:border-violet-900/30 dark:bg-violet-950/20 dark:text-violet-400'
-                                        }`}
-                                    >
-                                        {m.sender === 'user' ? (
-                                            <User size={13} />
-                                        ) : (
-                                            <Bot size={13} />
-                                        )}
-                                    </div>
+                                    {m.sender === 'ridhwan' ? (
+                                        <div className="h-7.5 w-7.5 shrink-0 overflow-hidden rounded-xl border border-violet-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                                            <img
+                                                src="/images/me.webp"
+                                                alt="Ridhwan Anang"
+                                                className="h-full w-full object-cover"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div
+                                            className={`flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-xl border shadow-sm ${
+                                                m.sender === 'user'
+                                                    ? 'dark:text-slate-350 border-slate-200/50 bg-slate-50 text-slate-600 dark:border-slate-800 dark:bg-slate-900'
+                                                    : 'border-violet-100/50 bg-violet-50/60 text-violet-600 dark:border-violet-900/30 dark:bg-violet-950/20 dark:text-violet-400'
+                                            }`}
+                                        >
+                                            {m.sender === 'user' ? (
+                                                <User size={13} />
+                                            ) : (
+                                                <Bot size={13} />
+                                            )}
+                                        </div>
+                                    )}
                                     {/* Bubble */}
                                     <div
                                         className={`rounded-2xl border px-4 py-2.5 text-xs leading-relaxed ${
-                                            m.sender === 'user'
-                                                ? 'via-slate-800 dark:from-violet-600 dark:to-indigo-600 rounded-br-none border-slate-950 bg-gradient-to-tr from-slate-900 to-slate-900 text-white shadow-md shadow-slate-950/5 dark:border-indigo-600 dark:via-indigo-600 dark:shadow-indigo-500/10'
-                                                : 'rounded-bl-none border-slate-100/40 bg-slate-50/70 text-slate-800 shadow-sm dark:border-slate-900/40 dark:bg-slate-900/55 dark:text-slate-100'
+                                            m.sender === 'ridhwan'
+                                                ? 'rounded-bl-none border-violet-200/60 bg-violet-50/45 text-slate-800 shadow-sm dark:border-violet-900/40 dark:bg-violet-950/25 dark:text-slate-100'
+                                                : m.sender === 'user'
+                                                    ? 'via-slate-800 dark:from-violet-600 dark:to-indigo-600 rounded-br-none border-slate-950 bg-gradient-to-tr from-slate-900 to-slate-900 text-white shadow-md shadow-slate-950/5 dark:border-indigo-600 dark:via-indigo-600 dark:shadow-indigo-500/10'
+                                                    : 'rounded-bl-none border-slate-100/40 bg-slate-50/70 text-slate-800 shadow-sm dark:border-slate-900/40 dark:bg-slate-900/55 dark:text-slate-100'
                                         }`}
                                     >
+                                        {m.sender === 'ridhwan' && (
+                                            <div className="mb-1.5 flex items-center gap-1 text-[10px] font-bold text-violet-600 dark:text-violet-400 animate-fade-in">
+                                                <span className="h-1.5 w-1.5 rounded-full bg-violet-500"></span>
+                                                Ridhwan Anang • Developer
+                                            </div>
+                                        )}
                                         <div className="prose prose-sm dark:prose-invert whitespace-pre-line">
                                             {renderMessageText(m.text)}
                                         </div>

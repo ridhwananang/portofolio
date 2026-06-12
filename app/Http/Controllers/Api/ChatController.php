@@ -26,12 +26,16 @@ class ChatController extends Controller
     {
         $request->validate([
             'messages' => 'required|array',
-            'messages.*.sender' => 'required|in:user,bot',
+            'messages.*.sender' => 'required|in:user,bot,ridhwan',
             'messages.*.text' => 'required|string',
         ]);
 
         $responseText = $this->chatService->getChatResponse($request->input('messages'));
+        $parts = explode('|||reply|||', $responseText);
 
-        return response()->json(['text' => $responseText]);
+        return response()->json([
+            'text' => trim($parts[0]),
+            'reply' => isset($parts[1]) ? trim($parts[1]) : null,
+        ]);
     }
 }

@@ -60,6 +60,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                 throw new Error(data.message || 'Gagal mengirim pesan.');
             }
 
+            localStorage.setItem('user_contact_email', formEmail);
             setIsSubmitted(true);
 
             // Reset form

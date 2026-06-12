@@ -14,6 +14,7 @@ interface CertificateItem {
     skills: string[];
     file_path: string;
     file_url: string;
+    thumbnail_url?: string;
 }
 
 interface CertificatesProps {
@@ -29,7 +30,7 @@ export default function Certificates({ certificates, loading }: CertificatesProp
 
     const handlePreview = (cert: CertificateItem) => {
         setPreviewUrl(cert.file_url);
-        setPreviewThumbnailUrl(cert.thumbnail_url);
+        setPreviewThumbnailUrl(cert.thumbnail_url || null);
         setPreviewTitle(cert.title);
         setIsPreviewOpen(true);
     };

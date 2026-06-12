@@ -68,11 +68,10 @@ test('chat api intercepts check reply intent and queries database', function () 
     $response = $this->postJson('/api/chat', $payload);
 
     $response->assertStatus(200)
-             ->assertJsonStructure(['text']);
+             ->assertJsonStructure(['text', 'reply']);
 
-    $text = $response->json('text');
-    expect($text)->toContain('balasan langsung dari Ridhwan');
-    expect($text)->toContain('Ya, projek ini sudah selesai.');
+    expect($response->json('text'))->toBe('');
+    expect($response->json('reply'))->toContain('Ya, projek ini sudah selesai.');
 });
 
 test('chat api returns pending message when no reply yet', function () {

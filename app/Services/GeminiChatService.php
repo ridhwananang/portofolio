@@ -18,6 +18,33 @@ class GeminiChatService
      */
     public function getChatResponse(array $messages): string
     {
+        // 0. Direct Intercept for Reply Checking (Fast & 100% Reliable Bypass)
+        $lastUserMessage = null;
+        foreach (array_reverse($messages) as $msg) {
+            if ($msg['sender'] === 'user') {
+                $lastUserMessage = $msg['text'];
+                break;
+            }
+        }
+
+        if ($lastUserMessage) {
+            $q = strtolower($lastUserMessage);
+            
+            // Check if user explicitly queries checking replies with an email
+            if (preg_match('/([\w\.\-]+@[\w\.\-]+\.\w+)/', $q, $matches)) {
+                $email = trim($matches[1]);
+                if (str_contains($q, 'cek') || str_contains($q, 'balas') || str_contains($q, 'pesan') || str_contains($q, 'status') || str_contains($q, 'tanya') || str_contains($q, 'inbox') || str_contains($q, 'history')) {
+                    return $this->parseSpecialTokens("[CHECK_REPLY:{$email}]");
+                }
+            }
+            
+            // Or if user enters only a valid email address (raw input check)
+            if (preg_match('/^\s*([\w\.\-]+@[\w\.\-]+\.\w+)\s*$/', $lastUserMessage, $matches)) {
+                $email = trim($matches[1]);
+                return $this->parseSpecialTokens("[CHECK_REPLY:{$email}]");
+            }
+        }
+
         // 1. Gather dynamic portfolio context from DB to construct the system prompt
         $profile = Profile::first();
         $projects = Project::all();
@@ -174,8 +201,11 @@ class GeminiChatService
         foreach ($messages as $msg) {
             $role = $msg['sender'] === 'user' ? 'user' : 'model';
             
-            // Filter consecutive identical roles
+            // Filter consecutive identical roles by appending texts to maintain strict alternation
             if ($role === $lastRole) {
+                if (!empty($contents)) {
+                    $contents[count($contents) - 1]['parts'][0]['text'] .= "\n\n" . $msg['text'];
+                }
                 continue;
             }
             
@@ -255,7 +285,7 @@ class GeminiChatService
      */
     protected function parseSpecialTokens(string $text): string
     {
-        if (preg_match('/\[CHECK_REPLY:([\w\.\-]+@[\w\.\-]+\.\w+)\]/', $text, $matches)) {
+        if (preg_match('/\[?CHECK_REPLY\s*:\s*([\w\.\-]+@[\w\.\-]+\.\w+)\]?/i', $text, $matches)) {
             $email = trim($matches[1]);
             
             $msg = \App\Models\Message::where('email', $email)->latest()->first();
@@ -265,7 +295,7 @@ class GeminiChatService
             }
             
             if ($msg->replied_at) {
-                return "Halo, saya menemukan pesan Anda dengan subjek '**{$msg->subject}**' yang dikirim pada " . $msg->created_at->format('d M Y H:i') . ".\n\nBerikut adalah **balasan langsung dari Ridhwan**:\n\n> " . str_replace("\n", "\n> ", $msg->reply_content);
+                return "|||reply|||" . $msg->reply_content;
             }
             
             return "Pesan Anda dengan subjek '**{$msg->subject}**' sudah kami terima pada " . $msg->created_at->format('d M Y H:i') . ", namun saat ini Ridhwan belum sempat membalasnya. Mohon tunggu sebentar ya!";
