@@ -18,18 +18,27 @@ class CertificateController extends Controller
             if ($path) {
                 if (str_starts_with($path, '/') || str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
                     $cert->file_url = $path;
-                } else {
-                    $cert->file_url = \Illuminate\Support\Facades\Storage::url($path);
-                }
 
-                // Generate thumbnail URL if webp thumbnail exists
-                $filename = basename($path);
-                $thumbnailName = pathinfo($filename, PATHINFO_FILENAME) . '.webp';
-                $thumbnailPath = 'images/Sertifikat/thumbnails/' . $thumbnailName;
-                if (file_exists(public_path($thumbnailPath))) {
-                    $cert->thumbnail_url = '/' . $thumbnailPath;
+                    // Check local public folder thumbnails
+                    $filename = basename($path);
+                    $thumbnailName = pathinfo($filename, PATHINFO_FILENAME) . '.webp';
+                    $thumbnailPath = 'images/Sertifikat/thumbnails/' . $thumbnailName;
+                    if (file_exists(public_path($thumbnailPath))) {
+                        $cert->thumbnail_url = '/' . $thumbnailPath;
+                    } else {
+                        $cert->thumbnail_url = $cert->file_url;
+                    }
                 } else {
-                    $cert->thumbnail_url = $cert->file_url;
+                    $cert->file_url = \Illuminate\Support\Facades\Storage::disk('public')->url($path);
+
+                    // Check storage disk for _thumb.webp
+                    $extension = pathinfo($path, PATHINFO_EXTENSION);
+                    $thumbPathStorage = str_replace('.' . $extension, '_thumb.webp', $path);
+                    if (\Illuminate\Support\Facades\Storage::disk('public')->exists($thumbPathStorage)) {
+                        $cert->thumbnail_url = \Illuminate\Support\Facades\Storage::disk('public')->url($thumbPathStorage);
+                    } else {
+                        $cert->thumbnail_url = $cert->file_url;
+                    }
                 }
             } else {
                 $cert->file_url = null;
