@@ -34,7 +34,7 @@ class GeminiChatService
         if (!$apiKey) {
             Log::warning('Gemini API Key is missing. Using local rule-based fallback.');
             $lastMessageText = end($contents)['parts'][0]['text'] ?? 'Halo';
-            return $this->getFallbackResponse($lastMessageText);
+            return $this->parseSpecialTokens($this->getFallbackResponse($lastMessageText));
         }
 
         $model = config('services.gemini.model', 'gemini-2.5-flash');
@@ -54,7 +54,7 @@ class GeminiChatService
                 $result = $response->json();
                 $text = $result['candidates'][0]['content']['parts'][0]['text'] ?? null;
                 if ($text) {
-                    return trim($text);
+                    return $this->parseSpecialTokens(trim($text));
                 }
             }
             
@@ -65,7 +65,7 @@ class GeminiChatService
 
         // Fallback in case of API errors
         $lastMessageText = end($contents)['parts'][0]['text'] ?? 'Halo';
-        return $this->getFallbackResponse($lastMessageText);
+        return $this->parseSpecialTokens($this->getFallbackResponse($lastMessageText));
     }
 
     /**
@@ -158,7 +158,8 @@ class GeminiChatService
         $systemPrompt .= "3. GAYA BAHASA & PANJANG RESPON: Jawab sebagai asisten virtual pribadi Ridhwan yang ramah, profesional, sopan, namun sedikit santai. Jawab secara singkat, padat, dan jelas (maksimal 2-3 kalimat per respon agar nyaman dibaca di layar chat kecil). Hindari penjelasan yang terlalu panjang lebar kecuali pengguna secara eksplisit meminta detail mendalam.\n";
         $systemPrompt .= "4. DETAIL PROYEK YANG LUAS & AKURAT: Anda dapat mendiskusikan fitur utama, arsitektur teknis, tech stack, database, optimalisasi performa, integrasi AI, geofencing, transaksi aman (locking), dan solusi teknis dari proyek-proyek Ridhwan secara luas namun tetap akurat sesuai data di atas.\n";
         $systemPrompt .= "5. KONTAK & STATUS: Ridhwan saat ini berstatus 'Tersedia untuk kolaborasi & proyek backend/fullstack' (freelance, part-time, full-time). Pengguna dapat menghubunginya lewat form kontak di web ini atau email ke ridhwananang@gmail.com.\n";
-        $systemPrompt .= "6. BAHASA: Gunakan Bahasa Indonesia yang natural. Jika pengguna menyapa atau bertanya dalam Bahasa Inggris, jawablah dalam Bahasa Inggris.";
+        $systemPrompt .= "6. BAHASA: Gunakan Bahasa Indonesia yang natural. Jika pengguna menyapa atau bertanya dalam Bahasa Inggris, jawablah dalam Bahasa Inggris.\n";
+        $systemPrompt .= "7. FITUR CEK BALASAN PESAN KONTAK: Jika user bertanya tentang status, isi, atau ingin mengecek balasan dari pesan yang pernah mereka kirim ke Ridhwan lewat form kontak: (a) Jika mereka belum memberikan alamat email, tanyakan email mereka dengan sangat sopan (contoh: 'Silakan berikan alamat email Anda agar saya bisa membantu mengecek balasan dari Ridhwan.'). (b) Jika mereka sudah menyebutkan email (atau jika riwayat pesan menunjukkan email mereka), Anda WAJIB membalas dengan format token ini saja secara persis: [CHECK_REPLY:email@domain.com] (ganti email@domain.com dengan email asli mereka). Jangan tambahkan teks lain ketika membalas dengan token tersebut.";
 
         return $systemPrompt;
     }
@@ -210,6 +211,17 @@ class GeminiChatService
     {
         $q = strtolower($query);
 
+        // Check if query contains an email and indicates checking replies
+        if (preg_match('/([\w\.\-]+@[\w\.\-]+\.\w+)/', $q, $matches)) {
+            if (str_contains($q, 'cek') || str_contains($q, 'balas') || str_contains($q, 'pesan') || str_contains($q, 'status') || str_contains($q, 'tanya') || str_contains($q, 'inbox')) {
+                return '[CHECK_REPLY:' . trim($matches[1]) . ']';
+            }
+        }
+
+        if (str_contains($q, 'cek balasan') || str_contains($q, 'cek pesan') || str_contains($q, 'balasan saya') || str_contains($q, 'status pesan')) {
+            return 'Silakan masukkan alamat email yang Anda gunakan saat mengisi form kontak agar saya bisa membantu mengecek balasan dari Ridhwan.';
+        }
+
         if (str_contains($q, 'laravel') || str_contains($q, 'backend') || str_contains($q, 'php')) {
             return 'Ridhwan memiliki pemahaman mendalam tentang Laravel backend (MVC, RESTful API, queues, Eloquent ORM). Dia selalu memastikan kode backend bersih, efisien, aman, dan scalable untuk kebutuhan produksi.';
         }
@@ -220,7 +232,7 @@ class GeminiChatService
             return 'Ridhwan saat ini berlokasi di Tangerang Selatan, Indonesia. Namun, dia terbiasa berkolaborasi secara remote dengan tim dari berbagai zona waktu.';
         }
         if (str_contains($q, 'harga') || str_contains($q, 'rate') || str_contains($q, 'biaya') || str_contains($q, 'gaji')) {
-            return 'Rate Ridhwan sangat fleksibel dan kompetitif, disesuaikan dengan skala proyek (freelance per-proyek atau kontrak bulanan). Silakan kirimkan brief proyek Anda melalui form kontak!';
+            return 'Rate Ridhwan sangat fleksibel and kompetitif, disesuaikan dengan skala proyek (freelance per-proyek atau kontrak bulanan). Silakan kirimkan brief proyek Anda melalui form kontak!';
         }
         if (str_contains($q, 'proyek') || str_contains($q, 'finverra') || str_contains($q, 'karya') || str_contains($q, 'classytask')) {
             return 'Beberapa proyek unggulan Ridhwan antara lain Finverra (keuangan gudang), MyClassyTask (manajemen tugas AI), ProManageSys (kolaborasi tim), dan SiPresens (absensi GPS). Semuanya mengintegrasikan backend kokoh dengan UI responsif.';
@@ -236,5 +248,29 @@ class GeminiChatService
         }
 
         return 'Pertanyaan menarik! Ridhwan adalah software engineer berdedikasi tinggi yang fokus pada penyelesaian masalah nyata menggunakan kode. Ia menguasai fullstack web development dan siap membawa ide Anda dari konsep hingga tahap produksi. Mari bicarakan kolaborasi lebih lanjut!';
+    }
+
+    /**
+     * Intercept and parse special tokens (like [CHECK_REPLY:...]) in the response.
+     */
+    protected function parseSpecialTokens(string $text): string
+    {
+        if (preg_match('/\[CHECK_REPLY:([\w\.\-]+@[\w\.\-]+\.\w+)\]/', $text, $matches)) {
+            $email = trim($matches[1]);
+            
+            $msg = \App\Models\Message::where('email', $email)->latest()->first();
+            
+            if (!$msg) {
+                return "Maaf, saya tidak menemukan riwayat pesan kontak yang dikirim menggunakan alamat email **{$email}**. Pastikan email yang Anda masukkan sudah benar atau silakan kirim pesan baru melalui formulir kontak.";
+            }
+            
+            if ($msg->replied_at) {
+                return "Halo, saya menemukan pesan Anda dengan subjek '**{$msg->subject}**' yang dikirim pada " . $msg->created_at->format('d M Y H:i') . ".\n\nBerikut adalah **balasan langsung dari Ridhwan**:\n\n> " . str_replace("\n", "\n> ", $msg->reply_content);
+            }
+            
+            return "Pesan Anda dengan subjek '**{$msg->subject}**' sudah kami terima pada " . $msg->created_at->format('d M Y H:i') . ", namun saat ini Ridhwan belum sempat membalasnya. Mohon tunggu sebentar ya!";
+        }
+        
+        return $text;
     }
 }
