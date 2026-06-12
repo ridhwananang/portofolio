@@ -106,13 +106,19 @@ export default function Header({
                 {/* Brand Logo */}
                 <div
                     onClick={() => handleNavClick('hero')}
-                    className="group flex cursor-pointer items-center"
+                    className="group flex cursor-pointer items-center gap-2"
                 >
                     <img
                         src="/images/anang.png"
                         alt="Anang Logo"
                         className="h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105 [filter:drop-shadow(0px_2px_6px_rgba(0,0,0,0.15))] dark:[filter:drop-shadow(0px_2px_10px_rgba(139,92,246,0.35))]"
                     />
+                    <span className="flex items-center text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                        Portofolio
+                        <span className="ml-0.5 text-2xl leading-none text-violet-600 dark:text-violet-500">
+                            •
+                        </span>
+                    </span>
                 </div>
 
                 {/* Desktop Navigation */}
