@@ -1,6 +1,6 @@
-import { Award, ShieldCheck, Calendar, Eye, Clock } from 'lucide-react';
+import { Award, ShieldCheck, Calendar, Eye, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import CertificatePreviewModal from './CertificatePreviewModal';
 
 interface CertificateItem {
@@ -28,11 +28,32 @@ export default function Certificates({ certificates, loading }: CertificatesProp
     const [previewTitle, setPreviewTitle] = useState<string | null>(null);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
+    // Pagination State
+    const ITEMS_PER_PAGE = 6;
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const totalPages = Math.ceil(certificates.length / ITEMS_PER_PAGE);
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const paginatedCertificates = certificates.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+    // Reset pagination when certificates change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [certificates.length]);
+
     const handlePreview = (cert: CertificateItem) => {
         setPreviewUrl(cert.file_url);
         setPreviewThumbnailUrl(cert.thumbnail_url || null);
         setPreviewTitle(cert.title);
         setIsPreviewOpen(true);
+    };
+
+    const handlePageChange = (page: number) => {
+        if (page >= 1 && page <= totalPages) {
+            setCurrentPage(page);
+            // Smoothly scroll to the top of the certificates section
+            document.getElementById('sertifikat')?.scrollIntoView({ behavior: 'smooth' });
+        }
     };
 
     const getStyleForCategory = (category: string) => {
@@ -121,91 +142,133 @@ export default function Certificates({ certificates, loading }: CertificatesProp
                 </div>
             ) : (
                 /* Main certificates grid */
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {certificates.map((cert, index) => {
-                        const style = getStyleForCategory(cert.category);
+                <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {paginatedCertificates.map((cert, index) => {
+                            const style = getStyleForCategory(cert.category);
 
-                        return (
-                            <motion.div
-                                initial={{ opacity: 0, y: 15 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: index * 0.05, duration: 0.4 }}
-                                whileHover={{ y: -4, scale: 1.01 }}
-                                key={cert.id}
-                                onClick={() => handlePreview(cert)}
-                                className="glass-card flex flex-col justify-between gap-5 rounded-[2rem] border border-slate-200/50 bg-white p-6 shadow-sm hover:border-violet-500/40 hover:shadow-md dark:border-slate-800/45 dark:bg-slate-950 dark:hover:border-violet-500/45 transition-all duration-300 cursor-pointer group select-none relative overflow-hidden"
+                            return (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 15 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ delay: index * 0.05, duration: 0.4 }}
+                                    whileHover={{ y: -4, scale: 1.01 }}
+                                    key={cert.id}
+                                    onClick={() => handlePreview(cert)}
+                                    className="glass-card flex flex-col justify-between gap-5 rounded-[2rem] border border-slate-200/50 bg-white p-6 shadow-sm hover:border-violet-500/40 hover:shadow-md dark:border-slate-800/45 dark:bg-slate-950 dark:hover:border-violet-500/45 transition-all duration-300 cursor-pointer group select-none relative overflow-hidden"
+                                >
+                                    {/* Glow Accent Effect */}
+                                    <div className="pointer-events-none absolute -right-12 -top-12 h-24 w-24 rounded-full bg-gradient-to-tr from-violet-500/5 to-indigo-500/5 blur-lg transition-all group-hover:scale-150"></div>
+
+                                    <div className="space-y-3.5">
+                                        {/* Certificate Static Thumbnail Preview */}
+                                        <div className="relative aspect-[1.414/1] w-full overflow-hidden rounded-xl border border-slate-200/40 bg-slate-50 dark:border-slate-800/60 dark:bg-slate-950 pointer-events-none select-none">
+                                            <img
+                                                src={cert.thumbnail_url || cert.file_url}
+                                                alt={`Thumbnail ${cert.title}`}
+                                                className="w-full h-full object-cover"
+                                                loading="lazy"
+                                            />
+                                            {/* Light overlay on hover */}
+                                            <div className="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/[0.02] transition-colors duration-300"></div>
+                                        </div>
+
+                                        {/* Top Metadata */}
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[10px] font-extrabold tracking-widest text-slate-400 uppercase">
+                                                {cert.category}
+                                            </span>
+                                            <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
+                                                <Calendar size={11} />
+                                                {cert.date}
+                                            </div>
+                                        </div>
+
+                                        {/* Title & Shield stamp */}
+                                        <div className="flex items-start gap-3">
+                                            <div className={`flex flex-shrink-0 items-center justify-center rounded-xl border p-2.5 ${style.color}`}>
+                                                <ShieldCheck size={18} strokeWidth={2.2} />
+                                            </div>
+                                            <h4 className="text-sm font-extrabold leading-snug text-slate-900 group-hover:text-violet-600 dark:text-white dark:group-hover:text-violet-400 transition-colors duration-250">
+                                                {cert.title}
+                                            </h4>
+                                        </div>
+
+                                        {/* Skills tag list */}
+                                        <div className="flex flex-wrap gap-1 pt-1">
+                                            {cert.skills && Array.isArray(cert.skills) && cert.skills.map((s) => (
+                                                <span
+                                                    key={s}
+                                                    className="dark:text-slate-400 rounded-md border border-slate-100 bg-slate-50 px-2 py-0.5 text-[9px] font-semibold text-slate-650 dark:border-slate-800/80 dark:bg-slate-900/60"
+                                                >
+                                                    {s}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Bottom Info / Click to action */}
+                                    <div className="mt-2 flex items-center justify-between border-t border-slate-100/70 pt-3.5 text-[10px] dark:border-slate-800/60">
+                                        <div className="text-slate-500">
+                                            {cert.credential_id ? (
+                                                <span>
+                                                    ID: <span className="font-mono font-medium text-slate-700 dark:text-slate-350">{cert.credential_id}</span>
+                                                </span>
+                                            ) : (
+                                                <span>{cert.issuer}</span>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-1 font-bold text-violet-650 dark:text-violet-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                            <Eye size={12} />
+                                            <span>Preview</span>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Pagination Controls */}
+                    {!loading && totalPages > 1 && (
+                        <div className="mt-10 flex items-center justify-center gap-2">
+                            {/* Previous Button */}
+                            <button
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={currentPage === 1}
+                                className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition-all hover:border-violet-500 hover:text-violet-600 disabled:pointer-events-none disabled:opacity-40 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400 dark:hover:border-violet-500 dark:hover:text-violet-400 cursor-pointer disabled:cursor-not-allowed"
+                                aria-label="Previous Page"
                             >
-                                {/* Glow Accent Effect */}
-                                <div className="pointer-events-none absolute -right-12 -top-12 h-24 w-24 rounded-full bg-gradient-to-tr from-violet-500/5 to-indigo-500/5 blur-lg transition-all group-hover:scale-150"></div>
+                                <ChevronLeft size={16} />
+                            </button>
 
-                                <div className="space-y-3.5">
-                                    {/* Certificate Static Thumbnail Preview */}
-                                    <div className="relative aspect-[1.414/1] w-full overflow-hidden rounded-xl border border-slate-200/40 bg-slate-50 dark:border-slate-800/60 dark:bg-slate-950 pointer-events-none select-none">
-                                        <img
-                                            src={cert.thumbnail_url || cert.file_url}
-                                            alt={`Thumbnail ${cert.title}`}
-                                            className="w-full h-full object-cover"
-                                            loading="lazy"
-                                        />
-                                        {/* Light overlay on hover */}
-                                        <div className="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/[0.02] transition-colors duration-300"></div>
-                                    </div>
+                            {/* Page Numbers */}
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                                <button
+                                    key={page}
+                                    onClick={() => handlePageChange(page)}
+                                    className={`flex h-10 w-10 items-center justify-center rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                        currentPage === page
+                                            ? 'bg-violet-600 text-white shadow-md shadow-violet-500/20 dark:bg-violet-500'
+                                            : 'border border-slate-200 bg-white text-slate-650 hover:border-violet-500 hover:text-violet-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400 dark:hover:border-violet-500 dark:hover:text-violet-400'
+                                    }`}
+                                >
+                                    {page}
+                                </button>
+                            ))}
 
-                                    {/* Top Metadata */}
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-[10px] font-extrabold tracking-widest text-slate-400 uppercase">
-                                            {cert.category}
-                                        </span>
-                                        <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
-                                            <Calendar size={11} />
-                                            {cert.date}
-                                        </div>
-                                    </div>
-
-                                    {/* Title & Shield stamp */}
-                                    <div className="flex items-start gap-3">
-                                        <div className={`flex flex-shrink-0 items-center justify-center rounded-xl border p-2.5 ${style.color}`}>
-                                            <ShieldCheck size={18} strokeWidth={2.2} />
-                                        </div>
-                                        <h4 className="text-sm font-extrabold leading-snug text-slate-900 group-hover:text-violet-600 dark:text-white dark:group-hover:text-violet-400 transition-colors duration-250">
-                                            {cert.title}
-                                        </h4>
-                                    </div>
-
-                                    {/* Skills tag list */}
-                                    <div className="flex flex-wrap gap-1 pt-1">
-                                        {cert.skills && Array.isArray(cert.skills) && cert.skills.map((s) => (
-                                            <span
-                                                key={s}
-                                                className="dark:text-slate-400 rounded-md border border-slate-100 bg-slate-50 px-2 py-0.5 text-[9px] font-semibold text-slate-650 dark:border-slate-800/80 dark:bg-slate-900/60"
-                                            >
-                                                {s}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Bottom Info / Click to action */}
-                                <div className="mt-2 flex items-center justify-between border-t border-slate-100/70 pt-3.5 text-[10px] dark:border-slate-800/60">
-                                    <div className="text-slate-500">
-                                        {cert.credential_id ? (
-                                            <span>
-                                                ID: <span className="font-mono font-medium text-slate-700 dark:text-slate-350">{cert.credential_id}</span>
-                                            </span>
-                                        ) : (
-                                            <span>{cert.issuer}</span>
-                                        )}
-                                    </div>
-                                    <div className="flex items-center gap-1 font-bold text-violet-650 dark:text-violet-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                        <Eye size={12} />
-                                        <span>Preview</span>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        );
-                    })}
-                </div>
+                            {/* Next Button */}
+                            <button
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                                className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition-all hover:border-violet-500 hover:text-violet-600 disabled:pointer-events-none disabled:opacity-40 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400 dark:hover:border-violet-500 dark:hover:text-violet-400 cursor-pointer disabled:cursor-not-allowed"
+                                aria-label="Next Page"
+                            >
+                                <ChevronRight size={16} />
+                            </button>
+                        </div>
+                    )}
+                </>
             )}
 
             <CertificatePreviewModal
@@ -218,3 +281,4 @@ export default function Certificates({ certificates, loading }: CertificatesProp
         </section>
     );
 }
+
