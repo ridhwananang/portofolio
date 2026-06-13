@@ -110,8 +110,6 @@ export default function Welcome({
         >
             <Head>
                 <title>Ridhwan Anang Ma'ruf</title>
-                <meta name="description" content="Portfolio resmi Ridhwan Anang Ma'ruf, Fullstack Developer spesialis Laravel & React. Membangun aplikasi web skala produksi yang andal." />
-                <link rel="canonical" href="https://ridhwananang.id/" />
             </Head>
 
             {/* Visually Hidden H1 for SEO/AIO & Assistive Technologies */}
