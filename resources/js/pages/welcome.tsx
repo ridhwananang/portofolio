@@ -109,7 +109,7 @@ export default function Welcome({
             className="relative min-h-screen overflow-x-hidden bg-[#F4F6FA] text-slate-800 transition-colors duration-300 selection:bg-violet-500/30 dark:bg-slate-950 dark:text-slate-100"
         >
             <Head>
-                <title>Ridhwan Anang Ma'ruf - Fullstack Web Developer (Laravel & React)</title>
+                <title>Ridhwan Anang Ma'ruf</title>
                 <meta name="description" content="Portfolio resmi Ridhwan Anang Ma'ruf, Fullstack Developer spesialis Laravel & React. Membangun aplikasi web skala produksi yang andal." />
                 <link rel="canonical" href="https://ridhwananang.id/" />
             </Head>
