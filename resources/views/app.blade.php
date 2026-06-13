@@ -38,7 +38,45 @@
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
         <x-inertia::head>
-            <title>{{ config('app.name', 'Laravel') }}</title>
+            <title>Ridhwan Anang Ma'ruf - Fullstack Web Developer (Laravel & React)</title>
+            <meta name="description" content="Portfolio resmi Ridhwan Anang Ma'ruf, Fullstack Web Developer yang berdedikasi membangun sistem backend Laravel yang andal dan antarmuka React + TypeScript yang interaktif.">
+            <meta name="keywords" content="Ridhwan Anang Ma'ruf, Ridhwan Anang, Portfolio, Fullstack Web Developer, Laravel Developer, React Developer, Indonesia, Tangerang Selatan">
+            <meta name="author" content="Ridhwan Anang Ma'ruf">
+
+            <!-- Open Graph (Standar Industri untuk Instagram, WhatsApp, LinkedIn, dll.) -->
+            <meta property="og:type" content="website">
+            <meta property="og:url" content="{{ url()->current() }}">
+            <meta property="og:title" content="Ridhwan Anang Ma'ruf - Fullstack Web Developer (Laravel & React)">
+            <meta property="og:description" content="Portfolio resmi Ridhwan Anang Ma'ruf. Menampilkan proyek-proyek unggulan, keahlian teknis (Laravel, React, TypeScript, SQL), dan sertifikasi.">
+            <meta property="og:image" content="{{ asset('images/me.webp') }}">
+
+            <!-- JSON-LD Structured Data for Person (SEO) -->
+            <script type="application/ld+json">
+            {
+              "@context": "https://schema.org",
+              "@type": "Person",
+              "name": "Ridhwan Anang Ma'ruf",
+              "url": "{{ url('/') }}",
+              "image": "{{ asset('images/me.webp') }}",
+              "sameAs": [
+                "https://github.com/ridhwananang",
+                "https://www.linkedin.com/in/ridhwan-anang-ma-ruf/",
+                "https://www.instagram.com/ridhwan.anang_/"
+              ],
+              "jobTitle": "Fullstack Web Developer",
+              "worksFor": {
+                "@type": "Organization",
+                "name": "Freelance"
+              },
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "Tangerang Selatan",
+                "addressRegion": "Banten",
+                "addressCountry": "ID"
+              },
+              "description": "Fullstack Web Developer yang berdedikasi membangun sistem backend Laravel yang andal dan antarmuka React + TypeScript yang interaktif."
+            }
+            </script>
         </x-inertia::head>
     </head>
     <body class="font-sans antialiased">
