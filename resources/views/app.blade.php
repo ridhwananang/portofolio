@@ -39,6 +39,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
         <x-inertia::head>
             <title>Ridhwan Anang Ma'ruf - Fullstack Web Developer (Laravel & React)</title>
+            <link rel="canonical" href="https://ridhwananang.id/">
             <meta name="description" content="Portfolio resmi Ridhwan Anang Ma'ruf, Fullstack Web Developer yang berdedikasi membangun sistem backend Laravel yang andal dan antarmuka React + TypeScript yang interaktif.">
             <meta name="keywords" content="Ridhwan Anang Ma'ruf, Ridhwan Anang, Portfolio, Fullstack Web Developer, Laravel Developer, React Developer, Indonesia, Tangerang Selatan">
             <meta name="author" content="Ridhwan Anang Ma'ruf">

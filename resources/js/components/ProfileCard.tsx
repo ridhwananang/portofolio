@@ -87,9 +87,9 @@ export default function ProfileCard({ onOpenContact, profile, loading }: Profile
             </div>
 
             {/* Profile Details */}
-            <h1 className="mb-1 text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+            <h2 className="mb-1 text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
                 {profile.name}
-            </h1>
+            </h2>
             <p className="mb-4 inline-block rounded-full bg-violet-50 px-3.5 py-1 text-sm font-semibold text-violet-600 dark:bg-violet-950/40 dark:text-violet-400">
                 {profile.role}
             </p>
