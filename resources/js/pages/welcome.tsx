@@ -112,11 +112,6 @@ export default function Welcome({
                 <title>Ridhwan Anang Ma'ruf</title>
             </Head>
 
-            {/* Visually Hidden H1 for SEO/AIO & Assistive Technologies */}
-            <h1 className="sr-only">
-                Ridhwan Anang Ma'ruf - Fullstack Web Developer Portfolio (Laravel & React)
-            </h1>
-
             {/* Interactive Mouse follow highlight (Hidden on mobile/tablet) */}
             <div
                 className="pointer-events-none fixed inset-0 z-0 hidden opacity-70 transition-opacity duration-300 md:block"

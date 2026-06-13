@@ -22,14 +22,14 @@ export default function MainHero() {
             </div>
 
             {/* Premium Big Typography Heading */}
-            <h2 className="mb-6 text-3xl leading-[1.15] font-black tracking-tight text-slate-900 md:text-5xl dark:text-white">
+            <h1 className="mb-6 text-3xl leading-[1.15] font-black tracking-tight text-slate-900 md:text-5xl dark:text-white">
                 Halo, saya membangun <br />
                 <span className="bg-gradient-to-r from-blue-600 via-violet-600 to-indigo-600 bg-clip-text pb-1 font-extrabold text-transparent dark:from-blue-400 dark:via-violet-400 dark:to-indigo-400">
                     Aplikasi Web Scalable
                 </span>{' '}
                 <br />
                 & siap produksi.
-            </h2>
+            </h1>
 
             <p className="max-w-2xl text-base leading-relaxed text-slate-600 dark:text-slate-400">
                 Saya adalah seorang Full Stack Developer dan mahasiswa Teknik Informatika yang berfokus pada rekayasa perangkat lunak secara end-to-end. Spesialisasi saya meliputi perancangan arsitektur backend menggunakan Laravel, pembuatan antarmuka modern yang interaktif dengan React + TypeScript, serta optimasi performa database SQL & NoSQL (MongoDB). Dengan pendekatan Clean Code dan DevOps workflow yang teratur, saya berdedikasi membangun aplikasi web modern yang aman, berkinerja tinggi, dan mudah dipelihara pada skala produksi.
