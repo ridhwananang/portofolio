@@ -19,8 +19,8 @@ export default function Projects({ projects, loading }: ProjectsProps) {
 
     const getImageUrl = (imagePath: string) => {
         if (!imagePath) {
-return '/images/finverra.png';
-}
+            return '/images/finverra.png';
+        }
 
         if (
             imagePath.startsWith('/') ||
@@ -37,7 +37,7 @@ return '/images/finverra.png';
         <section id="karya" className="w-full">
             {/* Section Header */}
             <div className="mb-11 flex items-center gap-3.5">
-                <div className="rounded-2xl border border-slate-200/50 bg-white p-2.5 text-violet-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-violet-400">
+                <div className="hidden sm:flex rounded-2xl border border-slate-200/50 bg-white p-2.5 text-violet-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-violet-400">
                     <FolderGit2
                         size={22}
                         id="projects-title-icon"
@@ -45,9 +45,9 @@ return '/images/finverra.png';
                     />
                 </div>
                 <div>
-                    <h3 className="flex items-baseline text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+                    <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
                         Proyek{' '}
-                        <span className="ml-2 bg-gradient-to-r from-blue-500 to-violet-500 bg-clip-text font-mono font-extrabold text-transparent italic">
+                        <span className="bg-gradient-to-r from-blue-500 to-violet-500 bg-clip-text font-mono font-extrabold text-transparent italic">
                             Unggulan
                         </span>
                     </h3>
