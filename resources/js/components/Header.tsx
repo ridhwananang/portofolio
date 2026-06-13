@@ -35,9 +35,10 @@ export default function Header({
 
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 20);
-            
+
             // Calculate scroll progress percentage
-            const totalScroll = document.documentElement.scrollHeight - window.innerHeight;
+            const totalScroll =
+                document.documentElement.scrollHeight - window.innerHeight;
 
             if (totalScroll > 0) {
                 setScrollProgress((window.scrollY / totalScroll) * 100);
@@ -109,9 +110,9 @@ export default function Header({
                     className="group flex cursor-pointer items-center gap-2"
                 >
                     <img
-                        src="/images/anang.png"
+                        src="/images/anang-logo.png"
                         alt="Anang Logo"
-                        className="h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105 [filter:drop-shadow(0px_2px_6px_rgba(0,0,0,0.15))] dark:[filter:drop-shadow(0px_2px_10px_rgba(139,92,246,0.35))]"
+                        className="h-10 w-auto object-contain [filter:drop-shadow(0px_2px_6px_rgba(0,0,0,0.15))] transition-transform duration-300 group-hover:scale-105 dark:[filter:drop-shadow(0px_2px_10px_rgba(139,92,246,0.35))]"
                     />
                     <span className="flex items-center text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">
                         Portofolio
@@ -131,7 +132,7 @@ export default function Header({
                             <button
                                 key={item.id}
                                 onClick={() => handleNavClick(item.id)}
-                                className={`relative flex cursor-pointer items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold transition-colors duration-200 z-10 ${
+                                className={`relative z-10 flex cursor-pointer items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold transition-colors duration-200 ${
                                     isActive
                                         ? 'text-slate-900 dark:text-white'
                                         : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
@@ -141,7 +142,11 @@ export default function Header({
                                     <motion.div
                                         layoutId="activeNavBackground"
                                         className="absolute inset-0 -z-10 rounded-xl bg-white shadow-sm dark:bg-slate-700"
-                                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                                        transition={{
+                                            type: 'spring',
+                                            stiffness: 380,
+                                            damping: 30,
+                                        }}
                                     />
                                 )}
                                 <Icon size={14} />
@@ -154,7 +159,7 @@ export default function Header({
                         href="https://www.dicoding.com/users/riedmarf12/academies"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-slate-500 flex cursor-pointer items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold transition-colors duration-200 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                        className="flex cursor-pointer items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold text-slate-500 transition-colors duration-200 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
                     >
                         <Award size={14} />
                         Dicoding Profile
