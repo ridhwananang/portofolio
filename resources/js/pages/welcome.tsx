@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Head } from '@inertiajs/react';
 import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
 import AIChatWidget from '../components/AIChatWidget';
@@ -107,6 +108,12 @@ export default function Welcome({
             id="app-root"
             className="relative min-h-screen overflow-x-hidden bg-[#F4F6FA] text-slate-800 transition-colors duration-300 selection:bg-violet-500/30 dark:bg-slate-950 dark:text-slate-100"
         >
+            <Head>
+                <title>Ridhwan Anang Ma'ruf - Fullstack Web Developer (Laravel & React)</title>
+                <meta name="description" content="Portfolio resmi Ridhwan Anang Ma'ruf, Fullstack Developer spesialis Laravel & React. Membangun aplikasi web skala produksi yang andal." />
+                <link rel="canonical" href="https://ridhwananang.id/" />
+            </Head>
+
             {/* Visually Hidden H1 for SEO/AIO & Assistive Technologies */}
             <h1 className="sr-only">
                 Ridhwan Anang Ma'ruf - Fullstack Web Developer Portfolio (Laravel & React)
