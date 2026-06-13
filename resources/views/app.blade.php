@@ -49,7 +49,7 @@
             <meta property="og:url" content="{{ url()->current() }}">
             <meta property="og:title" content="Ridhwan Anang Ma'ruf - Fullstack Web Developer (Laravel & React)">
             <meta property="og:description" content="Portfolio resmi Ridhwan Anang Ma'ruf. Menampilkan proyek-proyek unggulan, keahlian teknis (Laravel, React, TypeScript, SQL), dan sertifikasi.">
-            <meta property="og:image" content="{{ asset('images/me.webp') }}">
+            <meta property="og:image" content="{{ asset('images/anang-logo.png') }}">
 
             <!-- JSON-LD Structured Data for Person (SEO) -->
             <script type="application/ld+json">

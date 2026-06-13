@@ -1,4 +1,4 @@
-import { Award, ShieldCheck, Calendar, Eye, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Award, ShieldCheck, Calendar, Eye, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
 import CertificatePreviewModal from './CertificatePreviewModal';
@@ -28,17 +28,15 @@ export default function Certificates({ certificates, loading }: CertificatesProp
     const [previewTitle, setPreviewTitle] = useState<string | null>(null);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
-    // Pagination State
+    // Expand State
     const ITEMS_PER_PAGE = 6;
-    const [currentPage, setCurrentPage] = useState(1);
+    const [isExpanded, setIsExpanded] = useState(false);
 
-    const totalPages = Math.ceil(certificates.length / ITEMS_PER_PAGE);
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const paginatedCertificates = certificates.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    const visibleCertificates = isExpanded ? certificates : certificates.slice(0, ITEMS_PER_PAGE);
 
-    // Reset pagination when certificates change
+    // Reset expand when certificates change
     useEffect(() => {
-        setCurrentPage(1);
+        setIsExpanded(false);
     }, [certificates.length]);
 
     const handlePreview = (cert: CertificateItem) => {
@@ -46,14 +44,6 @@ export default function Certificates({ certificates, loading }: CertificatesProp
         setPreviewThumbnailUrl(cert.thumbnail_url || null);
         setPreviewTitle(cert.title);
         setIsPreviewOpen(true);
-    };
-
-    const handlePageChange = (page: number) => {
-        if (page >= 1 && page <= totalPages) {
-            setCurrentPage(page);
-            // Smoothly scroll to the top of the certificates section
-            document.getElementById('sertifikat')?.scrollIntoView({ behavior: 'smooth' });
-        }
     };
 
     const getStyleForCategory = (category: string) => {
@@ -144,7 +134,7 @@ export default function Certificates({ certificates, loading }: CertificatesProp
                 /* Main certificates grid */
                 <>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {paginatedCertificates.map((cert, index) => {
+                        {visibleCertificates.map((cert, index) => {
                             const style = getStyleForCategory(cert.category);
 
                             return (
@@ -229,42 +219,22 @@ export default function Certificates({ certificates, loading }: CertificatesProp
                         })}
                     </div>
 
-                    {/* Pagination Controls */}
-                    {!loading && totalPages > 1 && (
-                        <div className="mt-10 flex items-center justify-center gap-2">
-                            {/* Previous Button */}
+                    {/* Toggle Button */}
+                    {!loading && certificates.length > ITEMS_PER_PAGE && (
+                        <div className="mt-10 flex justify-center">
                             <button
-                                onClick={() => handlePageChange(currentPage - 1)}
-                                disabled={currentPage === 1}
-                                className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition-all hover:border-violet-500 hover:text-violet-600 disabled:pointer-events-none disabled:opacity-40 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400 dark:hover:border-violet-500 dark:hover:text-violet-400 cursor-pointer disabled:cursor-not-allowed"
-                                aria-label="Previous Page"
+                                onClick={() => {
+                                    if (isExpanded) {
+                                        document.getElementById('sertifikat')?.scrollIntoView({ behavior: 'smooth' });
+                                        setTimeout(() => setIsExpanded(false), 100);
+                                    } else {
+                                        setIsExpanded(true);
+                                    }
+                                }}
+                                className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-violet-500 hover:text-violet-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400 dark:hover:border-violet-500 dark:hover:text-violet-400 cursor-pointer"
                             >
-                                <ChevronLeft size={16} />
-                            </button>
-
-                            {/* Page Numbers */}
-                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                                <button
-                                    key={page}
-                                    onClick={() => handlePageChange(page)}
-                                    className={`flex h-10 w-10 items-center justify-center rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                                        currentPage === page
-                                            ? 'bg-violet-600 text-white shadow-md shadow-violet-500/20 dark:bg-violet-500'
-                                            : 'border border-slate-200 bg-white text-slate-650 hover:border-violet-500 hover:text-violet-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400 dark:hover:border-violet-500 dark:hover:text-violet-400'
-                                    }`}
-                                >
-                                    {page}
-                                </button>
-                            ))}
-
-                            {/* Next Button */}
-                            <button
-                                onClick={() => handlePageChange(currentPage + 1)}
-                                disabled={currentPage === totalPages}
-                                className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition-all hover:border-violet-500 hover:text-violet-600 disabled:pointer-events-none disabled:opacity-40 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400 dark:hover:border-violet-500 dark:hover:text-violet-400 cursor-pointer disabled:cursor-not-allowed"
-                                aria-label="Next Page"
-                            >
-                                <ChevronRight size={16} />
+                                <span>{isExpanded ? 'Tampilkan Lebih Sedikit' : 'Tampilkan Lebih Banyak'}</span>
+                                {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                             </button>
                         </div>
                     )}

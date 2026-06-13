@@ -1,5 +1,5 @@
-import { FolderGit2, ArrowUpRight, CheckCircle2, Layers } from 'lucide-react';
-import { useState } from 'react';
+import { FolderGit2, ArrowUpRight, CheckCircle2, Layers, ChevronDown, ChevronUp } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 interface ProjectItem {
     title: string;
@@ -16,6 +16,15 @@ interface ProjectsProps {
 
 export default function Projects({ projects, loading }: ProjectsProps) {
     const [activeProject, setActiveProject] = useState<number | null>(null);
+    const ITEMS_PER_PAGE = 3;
+    const [isExpanded, setIsExpanded] = useState(false);
+
+    const visibleProjects = isExpanded ? projects : projects.slice(0, ITEMS_PER_PAGE);
+
+    // Reset expand when projects count changes
+    useEffect(() => {
+        setIsExpanded(false);
+    }, [projects.length]);
 
     const getImageUrl = (imagePath: string) => {
         if (!imagePath) {
@@ -80,90 +89,112 @@ export default function Projects({ projects, loading }: ProjectsProps) {
                     ))}
                 </div>
             ) : (
-                /* Main projects flex container (3 items per row on desktop) */
-                <div className="flex flex-wrap gap-6">
-                    {projects.map((p, idx) => {
-                        const isHovered = activeProject === idx;
+                <>
+                    {/* Main projects flex container (3 items per row on desktop) */}
+                    <div className="flex flex-wrap gap-6">
+                        {visibleProjects.map((p, idx) => {
+                            const isHovered = activeProject === idx;
 
-                        return (
-                            <div
-                                key={p.title}
-                                onMouseEnter={() => setActiveProject(idx)}
-                                onMouseLeave={() => setActiveProject(null)}
-                                className={`glass-card flex min-w-[250px] flex-1 flex-col items-stretch gap-6 rounded-[2rem] border p-6 select-none md:max-w-[calc(33.333%-16px)] ${
-                                    isHovered
-                                        ? 'border-violet-500/50 shadow-xl shadow-slate-100/40 dark:shadow-none'
-                                        : 'border-slate-200/50 dark:border-slate-800/40'
-                                } group`}
-                            >
-                                {/* Screen Mockup Sandbox Container (Fits full width, 2:1 aspect ratio) */}
-                                <div className="relative aspect-[2/1] w-full flex-shrink-0 overflow-hidden rounded-2xl border border-slate-200/40 bg-slate-50 dark:border-slate-800 dark:bg-slate-950">
-                                    <div className="relative flex h-full w-full flex-col justify-start overflow-hidden bg-slate-950">
-                                        <div className="relative w-full flex-grow overflow-hidden bg-slate-900">
-                                            <img
-                                                src={getImageUrl(p.image)}
-                                                alt={`${p.title} Screenshot`}
-                                                className="h-full w-full object-cover object-top"
-                                            />
+                            return (
+                                <div
+                                    key={p.title}
+                                    onMouseEnter={() => setActiveProject(idx)}
+                                    onMouseLeave={() => setActiveProject(null)}
+                                    className={`glass-card flex min-w-[250px] flex-1 flex-col items-stretch gap-6 rounded-[2rem] border p-6 select-none md:max-w-[calc(33.333%-16px)] ${
+                                        isHovered
+                                            ? 'border-violet-500/50 shadow-xl shadow-slate-100/40 dark:shadow-none'
+                                            : 'border-slate-200/50 dark:border-slate-800/40'
+                                    } group`}
+                                >
+                                    {/* Screen Mockup Sandbox Container (Fits full width, 2:1 aspect ratio) */}
+                                    <div className="relative aspect-[2/1] w-full flex-shrink-0 overflow-hidden rounded-2xl border border-slate-200/40 bg-slate-50 dark:border-slate-800 dark:bg-slate-950">
+                                        <div className="relative flex h-full w-full flex-col justify-start overflow-hidden bg-slate-950">
+                                            <div className="relative w-full flex-grow overflow-hidden bg-slate-900">
+                                                <img
+                                                    src={getImageUrl(p.image)}
+                                                    alt={`${p.title} Screenshot`}
+                                                    className="h-full w-full object-cover object-top"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Right Content details details Container */}
+                                    <div className="flex flex-1 flex-col justify-between py-1">
+                                        {/* Tech Badges Container */}
+                                        <div className="mb-3.5 flex flex-wrap gap-1.5">
+                                            {p.tags.map((tag) => (
+                                                <span
+                                                    key={tag}
+                                                    className="dark:bg-slate-850 rounded-md border border-slate-200/30 bg-slate-50 px-2.5 py-1 text-[9px] font-extrabold tracking-wider text-slate-500 dark:border-slate-700/30 dark:text-slate-400"
+                                                >
+                                                    {tag}
+                                                </span>
+                                            ))}
+                                        </div>
+
+                                        {/* Name & Explanations */}
+                                        <div>
+                                            <h4 className="mb-2.5 flex items-center gap-1.5 text-xl font-extrabold tracking-tight text-slate-900 transition-colors group-hover:text-violet-600 dark:text-white dark:group-hover:text-violet-400">
+                                                {p.title}
+                                                <ArrowUpRight
+                                                    size={15}
+                                                    className={`text-slate-400 transition-all ${
+                                                        isHovered
+                                                            ? 'translate-x-0.5 -translate-y-0.5 text-violet-500'
+                                                            : ''
+                                                    }`}
+                                                />
+                                            </h4>
+                                            <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+                                                {p.description}
+                                            </p>
+                                        </div>
+
+                                        {/* Project Links / Integration Meta */}
+                                        <div className="text-slate-450 mt-5 flex items-center gap-4 border-t border-slate-100 pt-4 text-xs dark:border-slate-800/85">
+                                            <span className="text-slate-650 flex items-center gap-1.5 font-semibold dark:text-slate-400">
+                                                <CheckCircle2
+                                                    size={13}
+                                                    className="text-emerald-500"
+                                                />
+                                                Clean Architecture
+                                            </span>
+                                            <span>•</span>
+                                            <span className="text-slate-650 flex items-center gap-1.5 font-semibold dark:text-slate-400">
+                                                <Layers
+                                                    size={13}
+                                                    strokeWidth={2.4}
+                                                />
+                                                Inertia.js Ready
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
+                            );
+                        })}
+                    </div>
 
-                                {/* Right Content details details Container */}
-                                <div className="flex flex-1 flex-col justify-between py-1">
-                                    {/* Tech Badges Container */}
-                                    <div className="mb-3.5 flex flex-wrap gap-1.5">
-                                        {p.tags.map((tag) => (
-                                            <span
-                                                key={tag}
-                                                className="dark:bg-slate-850 rounded-md border border-slate-200/30 bg-slate-50 px-2.5 py-1 text-[9px] font-extrabold tracking-wider text-slate-500 dark:border-slate-700/30 dark:text-slate-400"
-                                            >
-                                                {tag}
-                                            </span>
-                                        ))}
-                                    </div>
-
-                                    {/* Name & Explanations */}
-                                    <div>
-                                        <h4 className="mb-2.5 flex items-center gap-1.5 text-xl font-extrabold tracking-tight text-slate-900 transition-colors group-hover:text-violet-600 dark:text-white dark:group-hover:text-violet-400">
-                                            {p.title}
-                                            <ArrowUpRight
-                                                size={15}
-                                                className={`text-slate-400 transition-all ${
-                                                    isHovered
-                                                        ? 'translate-x-0.5 -translate-y-0.5 text-violet-500'
-                                                        : ''
-                                                }`}
-                                            />
-                                        </h4>
-                                        <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-                                            {p.description}
-                                        </p>
-                                    </div>
-
-                                    {/* Project Links / Integration Meta */}
-                                    <div className="text-slate-450 mt-5 flex items-center gap-4 border-t border-slate-100 pt-4 text-xs dark:border-slate-800/85">
-                                        <span className="text-slate-650 flex items-center gap-1.5 font-semibold dark:text-slate-400">
-                                            <CheckCircle2
-                                                size={13}
-                                                className="text-emerald-500"
-                                            />
-                                            Clean Architecture
-                                        </span>
-                                        <span>•</span>
-                                        <span className="text-slate-650 flex items-center gap-1.5 font-semibold dark:text-slate-400">
-                                            <Layers
-                                                size={13}
-                                                strokeWidth={2.4}
-                                            />
-                                            Inertia.js Ready
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
+                    {/* Toggle Button */}
+                    {!loading && projects.length > ITEMS_PER_PAGE && (
+                        <div className="mt-10 flex justify-center w-full">
+                            <button
+                                onClick={() => {
+                                    if (isExpanded) {
+                                        document.getElementById('karya')?.scrollIntoView({ behavior: 'smooth' });
+                                        setTimeout(() => setIsExpanded(false), 100);
+                                    } else {
+                                        setIsExpanded(true);
+                                    }
+                                }}
+                                className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-violet-500 hover:text-violet-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400 dark:hover:border-violet-500 dark:hover:text-violet-400 cursor-pointer"
+                            >
+                                <span>{isExpanded ? 'Tampilkan Lebih Sedikit' : 'Tampilkan Lebih Banyak'}</span>
+                                {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                            </button>
+                        </div>
+                    )}
+                </>
             )}
         </section>
     );
