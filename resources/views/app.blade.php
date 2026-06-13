@@ -31,7 +31,7 @@
         </style>
 
         <link rel="icon" href="/images/anang-logo.png" type="image/png">
-        <link rel="apple-touch-icon" href="/images/anang-logo.png">
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
         @fonts
 
