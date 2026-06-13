@@ -53,8 +53,8 @@
             <!-- JSON-LD Structured Data for Person (SEO) -->
             <script type="application/ld+json">
             {
-              "@context": "https://schema.org",
-              "@type": "Person",
+              "@@context": "https://schema.org",
+              "@@type": "Person",
               "name": "Ridhwan Anang Ma'ruf",
               "url": "{{ url('/') }}",
               "image": "{{ asset('images/me.webp') }}",
@@ -65,11 +65,11 @@
               ],
               "jobTitle": "Fullstack Web Developer",
               "worksFor": {
-                "@type": "Organization",
+                "@@type": "Organization",
                 "name": "Freelance"
               },
               "address": {
-                "@type": "PostalAddress",
+                "@@type": "PostalAddress",
                 "addressLocality": "Tangerang Selatan",
                 "addressRegion": "Banten",
                 "addressCountry": "ID"
