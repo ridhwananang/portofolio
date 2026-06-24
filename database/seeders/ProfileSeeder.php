@@ -12,6 +12,8 @@ class ProfileSeeder extends Seeder
      */
     public function run(): void
     {
+        Profile::query()->delete();
+
         Profile::create([
             'name' => 'Ridhwan Anang Ma\'ruf',
             'role' => 'Full Stack Developer',
@@ -23,29 +25,19 @@ class ProfileSeeder extends Seeder
             'linkedin_url' => 'https://www.linkedin.com/in/ridhwan-anang-ma-ruf/',
             'education' => [
                 [
+                    'school' => 'Coding Camp 2026 - Powered by DBS Foundation',
+                    'major' => 'Full-Stack Web Developer',
+                    'period' => 'February 2026 - July 2026',
+                ],
+                [
                     'school' => 'Universitas Pamulang',
-                    'major' => 'Teknik Informatika (S1)',
-                    'period' => '2024 - 2028',
+                    'major' => 'B.S. in Informatics Engineering – Software Engineering Focus',
+                    'period' => 'March 2024 – Present',
                 ],
                 [
                     'school' => 'SMK Telekomunikasi Tunas Harapan',
-                    'major' => 'Rekayasa Perangkat Lunak',
-                    'period' => '2014 - 2017',
-                ],
-                [
-                    'school' => 'SMP PGRI 12 Jakarta',
-                    'major' => null,
-                    'period' => '2011 - 2014',
-                ],
-                [
-                    'school' => 'SD Negeri Pisangan 02',
-                    'major' => null,
-                    'period' => '2005 - 2011',
-                ],
-                [
-                    'school' => 'TK Islam Al-Husna',
-                    'major' => null,
-                    'period' => '2003 - 2005',
+                    'major' => 'Computer & Network Engineering / Software Engineering',
+                    'period' => 'July 2014 – June 2017',
                 ],
             ],
         ]);
