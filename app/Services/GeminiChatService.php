@@ -125,15 +125,15 @@ class GeminiChatService
                 'features' => 'Klasifikasi tingkat kematangan buah pisang (mentah, matang, terlalu matang) dari foto secara real-time menggunakan Computer Vision, monitoring distribusi rantai pasok pisang.',
                 'architecture' => 'Backend Python (Flask) untuk menjalankan inferensi model Deep Learning (Computer Vision), frontend React, visualisasi data grafik distribusi.'
             ],
-            'NutriVision' => [
+            'Nutrivision' => [
                 'features' => 'Analisis kandungan nutrisi makanan instan (kalori, protein, karbohidrat, lemak) cukup dengan mengunggah foto makanan, log harian konsumsi kalori pengguna.',
                 'architecture' => 'FastAPI backend untuk response cepat, integrasi model Computer Vision untuk deteksi jenis makanan, database PostgreSQL.'
             ],
-            'MTs Baitis Salmah' => [
+            'Mts Baitis Salmah' => [
                 'features' => 'Portal akademik sekolah lengkap, pengelolaan nilai siswa (E-Rapor), absensi kelas harian, berita sekolah, administrasi pembayaran SPP siswa.',
                 'architecture' => 'Laravel dengan blade/Inertia React, rancangan basis data relasional untuk entitas siswa, kelas, guru, dan mata pelajaran.'
             ],
-            'LMS Skillventura' => [
+            'LMS SkillVentura' => [
                 'features' => 'Manajemen kelas online, kuis dan ujian interaktif, generate sertifikat otomatis berbentuk PDF saat lulus materi, pelacakan progres belajar siswa.',
                 'architecture' => 'Pola modular course-module-lecture, integrasi file manager untuk materi video/pdf, caching query database pelajaran.'
             ]
