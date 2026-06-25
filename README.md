@@ -1,5 +1,7 @@
 # Portofolio Ridhwan Anang Ma'ruf 🚀
 
+🌐 **Link Akses Online**: [https://ridhwananang.id/](https://ridhwananang.id/)
+
 Website portofolio pribadi premium yang dibangun menggunakan ekosistem modern **Laravel 13** dan **React 19** (melalui **Inertia.js**), ditenagai oleh **Google Gemini AI** untuk fitur asisten interaktif, serta dilengkapi **Filament Admin Panel** untuk manajemen konten secara dinamis.
 
 ---
