@@ -112,7 +112,7 @@ def generate_pdf():
     # Title section
     story.append(Paragraph("RIDHWAN ANANG MA'RUF", name_style))
     story.append(Spacer(1, 2))
-    story.append(Paragraph("Full Stack Developer | Informatics Engineering Student", sub_style))
+    story.append(Paragraph("Full Stack Developer", sub_style))
     story.append(Spacer(1, 2))
     
     contact_text = (
