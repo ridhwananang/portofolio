@@ -23,7 +23,7 @@ class CertificateSeeder extends Seeder
                 'date' => 'Juli 2026',
                 'duration' => '943 Jam Belajar',
                 'skills' => ['Full-Stack Web Development', 'React.js', 'Node.js', 'AWS Cloud & Gen AI', 'RESTful API', 'Capstone Project', 'Soft Skills'],
-                'file_path' => '/images/Sertifikat/Coding Camp 2026 - DBS Foundation - Full-Stack Web Developer.pdf',
+                'file_path' => '/images/Sertifikat/Coding_Camp_2026_DBS_Foundation_Full_Stack_Web_Developer.pdf',
             ],
         ];
 
