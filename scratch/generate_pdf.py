@@ -140,7 +140,7 @@ def generate_pdf():
     # 1. Summary
     add_section_heading("SUMMARY")
     summary_text = (
-        "Dedicated Full Stack Developer and Computer Science student focused on engineering reliable, "
+        "Dedicated Full Stack Developer focused on engineering reliable, "
         "scalable, and secure end-to-end software applications. Experienced in developing backend "
         "architectures using Laravel, designing secure RESTful APIs, and integrating interactive modern "
         "frontends with React and TypeScript. Skilled in database optimization (PostgreSQL, MySQL, MongoDB) "
@@ -153,17 +153,21 @@ def generate_pdf():
     add_section_heading("PROFESSIONAL EXPERIENCE")
 
     def add_job(title, date, bullets):
-        p_title = Paragraph(title, job_title_style)
-        p_date = Paragraph(date, ParagraphStyle('JobDate', parent=styles['Normal'], fontName='Helvetica-Oblique', fontSize=8.5, alignment=2, textColor=colors.HexColor('#475569')))
-        t = Table([[p_title, p_date]], colWidths=[A4[0] - 72 - 150, 150])
-        t.setStyle(TableStyle([
-            ('VALIGN', (0,0), (-1,-1), 'BOTTOM'),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 1),
-            ('TOPPADDING', (0,0), (-1,-1), 1),
-            ('LEFTPADDING', (0,0), (-1,-1), 0),
-            ('RIGHTPADDING', (0,0), (-1,-1), 0),
-        ]))
-        story.append(t)
+        if date:
+            p_title = Paragraph(title, job_title_style)
+            p_date = Paragraph(date, ParagraphStyle('JobDate', parent=styles['Normal'], fontName='Helvetica-Oblique', fontSize=8.5, alignment=2, textColor=colors.HexColor('#475569')))
+            t = Table([[p_title, p_date]], colWidths=[A4[0] - 72 - 150, 150])
+            t.setStyle(TableStyle([
+                ('VALIGN', (0,0), (-1,-1), 'BOTTOM'),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 1),
+                ('TOPPADDING', (0,0), (-1,-1), 1),
+                ('LEFTPADDING', (0,0), (-1,-1), 0),
+                ('RIGHTPADDING', (0,0), (-1,-1), 0),
+            ]))
+            story.append(t)
+        else:
+            p_title = Paragraph(title, job_title_style)
+            story.append(p_title)
         story.append(Spacer(1, 2))
         for bullet in bullets:
             story.append(Paragraph(f"&bull; {bullet}", job_desc_style))
@@ -172,7 +176,7 @@ def generate_pdf():
     # Job 1
     add_job(
         "Full Stack Developer &ndash; SkillVentura (RPG Gamified LMS)",
-        "November 2025 &ndash; Present",
+        "",
         [
             "Engineered a gamified Learning Management System (LMS) with RPG elements, boosting student engagement metrics by 25%.",
             "Structured database systems using MongoDB and integrated 15+ secure RESTful APIs via Inertia.js.",
@@ -183,7 +187,7 @@ def generate_pdf():
     # Job 2
     add_job(
         "Full Stack Developer &ndash; SIPresensi (Attendance Management System)",
-        "April 2026 &ndash; Present",
+        "",
         [
             "Created a real-time employee and school attendance system, reducing monthly reporting processing time by 50% via automated generation.",
             "Programmed backend services with Laravel and PostgreSQL, combined with a React frontend supporting 100+ active daily users.",
@@ -194,7 +198,7 @@ def generate_pdf():
     # Job 3
     add_job(
         "Full Stack Developer &ndash; NutriVision (AI-Powered Nutrition Assistant)",
-        "February 2026 &ndash; Present",
+        "",
         [
             "Collaborated in a 4-member development team to build an AI-powered instant nutrition analysis and calorie detection application.",
             "Architected backend services using Laravel and PostgreSQL, optimizing AI model API response times to under 500ms.",
@@ -205,7 +209,7 @@ def generate_pdf():
     # Job 4
     add_job(
         "Full Stack Developer &ndash; MTs Baitis Salmah Academic Portal",
-        "May 2026 &ndash; June 2026",
+        "",
         [
             "Delivered an integrated academic information portal and official news CMS serving 300+ students and staff.",
             "Built automated grading modules, reducing teachers' report card preparation time by 30%.",
@@ -232,11 +236,9 @@ def generate_pdf():
     # 4. Certifications
     add_section_heading("CERTIFICATIONS")
     cert_text = (
-        "<b>Dicoding Indonesia:</b> "
-        "Belajar Fundamental Back-End dengan JavaScript (L4PQ9L2Q4PO1) &bull; "
-        "Belajar Back-End Pemula dengan JavaScript (DC-BE-JS) &bull; "
-        "Belajar Membuat Aplikasi Web dengan React (DC-APP-RCT) &bull; "
-        "Belajar Fundamental Aplikasi Web dengan React (DC-FUND-RCT)"
+        "<b>Dicoding Indonesia & DBS Foundation:</b> "
+        "Coding Camp 2026 powered by DBS Foundation &ndash; Full-Stack Web Developer "
+        "(Credential ID: CC26/GRAD/XXVI-07/CFCC288D6Y1198) &bull; 943 Jam Belajar (Full Graduate)"
     )
     story.append(Paragraph(cert_text, body_style))
     story.append(Spacer(1, 6))
@@ -269,11 +271,6 @@ def generate_pdf():
         "Universitas Pamulang",
         "March 2024 &ndash; Present",
         "B.S. in Informatics Engineering &ndash; Software Engineering Focus"
-    )
-    add_edu(
-        "SMK Telekomunikasi Tunas Harapan",
-        "July 2014 &ndash; June 2017",
-        "Computer & Network Engineering / Software Engineering"
     )
 
     doc.build(story)

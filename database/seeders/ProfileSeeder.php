@@ -34,11 +34,6 @@ class ProfileSeeder extends Seeder
                     'major' => 'B.S. in Informatics Engineering – Software Engineering Focus',
                     'period' => 'March 2024 – Present',
                 ],
-                [
-                    'school' => 'SMK Telekomunikasi Tunas Harapan',
-                    'major' => 'Computer & Network Engineering / Software Engineering',
-                    'period' => 'July 2014 – June 2017',
-                ],
             ],
         ]);
     }
