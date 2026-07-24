@@ -109,10 +109,9 @@ def generate_portfolio_pdf():
 
     contact_info = (
         "<b>Website:</b> <a href='https://ridhwananang.id/'>https://ridhwananang.id/</a> &bull; "
-        "<b>Email:</b> ridhwananang@gmail.com &bull; "
-        "<b>Location:</b> Tangerang Selatan, Indonesia &bull; "
-        "<b>GitHub:</b> github.com/ridhwananang &bull; "
-        "<b>LinkedIn:</b> linkedin.com/in/ridhwan-anang-ma-ruf/"
+        "<b>GitHub:</b> <a href='https://github.com/ridhwananang'>https://github.com/ridhwananang</a> &bull; "
+        "<b>LinkedIn:</b> <a href='https://linkedin.com/in/ridhwan-anang-ma-ruf/'>https://linkedin.com/in/ridhwan-anang-ma-ruf/</a> &bull; "
+        "<b>Email:</b> <a href='mailto:ridhwananang@gmail.com'>ridhwananang@gmail.com</a>"
     )
     story.append(Paragraph(contact_info, meta_style))
     story.append(Spacer(1, 10))
