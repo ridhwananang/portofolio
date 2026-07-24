@@ -17,16 +17,18 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        User::updateOrCreate(
+            ['email' => 'test@example.com'],
+            ['name' => 'Test User']
+        );
 
-        User::factory()->create([
-            'name' => 'Ridhwan Anang Ma\'ruf',
-            'email' => 'ridhwananang@gmail.com',
-            'password' => \Illuminate\Support\Facades\Hash::make('AanVeena123!'),
-        ]);
+        User::updateOrCreate(
+            ['email' => 'ridhwananang@gmail.com'],
+            [
+                'name' => 'Ridhwan Anang Ma\'ruf',
+                'password' => \Illuminate\Support\Facades\Hash::make('AanVeena123!'),
+            ]
+        );
 
         $this->call([
             ProfileSeeder::class,

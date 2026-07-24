@@ -237,8 +237,7 @@ def generate_pdf():
     add_section_heading("CERTIFICATIONS")
     cert_text = (
         "<b>Dicoding Indonesia & DBS Foundation:</b> "
-        "Coding Camp 2026 powered by DBS Foundation &ndash; Full-Stack Web Developer "
-        "(Credential ID: CC26/GRAD/XXVI-07/CFCC288D6Y1198) &bull; 943 Jam Belajar (Full Graduate)"
+        "Coding Camp 2026 powered by DBS Foundation &ndash; Full-Stack Web Developer"
     )
     story.append(Paragraph(cert_text, body_style))
     story.append(Spacer(1, 6))
