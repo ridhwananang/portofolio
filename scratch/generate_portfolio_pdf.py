@@ -5,12 +5,13 @@ from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image as RLImage, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
-def convert_webp_to_png(webp_path):
-    png_path = webp_path.replace('.webp', '_temp.png')
+def convert_webp_to_jpg(webp_path):
+    jpg_path = webp_path.replace('.webp', '_temp.jpg')
     if os.path.exists(webp_path):
         img = PILImage.open(webp_path).convert('RGB')
-        img.save(png_path, 'PNG')
-        return png_path
+        img.thumbnail((800, 600), PILImage.Resampling.LANCZOS)
+        img.save(jpg_path, 'JPEG', quality=80, optimize=True)
+        return jpg_path
     return None
 
 def generate_portfolio_pdf():
@@ -55,8 +56,8 @@ def generate_portfolio_pdf():
         'CoverMeta',
         parent=styles['Normal'],
         fontName='Helvetica',
-        fontSize=9,
-        leading=14,
+        fontSize=8.5,
+        leading=13,
         textColor=colors.HexColor('#475569')
     )
 
@@ -107,8 +108,9 @@ def generate_portfolio_pdf():
     story.append(Spacer(1, 6))
 
     contact_info = (
-        "<b>Location:</b> Tangerang Selatan, Indonesia &bull; "
+        "<b>Website:</b> <a href='https://ridhwananang.id/'>https://ridhwananang.id/</a> &bull; "
         "<b>Email:</b> ridhwananang@gmail.com &bull; "
+        "<b>Location:</b> Tangerang Selatan, Indonesia &bull; "
         "<b>GitHub:</b> github.com/ridhwananang &bull; "
         "<b>LinkedIn:</b> linkedin.com/in/ridhwan-anang-ma-ruf/"
     )
@@ -133,14 +135,14 @@ def generate_portfolio_pdf():
 
     def add_project_card(title, tags_str, description, features_str, webp_filename):
         webp_path = os.path.join(img_dir, webp_filename)
-        png_path = convert_webp_to_png(webp_path)
+        jpg_path = convert_webp_to_jpg(webp_path)
         
         img_cell = ""
-        if png_path and os.path.exists(png_path):
-            temp_files_to_clean.append(png_path)
+        if jpg_path and os.path.exists(jpg_path):
+            temp_files_to_clean.append(jpg_path)
             # Image aspect ratio constraint
             # Width ~195, Height ~105
-            img_cell = RLImage(png_path, width=195, height=105)
+            img_cell = RLImage(jpg_path, width=195, height=105)
 
         # Right side info
         info_elements = [
