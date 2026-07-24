@@ -263,8 +263,7 @@ def generate_portfolio_pdf():
     
     cert_box_text = (
         "<b>Coding Camp 2026 powered by DBS Foundation &ndash; Full-Stack Web Developer</b><br/>"
-        "<font size=8 color='#475569'>Issued by <b>Dicoding Indonesia & DBS Foundation</b> (July 2026) &bull; "
-        "Full Graduate Specialization (943 Learning Hours &bull; Capstone Project &bull; AWS Cloud &bull; React &bull; Node.js)</font>"
+        "<font size=8 color='#475569'>Issued by <b>Dicoding Indonesia & DBS Foundation</b> (July 2026)</font>"
     )
     cert_table = Table([[Paragraph(cert_box_text, proj_desc_style)]], colWidths=[A4[0] - 72])
     cert_table.setStyle(TableStyle([
