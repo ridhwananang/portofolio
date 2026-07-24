@@ -118,8 +118,9 @@ def generate_pdf():
     contact_text = (
         "Tangerang Selatan, Indonesia &bull; +62 812-9850-2177 &bull; "
         "<a href='mailto:ridhwananang@gmail.com'>ridhwananang@gmail.com</a> &bull; "
-        "<a href='https://github.com/ridhwananang'>https://github.com/ridhwananang</a> &bull; "
-        "<a href='https://linkedin.com/in/ridhwan-anang-ma-ruf/'>https://linkedin.com/in/ridhwan-anang-ma-ruf/</a>"
+        "<a href='https://ridhwananang.id/'>https://ridhwananang.id/</a> &bull; "
+        "<a href='https://github.com/ridhwananang'>github.com/ridhwananang</a> &bull; "
+        "<a href='https://linkedin.com/in/ridhwan-anang-ma-ruf/'>linkedin.com/in/ridhwan-anang-ma-ruf/</a>"
     )
     story.append(Paragraph(contact_text, contact_style))
     story.append(Spacer(1, 6))
