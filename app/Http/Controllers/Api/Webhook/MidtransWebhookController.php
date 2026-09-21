@@ -34,15 +34,30 @@ class MidtransWebhookController extends Controller
         $fraudStatus = strtolower($payload['fraud_status'] ?? '');
         $transactionId = $payload['transaction_id'] ?? null;
 
+        // Handle Midtrans Dashboard "Test notification URL" ping
+        if (empty($orderId)) {
+            Log::info('Midtrans Webhook: Test ping notification received successfully.');
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Notification URL is active and reachable',
+            ], 200);
+        }
+
         // 1. Catat ke payment_logs
-        $paymentLog = PaymentLog::create([
-            'event' => 'midtrans.' . $transactionStatus,
-            'xendit_id' => $transactionId,
-            'external_id' => $orderId,
-            'payload' => $payload,
-            'ip_address' => $request->ip(),
-            'status' => PaymentLogStatus::RECEIVED,
-        ]);
+        $paymentLog = null;
+        try {
+            $paymentLog = PaymentLog::create([
+                'event' => 'midtrans.' . $transactionStatus,
+                'xendit_id' => $transactionId,
+                'external_id' => $orderId,
+                'payload' => $payload,
+                'ip_address' => $request->ip(),
+                'status' => PaymentLogStatus::RECEIVED,
+            ]);
+        } catch (Throwable $e) {
+            Log::warning('Gagal mencatat payment_log Midtrans: ' . $e->getMessage());
+        }
 
         // 2. Verifikasi Signature Key Midtrans (jika server key dikonfigurasi)
         if (! empty($this->midtransClient->getServerKey())) {

@@ -66,15 +66,15 @@ class MidtransClient
      * Verifikasi signature key webhook dari Midtrans
      * SHA512(order_id + status_code + gross_amount + ServerKey)
      */
-    public function verifySignature(string $orderId, string $statusCode, string $grossAmount, string $signatureKey): bool
+    public function verifySignature(?string $orderId, ?string $statusCode, ?string $grossAmount, ?string $signatureKey): bool
     {
-        if (empty($this->serverKey)) {
+        if (empty($this->serverKey) || empty($orderId) || empty($signatureKey)) {
             return false;
         }
 
-        $expected = hash('sha512', $orderId . $statusCode . $grossAmount . $this->serverKey);
+        $expected = hash('sha512', (string) $orderId . (string) $statusCode . (string) $grossAmount . $this->serverKey);
 
-        return hash_equals($expected, $signatureKey);
+        return hash_equals($expected, (string) $signatureKey);
     }
 
     public function getServerKey(): string
