@@ -438,8 +438,22 @@ export default function ProjectTracker({ order }: Props) {
                                     </div>
                                     <div className="flex justify-between text-slate-500">
                                         <span>Status Dana</span>
-                                        <span className="font-bold uppercase text-emerald-600">
-                                            {order.quest?.deposit_transaction?.status || 'PENDING'}
+                                        <span className={`font-bold uppercase ${
+                                            order.status === 'completed'
+                                                ? 'text-emerald-600 dark:text-emerald-400'
+                                                : order.quest?.payout_transaction
+                                                ? 'text-amber-500'
+                                                : order.quest?.deposit_transaction?.status === 'held'
+                                                ? 'text-emerald-500'
+                                                : 'text-slate-400'
+                                        }`}>
+                                            {order.status === 'completed'
+                                                ? 'DICAIRKAN (RELEASED)'
+                                                : order.quest?.payout_transaction
+                                                ? 'PROSES PENCAIRAN'
+                                                : order.quest?.deposit_transaction?.status === 'held'
+                                                ? 'DITAHAN DI REKBER (HELD)'
+                                                : 'MENUNGGU PEMBAYARAN'}
                                         </span>
                                     </div>
                                     {order.quest?.deposit_transaction?.paid_at && (
@@ -450,7 +464,11 @@ export default function ProjectTracker({ order }: Props) {
                                 </div>
 
                                 <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3 text-[11px] text-slate-500 dark:border-slate-800 dark:bg-slate-950 leading-relaxed">
-                                    Dana disimpan aman di sistem escrow Xendit. Tidak ada uang riil yang dipotong pada mode simulasi Sandbox.
+                                    {order.status === 'completed'
+                                        ? 'Dana rekber telah resmi disetujui klien dan dicairkan ke rekening BCA Ridhwan Anang Ma\'ruf.'
+                                        : order.quest?.deposit_transaction?.status === 'held'
+                                        ? 'Dana disimpan aman di sistem escrow Xendit dan baru dicairkan setelah klien menyetujui hasil pengerjaan website.'
+                                        : 'Menunggu pembayaran rekber dari klien via Xendit.'}
                                 </div>
                             </div>
 
