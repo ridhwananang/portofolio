@@ -77,7 +77,28 @@ test('midtrans webhook settlement berhasil menahan dana rekber dan membuka quest
 });
 
 test('midtrans webhook menolak request dengan signature yang tidak valid', function () {
+    $quest = Quest::create([
+        'poster_id' => $this->poster->id,
+        'title' => 'Test Quest',
+        'description' => 'Test Description',
+        'reward_amount' => 100000,
+        'fee_amount' => 0,
+        'total_amount' => 100000,
+        'currency' => 'IDR',
+        'status' => QuestStatus::PENDING_PAYMENT,
+    ]);
+
     $orderId = 'QUEST-DEP-999-12345';
+
+    Transaction::create([
+        'quest_id' => $quest->id,
+        'user_id' => $this->poster->id,
+        'type' => TransactionType::DEPOSIT,
+        'amount' => 100000,
+        'currency' => 'IDR',
+        'status' => TransactionStatus::PENDING,
+        'xendit_external_id' => $orderId,
+    ]);
 
     $payload = [
         'transaction_id' => 'midtrans-trans-fake',

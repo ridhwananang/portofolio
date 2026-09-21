@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Api\Webhook;
 
 use App\Enums\PaymentLogStatus;
+use App\Enums\TransactionType;
 use App\Http\Controllers\Controller;
 use App\Models\PaymentLog;
+use App\Models\Transaction;
 use App\Services\Payment\EscrowService;
 use App\Services\Payment\Midtrans\MidtransClient;
 use Illuminate\Http\JsonResponse;
@@ -34,10 +36,11 @@ class MidtransWebhookController extends Controller
         $fraudStatus = strtolower($payload['fraud_status'] ?? '');
         $transactionId = $payload['transaction_id'] ?? null;
 
-        // Handle Midtrans Dashboard "Test notification URL" ping / mock test
+        // 1. Handle Midtrans Dashboard "Test notification URL" ping / mock test
         $isTestPing = empty($orderId) ||
             str_contains(strtolower((string) $orderId), 'test') ||
             str_contains(strtolower((string) $orderId), 'dummy') ||
+            str_contains(strtolower((string) $orderId), 'sample') ||
             empty($signatureKey);
 
         if ($isTestPing) {
@@ -49,7 +52,7 @@ class MidtransWebhookController extends Controller
             ], 200);
         }
 
-        // 1. Catat ke payment_logs
+        // 2. Catat ke payment_logs
         $paymentLog = null;
         try {
             $paymentLog = PaymentLog::create([
@@ -64,7 +67,21 @@ class MidtransWebhookController extends Controller
             Log::warning('Gagal mencatat payment_log Midtrans: ' . $e->getMessage());
         }
 
-        // 2. Verifikasi Signature Key Midtrans (jika server key dikonfigurasi)
+        // 3. Verifikasi apakah transaksi ini milik sistem rekber kita
+        $transaction = Transaction::where('xendit_external_id', $orderId)
+            ->where('type', TransactionType::DEPOSIT)
+            ->first();
+
+        if (! $transaction) {
+            Log::info("Midtrans Webhook: Transaksi dengan order_id [{$orderId}] tidak ditemukan dalam database (kemungkinan test ping dashboard).");
+
+            return response()->json([
+                'status' => 'success',
+                'message' => "Order [{$orderId}] acknowledged",
+            ], 200);
+        }
+
+        // 4. Verifikasi Signature Key Midtrans (jika server key dikonfigurasi)
         if (! empty($this->midtransClient->getServerKey())) {
             $isValidSignature = $this->midtransClient->verifySignature(
                 $orderId,
@@ -74,7 +91,7 @@ class MidtransWebhookController extends Controller
             );
 
             if (! $isValidSignature) {
-                $paymentLog->update([
+                $paymentLog?->update([
                     'status' => PaymentLogStatus::FAILED,
                     'error_message' => 'Invalid Midtrans signature_key',
                 ]);
@@ -85,7 +102,7 @@ class MidtransWebhookController extends Controller
             }
         }
 
-        // 3. Cek apakah transaksi berhasil (settlement atau capture dengan accept)
+        // 5. Cek apakah transaksi berhasil (settlement atau capture dengan accept)
         $isSuccess = ($transactionStatus === 'settlement') ||
             ($transactionStatus === 'capture' && $fraudStatus === 'accept');
 
@@ -98,7 +115,7 @@ class MidtransWebhookController extends Controller
 
                 $this->escrowService->holdEscrow($orderId, $paymentData);
 
-                $paymentLog->update([
+                $paymentLog?->update([
                     'status' => PaymentLogStatus::PROCESSED,
                 ]);
 
@@ -109,21 +126,18 @@ class MidtransWebhookController extends Controller
                     'message' => 'Midtrans notification processed and escrow held successfully',
                 ]);
             } catch (Throwable $e) {
-                $paymentLog->update([
+                $paymentLog?->update([
                     'status' => PaymentLogStatus::FAILED,
                     'error_message' => $e->getMessage(),
                 ]);
 
-                Log::error("Gagal memproses penahanan dana rekber Midtrans untuk {$orderId}: " . $e->getMessage());
+                Log::error("Midtrans Webhook Gagal untuk {$orderId}: " . $e->getMessage());
 
-                return response()->json(['error' => $e->getMessage()], 500);
+                return response()->json([
+                    'error' => 'Gagal memproses escrow: ' . $e->getMessage(),
+                ], 500);
             }
         }
-
-        // Jika status pending, expire, cancel, deny
-        $paymentLog->update([
-            'status' => PaymentLogStatus::IGNORED,
-        ]);
 
         return response()->json([
             'status' => 'ignored',
