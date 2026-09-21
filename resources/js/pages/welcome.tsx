@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
 import AIChatWidget from '../components/AIChatWidget';
@@ -246,7 +246,7 @@ export default function Welcome({
             {/* Aesthetic Footer Area */}
             <footer className="mt-2 w-full border-t border-slate-200/50 bg-white/40 py-12 backdrop-blur-md dark:border-slate-800/45 dark:bg-slate-950/40">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-1 gap-8 border-b border-slate-200/50 pb-8 md:grid-cols-3 dark:border-slate-800/45">
+                    <div className="grid grid-cols-1 gap-8 border-b border-slate-200/50 pb-8 sm:grid-cols-2 md:grid-cols-4 dark:border-slate-800/45">
                         {/* Brand / Name info */}
                         <div className="space-y-3">
                             <h4 className="text-base font-extrabold tracking-tight text-slate-900 dark:text-white">
@@ -288,6 +288,39 @@ export default function Welcome({
                                     >
                                         Portofolio
                                     </a>
+                                </li>
+                                <li>
+                                    <Link
+                                        href="/layanan"
+                                        className="transition-colors hover:text-violet-600 dark:hover:text-violet-400"
+                                    >
+                                        Kalkulator Layanan
+                                    </Link>
+                                </li>
+                            </ul>
+                        </div>
+
+                        {/* Legal & Compliance (Midtrans Requirements) */}
+                        <div className="space-y-3">
+                            <h5 className="text-xs font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
+                                Legal & Kebijakan
+                            </h5>
+                            <ul className="text-slate-650 dark:text-slate-350 space-y-2 text-xs font-semibold">
+                                <li>
+                                    <Link
+                                        href="/terms-and-conditions"
+                                        className="transition-colors hover:text-violet-600 dark:hover:text-violet-400"
+                                    >
+                                        Syarat & Ketentuan (T&C)
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
+                                        href="/privacy-policy"
+                                        className="transition-colors hover:text-violet-600 dark:hover:text-violet-400"
+                                    >
+                                        Kebijakan Privasi
+                                    </Link>
                                 </li>
                             </ul>
                         </div>

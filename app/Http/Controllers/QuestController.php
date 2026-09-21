@@ -173,7 +173,7 @@ class QuestController extends Controller
         try {
             $this->escrowService->releaseEscrow($quest, $request->validated());
 
-            return back()->with('success', 'Pekerjaan disetujui! Pencairan dana ke worker sedang diproses oleh sistem Rekber Xendit.');
+            return back()->with('success', 'Pekerjaan disetujui! Pencairan dana ke worker sedang diproses oleh sistem Rekber Midtrans.');
         } catch (\Throwable $e) {
             return back()->with('error', 'Gagal merilis dana rekber: ' . $e->getMessage());
         }

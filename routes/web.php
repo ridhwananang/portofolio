@@ -72,6 +72,10 @@ Route::get('/track-project/{tracking_code}', [ProjectOrderController::class, 'tr
 Route::post('/track-project/{tracking_code}/approve', [ProjectOrderController::class, 'approve'])->name('project.tracker.approve');
 Route::post('/track-project/{tracking_code}/staging', [ProjectOrderController::class, 'updateStaging'])->name('project.tracker.staging');
 
+// Legal & Compliance Pages (Midtrans Requirements)
+Route::inertia('/terms-and-conditions', 'terms')->name('terms');
+Route::inertia('/privacy-policy', 'privacy')->name('privacy');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'dashboard')->name('dashboard');
 

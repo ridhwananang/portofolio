@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     Check,
     CheckCircle2,
@@ -145,7 +145,7 @@ export default function ProjectTracker({ order }: Props) {
 
     const featureNames: Record<string, string> = {
         ai_gemini: 'Integrasi Google Gemini AI Chatbot',
-        payment_gateway: 'Payment Gateway Xendit (QRIS, VA, E-Wallet)',
+        payment_gateway: 'Payment Gateway Midtrans (QRIS, VA, Gopay)',
         admin_cms: 'Dashboard Admin Panel (Filament v3)',
         auth_security: 'Multi-Role Auth & 2FA / Passkeys',
         seo_speed: 'Optimasi Performa & SEO Premium',
@@ -202,7 +202,7 @@ export default function ProjectTracker({ order }: Props) {
                                         Proposal Proyek: {projectTypeName}
                                     </h2>
                                     <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
-                                        Rincian kebutuhan website Anda telah dirangkum di bawah. Anda dapat <strong>berdiskusi terlebih dahulu</strong> dengan Ridhwan atau langsung <strong>mengamankan jadwal pengerjaan</strong> dengan menyetor dana ke Rekber Xendit.
+                                        Rincian kebutuhan website Anda telah dirangkum di bawah. Anda dapat <strong>berdiskusi terlebih dahulu</strong> dengan Ridhwan atau langsung <strong>mengamankan jadwal pengerjaan</strong> dengan menyetor dana ke Rekber Midtrans.
                                     </p>
                                 </div>
 
@@ -212,7 +212,7 @@ export default function ProjectTracker({ order }: Props) {
                                         {formatCurrency(order.total_amount)}
                                     </div>
                                     <div className="text-[10px] text-emerald-600 font-semibold mt-0.5">
-                                        ✓ Garansi Rekber Xendit
+                                        ✓ Garansi Rekber Midtrans
                                     </div>
                                 </div>
                             </div>
@@ -227,7 +227,7 @@ export default function ProjectTracker({ order }: Props) {
                                         className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-xs font-bold text-white shadow-md hover:bg-violet-700 transition-all active:scale-98"
                                     >
                                         <CreditCard size={15} />
-                                        <span>Kunci Slot & Bayar via Rekber Xendit</span>
+                                        <span>Kunci Slot & Bayar via Rekber Midtrans</span>
                                         <ExternalLink size={13} />
                                     </a>
                                 )}
@@ -428,7 +428,7 @@ export default function ProjectTracker({ order }: Props) {
                             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-4">
                                 <div className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
                                     <ShieldCheck size={18} className="text-emerald-500" />
-                                    <span>Status Rekber Xendit</span>
+                                    <span>Status Rekber Midtrans</span>
                                 </div>
 
                                 <div className="space-y-2.5 text-xs">
@@ -467,8 +467,8 @@ export default function ProjectTracker({ order }: Props) {
                                     {order.status === 'completed'
                                         ? 'Dana rekber telah resmi disetujui klien dan dicairkan ke rekening BCA Ridhwan Anang Ma\'ruf.'
                                         : order.quest?.deposit_transaction?.status === 'held'
-                                        ? 'Dana disimpan aman di sistem escrow Xendit dan baru dicairkan setelah klien menyetujui hasil pengerjaan website.'
-                                        : 'Menunggu pembayaran rekber dari klien via Xendit.'}
+                                        ? 'Dana disimpan aman di sistem escrow Midtrans dan baru dicairkan setelah klien menyetujui hasil pengerjaan website.'
+                                        : 'Menunggu pembayaran rekber dari klien via Midtrans.'}
                                 </div>
                             </div>
 
@@ -487,6 +487,21 @@ export default function ProjectTracker({ order }: Props) {
                                     <div className="text-slate-500">ridhwananang@gmail.com</div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Footer Legal & Midtrans Compliance */}
+                    <div className="border-t border-slate-200 pt-6 text-center dark:border-slate-800">
+                        <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+                            <span>Sistem Rekber Aman via Midtrans Sandbox</span>
+                            <span>•</span>
+                            <Link href="/terms-and-conditions" className="hover:text-violet-600 dark:hover:text-violet-400">
+                                Syarat & Ketentuan (T&C)
+                            </Link>
+                            <span>•</span>
+                            <Link href="/privacy-policy" className="hover:text-violet-600 dark:hover:text-violet-400">
+                                Kebijakan Privasi
+                            </Link>
                         </div>
                     </div>
                 </div>

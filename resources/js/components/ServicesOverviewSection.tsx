@@ -96,7 +96,7 @@ export default function ServicesOverviewSection() {
                         <span className="h-1.5 w-1.5 rounded-full bg-violet-400" />
                         <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
                             <ShieldCheck className="h-3.5 w-3.5" />
-                            Garansi Rekber Xendit
+                            Garansi Rekber Midtrans
                         </span>
                     </div>
 
@@ -184,7 +184,7 @@ export default function ServicesOverviewSection() {
                             <div className="flex items-center justify-center gap-4 pt-1 text-xs text-emerald-400 lg:justify-start">
                                 <span className="flex items-center gap-1">
                                     <ShieldCheck className="h-4 w-4" />
-                                    Rekber Escrow Xendit
+                                    Rekber Escrow Midtrans
                                 </span>
                                 <span className="text-slate-600">•</span>
                                 <span>Tanpa Registrasi / Akun Rumit</span>

@@ -22,7 +22,7 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->bind(
             \App\Contracts\PaymentGatewayInterface::class,
-            \App\Services\Payment\Xendit\XenditPaymentGateway::class
+            \App\Services\Payment\Midtrans\MidtransPaymentGateway::class
         );
     }
 

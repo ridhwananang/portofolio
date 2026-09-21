@@ -99,13 +99,13 @@ class ProjectOrderController extends Controller
                 'quest_id' => $quest->id,
             ]);
 
-            // 5. Inisiasi Deposit Rekber via Xendit
+            // 5. Inisiasi Deposit Rekber via Midtrans
             $transaction = $this->escrowService->initiateQuestDeposit($quest);
             $invoiceUrl = $transaction->payment_details['invoice_url'] ?? null;
 
             return response()->json([
                 'success' => true,
-                'message' => 'Pesanan berhasil dibuat! Mengalihkan ke pembayaran rekber Xendit...',
+                'message' => 'Pesanan berhasil dibuat! Mengalihkan ke pembayaran rekber Midtrans...',
                 'tracking_code' => $order->tracking_code,
                 'invoice_url' => $invoiceUrl,
                 'redirect_url' => route('project.tracker', $order->tracking_code),

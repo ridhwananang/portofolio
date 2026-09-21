@@ -86,7 +86,7 @@ const featureAddons: FeatureAddon[] = [
     },
     {
         id: 'payment_gateway',
-        name: 'Payment Gateway Xendit',
+        name: 'Payment Gateway Midtrans',
         description: 'Menerima pembayaran otomatis via QRIS, VA, dan E-Wallet.',
         price: 50000,
         icon: CreditCard,
@@ -280,7 +280,7 @@ export default function ServicesCalculator() {
                     <div className="inline-flex items-center gap-2 rounded-full border border-violet-500/30 bg-violet-500/10 px-4 py-1.5 text-xs font-bold text-violet-700 dark:text-violet-300">
                         <Sparkles size={14} className="animate-pulse" />
                         <span>Kalkulator Interaktif & Pemesanan</span>
-                        <span className="rounded-full bg-violet-600 px-2 py-0.5 text-[10px] text-white">Garansi Rekber Xendit</span>
+                        <span className="rounded-full bg-violet-600 px-2 py-0.5 text-[10px] text-white">Garansi Rekber Midtrans</span>
                     </div>
 
                     <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
@@ -288,7 +288,7 @@ export default function ServicesCalculator() {
                     </h1>
 
                     <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-base dark:text-slate-400">
-                        Kalkulasikan kebutuhan website Anda secara transparan. Dana Anda <strong>100% aman ditahan di Rekber Xendit</strong> dan hanya cair setelah Anda puas dengan hasilnya.
+                        Kalkulasikan kebutuhan website Anda secara transparan. Dana Anda <strong>100% aman ditahan di Rekber Midtrans</strong> dan hanya cair setelah Anda puas dengan hasilnya.
                     </p>
                 </div>
 
@@ -464,7 +464,7 @@ export default function ServicesCalculator() {
                                 <div className="border-t border-slate-200 pt-3 dark:border-slate-800">
                                     <div className="flex items-center gap-2 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
                                         <ShieldCheck size={14} />
-                                        <span>Semua pembayaran diamankan di Rekber Xendit</span>
+                                        <span>Semua pembayaran diamankan di Rekber Midtrans</span>
                                     </div>
                                 </div>
                             </div>
@@ -511,6 +511,50 @@ export default function ServicesCalculator() {
                     </div>
                 </div>
             </main>
+
+            {/* Footer Legal & Midtrans Compliance */}
+            <footer className="mt-16 border-t border-slate-200/80 bg-white/50 py-10 backdrop-blur-md dark:border-slate-850 dark:bg-slate-950/60">
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-600 font-bold text-white shadow-md shadow-violet-500/20">
+                                R
+                            </div>
+                            <div className="text-left">
+                                <p className="text-xs font-bold text-slate-900 dark:text-white">
+                                    Ridhwan Anang • Web Development Services
+                                </p>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                    Transaksi escrow aman diproses melalui Midtrans Sandbox
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-6 text-xs text-slate-600 dark:text-slate-400">
+                            <Link
+                                href="/terms-and-conditions"
+                                className="transition hover:text-violet-600 dark:hover:text-violet-400"
+                            >
+                                Syarat & Ketentuan (T&C)
+                            </Link>
+                            <span className="text-slate-300 dark:text-slate-700">•</span>
+                            <Link
+                                href="/privacy-policy"
+                                className="transition hover:text-violet-600 dark:hover:text-violet-400"
+                            >
+                                Kebijakan Privasi
+                            </Link>
+                            <span className="text-slate-300 dark:text-slate-700">•</span>
+                            <Link
+                                href="/"
+                                className="transition hover:text-violet-600 dark:hover:text-violet-400"
+                            >
+                                Beranda
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </footer>
 
             {/* Modal: Input Data Klien & Buat Proposal Digital */}
             <AnimatePresence>
