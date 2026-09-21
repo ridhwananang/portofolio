@@ -34,7 +34,7 @@ Route::prefix('webhooks/xendit')->group(function () {
 });
 
 Route::prefix('webhooks/midtrans')->group(function () {
-    Route::post('/notification', [MidtransWebhookController::class, 'handleNotification']);
+    Route::match(['get', 'post', 'head'], '/notification', [MidtransWebhookController::class, 'handleNotification']);
 });
 
 

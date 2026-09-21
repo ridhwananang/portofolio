@@ -26,6 +26,13 @@ class MidtransWebhookController extends Controller
      */
     public function handleNotification(Request $request): JsonResponse
     {
+        if ($request->isMethod('get') || $request->isMethod('head')) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Midtrans notification webhook endpoint is active and reachable',
+            ], 200);
+        }
+
         $payload = $request->all();
 
         $orderId = $payload['order_id'] ?? null;
