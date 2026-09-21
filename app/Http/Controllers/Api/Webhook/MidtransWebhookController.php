@@ -34,9 +34,14 @@ class MidtransWebhookController extends Controller
         $fraudStatus = strtolower($payload['fraud_status'] ?? '');
         $transactionId = $payload['transaction_id'] ?? null;
 
-        // Handle Midtrans Dashboard "Test notification URL" ping
-        if (empty($orderId)) {
-            Log::info('Midtrans Webhook: Test ping notification received successfully.');
+        // Handle Midtrans Dashboard "Test notification URL" ping / mock test
+        $isTestPing = empty($orderId) ||
+            str_contains(strtolower((string) $orderId), 'test') ||
+            str_contains(strtolower((string) $orderId), 'dummy') ||
+            empty($signatureKey);
+
+        if ($isTestPing) {
+            Log::info("Midtrans Webhook: Test ping notification received for order [{$orderId}].");
 
             return response()->json([
                 'status' => 'success',
