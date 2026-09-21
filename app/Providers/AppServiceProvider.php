@@ -19,6 +19,11 @@ class AppServiceProvider extends ServiceProvider
             \App\Repositories\ContactRepositoryInterface::class,
             \App\Repositories\ContactRepository::class
         );
+
+        $this->app->bind(
+            \App\Contracts\PaymentGatewayInterface::class,
+            \App\Services\Payment\Xendit\XenditPaymentGateway::class
+        );
     }
 
     /**
@@ -27,6 +32,16 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        \Illuminate\Support\Facades\Event::listen(
+            \App\Events\EscrowFunded::class,
+            \App\Listeners\UpdateQuestOnEscrowFunded::class
+        );
+
+        \Illuminate\Support\Facades\Event::listen(
+            \App\Events\EscrowReleased::class,
+            \App\Listeners\UpdateQuestOnEscrowReleased::class
+        );
     }
 
     /**

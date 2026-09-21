@@ -1,6 +1,7 @@
-import { Moon, Sun, Menu, X, Award, Briefcase, Code, Home } from 'lucide-react';
+import { Moon, Sun, Menu, X, Award, Briefcase, Code, Home, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
+import { useAppearance } from '@/hooks/use-appearance';
 
 interface HeaderProps {
     onOpenContact: () => void;
@@ -13,26 +14,13 @@ export default function Header({
     activeSection,
     setActiveSection,
 }: HeaderProps) {
-    const [isDarkMode, setIsDarkMode] = useState(false);
+    const { resolvedAppearance, updateAppearance } = useAppearance();
+    const isDarkMode = resolvedAppearance === 'dark';
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const [scrollProgress, setScrollProgress] = useState(0);
 
     useEffect(() => {
-        // Check initial dark mode preference
-        const savedTheme = localStorage.getItem('theme');
-        const prefersDark = window.matchMedia(
-            '(prefers-color-scheme: dark)',
-        ).matches;
-
-        if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-            setIsDarkMode(true);
-            document.documentElement.classList.add('dark');
-        } else {
-            setIsDarkMode(false);
-            document.documentElement.classList.remove('dark');
-        }
-
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 20);
 
@@ -53,21 +41,16 @@ export default function Header({
     }, []);
 
     const toggleTheme = () => {
-        if (isDarkMode) {
-            document.documentElement.classList.remove('dark');
-            localStorage.setItem('theme', 'light');
-            setIsDarkMode(false);
-        } else {
-            document.documentElement.classList.add('dark');
-            localStorage.setItem('theme', 'dark');
-            setIsDarkMode(true);
-        }
+        const nextMode = isDarkMode ? 'light' : 'dark';
+        updateAppearance(nextMode);
+        localStorage.setItem('theme', nextMode);
     };
 
     const navItems = [
         { label: 'Beranda', id: 'hero', icon: Home },
         { label: 'Tech Stack', id: 'tech-stack', icon: Code },
         { label: 'Karya', id: 'karya', icon: Briefcase },
+        { label: 'Layanan', id: 'layanan', icon: Sparkles },
         { label: 'Sertifikat', id: 'sertifikat', icon: Award },
     ];
 

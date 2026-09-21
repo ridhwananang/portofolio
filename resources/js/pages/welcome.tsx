@@ -14,6 +14,7 @@ import MainHero from '../components/MainHero';
 import ProfileCard from '../components/ProfileCard';
 import Projects from '../components/Projects';
 import TechStack from '../components/TechStack';
+import ServicesOverviewSection from '../components/ServicesOverviewSection';
 
 interface WelcomeProps {
     initialProfile?: any;
@@ -78,7 +79,7 @@ export default function Welcome({
         const handleScroll = () => {
             const scrollPosition = window.scrollY + 200; // Offset for trigger
 
-            const sections = ['hero', 'tech-stack', 'karya', 'sertifikat'];
+            const sections = ['hero', 'tech-stack', 'karya', 'layanan', 'sertifikat'];
 
             for (const section of sections) {
                 const element = document.getElementById(section);
@@ -209,6 +210,21 @@ export default function Welcome({
                     }}
                 >
                     <Projects projects={projects} loading={loading} />
+                </motion.div>
+
+                {/* Section: Jasa & Layanan Pembuatan Website (Overview & Paket) */}
+                <motion.div
+                    id="layanan"
+                    className="scroll-mt-28 border-t border-slate-200/40 pt-8 dark:border-slate-800/20"
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{
+                        duration: 0.6,
+                        ease: 'easeOut',
+                        delay: 0.55,
+                    }}
+                >
+                    <ServicesOverviewSection />
                 </motion.div>
 
                 {/* Section 4: Certificates Grid Wrapper (Full-width section below the grid) */}

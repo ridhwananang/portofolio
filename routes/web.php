@@ -62,8 +62,26 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
+use App\Http\Controllers\QuestController;
+use App\Http\Controllers\ProjectOrderController;
+
+// Client Project Orders & Live Tracker (Public & Guest-friendly)
+Route::get('/layanan', [ProjectOrderController::class, 'calculator'])->name('services.calculator');
+Route::post('/project-orders', [ProjectOrderController::class, 'store'])->name('project.order.store');
+Route::get('/track-project/{tracking_code}', [ProjectOrderController::class, 'track'])->name('project.tracker');
+Route::post('/track-project/{tracking_code}/approve', [ProjectOrderController::class, 'approve'])->name('project.tracker.approve');
+Route::post('/track-project/{tracking_code}/staging', [ProjectOrderController::class, 'updateStaging'])->name('project.tracker.staging');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'dashboard')->name('dashboard');
+
+    Route::resource('quests', QuestController::class);
+    Route::post('/quests/{quest}/take', [QuestController::class, 'take'])->name('quests.take');
+    Route::post('/quests/{quest}/submit', [QuestController::class, 'submitWork'])->name('quests.submit');
+    Route::post('/quests/{quest}/approve', [QuestController::class, 'approve'])->name('quests.approve');
+    Route::post('/quests/{quest}/cancel', [QuestController::class, 'cancel'])->name('quests.cancel');
+    Route::post('/quests/{quest}/dispute', [QuestController::class, 'dispute'])->name('quests.dispute');
 });
 
 require __DIR__.'/settings.php';
+
