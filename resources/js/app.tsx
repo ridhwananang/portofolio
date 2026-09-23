@@ -17,6 +17,8 @@ createInertiaApp({
             case name === 'project-tracker':
             case name === 'terms':
             case name === 'privacy':
+            case name === 'auth/login':
+            case name.startsWith('admin/'):
                 return null;
             case name.startsWith('auth/'):
                 return AuthLayout;

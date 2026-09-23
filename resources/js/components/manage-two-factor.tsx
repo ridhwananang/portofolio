@@ -1,5 +1,5 @@
 import { Form } from '@inertiajs/react';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, KeyRound, Sparkles } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import Heading from '@/components/heading';
 import TwoFactorRecoveryCodes from '@/components/two-factor-recovery-codes';
@@ -46,53 +46,66 @@ export default function ManageTwoFactor(props: Props) {
 
     return (
         <div className="space-y-6">
-            <Heading
-                variant="small"
-                title="Two-factor authentication"
-                description="Manage your two-factor authentication settings"
-            />
+            <div className="flex items-center justify-between">
+                <Heading
+                    variant="small"
+                    title="Autentikasi Dua Faktor (2FA)"
+                    description="Tingkatkan keamanan akun Anda dengan verifikasi kode dinamis (TOTP)."
+                />
+                {twoFactorEnabled ? (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                        <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        2FA Aktif
+                    </span>
+                ) : (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                        <span className="size-1.5 rounded-full bg-amber-500" />
+                        Belum Aktif
+                    </span>
+                )}
+            </div>
+
             {twoFactorEnabled ? (
-                <div className="flex flex-col items-start justify-start space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                        You will be prompted for a secure, random pin during
-                        login, which you can retrieve from the TOTP-supported
-                        application on your phone.
+                <div className="space-y-4 p-5 rounded-[1.6rem] border border-emerald-200/80 dark:border-emerald-950/60 bg-emerald-50/30 dark:bg-emerald-950/10">
+                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                        Akun Anda dilindungi dengan autentikasi dua faktor. Setiap kali masuk, Anda akan dimintai kode PIN 6 digit dari aplikasi autentikator (seperti Google Authenticator).
                     </p>
 
-                    <div className="relative inline">
+                    <div className="flex items-center gap-3 pt-1">
                         <Form {...disable.form()}>
                             {({ processing }) => (
                                 <Button
                                     variant="destructive"
                                     type="submit"
                                     disabled={processing}
+                                    className="rounded-2xl text-xs font-bold shadow-xs cursor-pointer"
                                 >
-                                    Disable 2FA
+                                    Nonaktifkan 2FA
                                 </Button>
                             )}
                         </Form>
-                    </div>
 
-                    <TwoFactorRecoveryCodes
-                        recoveryCodesList={recoveryCodesList}
-                        fetchRecoveryCodes={fetchRecoveryCodes}
-                        errors={errors}
-                    />
+                        <TwoFactorRecoveryCodes
+                            recoveryCodesList={recoveryCodesList}
+                            fetchRecoveryCodes={fetchRecoveryCodes}
+                            errors={errors}
+                        />
+                    </div>
                 </div>
             ) : (
-                <div className="flex flex-col items-start justify-start space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                        When you enable two-factor authentication, you will be
-                        prompted for a secure pin during login. This pin can be
-                        retrieved from a TOTP-supported application on your
-                        phone.
+                <div className="space-y-4 p-5 rounded-[1.6rem] border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/40">
+                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                        Saat mengaktifkan 2FA, Anda akan memindai kode QR menggunakan aplikasi autentikator pilihan Anda untuk menghasilkan PIN keamanan berkala.
                     </p>
 
                     <div>
                         {hasSetupData ? (
-                            <Button onClick={() => setShowSetupModal(true)}>
-                                <ShieldCheck />
-                                Continue setup
+                            <Button
+                                onClick={() => setShowSetupModal(true)}
+                                className="rounded-2xl bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 px-6 py-3 text-xs font-bold text-white shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer h-auto"
+                            >
+                                <ShieldCheck className="size-4 mr-1.5" />
+                                Lanjutkan Penyiapan 2FA
                             </Button>
                         ) : (
                             <Form
@@ -100,8 +113,13 @@ export default function ManageTwoFactor(props: Props) {
                                 onSuccess={() => setShowSetupModal(true)}
                             >
                                 {({ processing }) => (
-                                    <Button type="submit" disabled={processing}>
-                                        Enable 2FA
+                                    <Button
+                                        type="submit"
+                                        disabled={processing}
+                                        className="rounded-2xl bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 px-6 py-3 text-xs font-bold text-white shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer h-auto"
+                                    >
+                                        <ShieldCheck className="size-4 mr-1.5" />
+                                        Aktifkan 2FA Sekarang
                                     </Button>
                                 )}
                             </Form>

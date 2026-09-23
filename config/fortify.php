@@ -161,7 +161,7 @@ return [
     */
 
     'features' => [
-        Features::registration(),
+        // Features::registration(), // Closed from public to prevent bot spam; client accounts are created automatically upon service order
         Features::resetPasswords(),
         Features::emailVerification(),
         Features::twoFactorAuthentication([

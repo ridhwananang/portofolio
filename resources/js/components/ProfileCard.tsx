@@ -58,10 +58,10 @@ export default function ProfileCard({ onOpenContact, profile, loading }: Profile
     return (
         <div
             id="profile-card"
-            className="glass-card relative flex w-full flex-col items-center overflow-hidden rounded-[2.2rem] p-8 text-center shadow-xl shadow-slate-100/40 dark:shadow-none"
+            className="glass-card relative flex w-full flex-col items-center overflow-hidden rounded-[2.2rem] border border-slate-200/70 bg-white/75 p-8 text-center shadow-xl shadow-slate-100/50 backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/60 dark:shadow-none"
         >
-            {/* Decorative top decoration */}
-            <div className="absolute inset-x-0 top-0 h-2 bg-gradient-to-r from-blue-500 via-violet-500 to-indigo-500"></div>
+            {/* Decorative top gradient accent bar */}
+            <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-blue-500 via-violet-500 to-indigo-500"></div>
 
             {/* Avatar Container with glowing rings */}
             <div className="group relative mb-6 select-none">

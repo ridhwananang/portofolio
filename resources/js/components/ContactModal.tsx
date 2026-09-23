@@ -156,7 +156,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                                         setFormName(e.target.value)
                                     }
                                     placeholder="Robby Hartono"
-                                    className="bg-slate-50/50 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 transition-all focus:border-violet-500 focus:ring-4 focus:ring-violet-500/15 focus:outline-none dark:border-slate-800 dark:bg-slate-900/50 dark:text-white dark:focus:border-violet-400 dark:focus:ring-violet-400/10"
+                                    className="w-full rounded-2xl border border-slate-200/80 bg-slate-50/70 px-4 py-3 text-sm text-slate-900 transition-all focus:border-violet-500 focus:bg-white focus:ring-4 focus:ring-violet-500/15 focus:outline-none dark:border-slate-800 dark:bg-slate-900/60 dark:text-white dark:focus:border-violet-400 dark:focus:bg-slate-900"
                                 />
                             </div>
 
@@ -172,7 +172,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                                         setFormEmail(e.target.value)
                                     }
                                     placeholder="robby@perusahaan.com"
-                                    className="bg-slate-50/50 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 transition-all focus:border-violet-500 focus:ring-4 focus:ring-violet-500/15 focus:outline-none dark:border-slate-800 dark:bg-slate-900/50 dark:text-white dark:focus:border-violet-400 dark:focus:ring-violet-400/10"
+                                    className="w-full rounded-2xl border border-slate-200/80 bg-slate-50/70 px-4 py-3 text-sm text-slate-900 transition-all focus:border-violet-500 focus:bg-white focus:ring-4 focus:ring-violet-500/15 focus:outline-none dark:border-slate-800 dark:bg-slate-900/60 dark:text-white dark:focus:border-violet-400 dark:focus:bg-slate-900"
                                 />
                             </div>
 
@@ -187,7 +187,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                                         setFormSubject(e.target.value)
                                     }
                                     placeholder="Penawaran Kolaborasi Projek"
-                                    className="bg-slate-50/50 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 transition-all focus:border-violet-500 focus:ring-4 focus:ring-violet-500/15 focus:outline-none dark:border-slate-800 dark:bg-slate-900/50 dark:text-white dark:focus:border-violet-400 dark:focus:ring-violet-400/10"
+                                    className="w-full rounded-2xl border border-slate-200/80 bg-slate-50/70 px-4 py-3 text-sm text-slate-900 transition-all focus:border-violet-500 focus:bg-white focus:ring-4 focus:ring-violet-500/15 focus:outline-none dark:border-slate-800 dark:bg-slate-900/60 dark:text-white dark:focus:border-violet-400 dark:focus:bg-slate-900"
                                 />
                             </div>
 
@@ -203,19 +203,19 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                                         setFormMessage(e.target.value)
                                     }
                                     placeholder="Halo Ridhwan, saya tertarik untuk mendiskusikan pengembangan backend..."
-                                    className="bg-slate-50/50 w-full resize-none rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 transition-all focus:border-violet-500 focus:ring-4 focus:ring-violet-500/15 focus:outline-none dark:border-slate-800 dark:bg-slate-900/50 dark:text-white dark:focus:border-violet-400 dark:focus:ring-violet-400/10"
+                                    className="w-full resize-none rounded-2xl border border-slate-200/80 bg-slate-50/70 px-4 py-3 text-sm text-slate-900 transition-all focus:border-violet-500 focus:bg-white focus:ring-4 focus:ring-violet-500/15 focus:outline-none dark:border-slate-800 dark:bg-slate-900/60 dark:text-white dark:focus:border-violet-400 dark:focus:bg-slate-900"
                                 />
                             </div>
 
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-3 text-sm font-semibold text-white shadow-md transition-all hover:bg-slate-800 active:scale-[0.98] disabled:opacity-50 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"
+                                className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-violet-500/25 transition-all hover:from-violet-500 hover:to-indigo-500 hover:shadow-violet-500/40 active:scale-[0.98] disabled:opacity-50"
                             >
                                 {isSubmitting ? (
                                     <>
-                                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent dark:border-slate-900"></div>
-                                        Mengirim...
+                                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                                        <span>Mengirim...</span>
                                     </>
                                 ) : (
                                     <>
@@ -223,7 +223,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                                             size={15}
                                             id="send-form-icon"
                                         />
-                                        Kirim Pesan Sekarang
+                                        <span>Kirim Pesan Sekarang</span>
                                     </>
                                 )}
                             </button>

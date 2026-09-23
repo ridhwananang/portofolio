@@ -34,7 +34,7 @@ export default function QuestCreate({ platformFeeFixed }: Props) {
 
     return (
         <>
-            <Head title="Buat Quest Baru - Rekber Midtrans" />
+            <Head title="Buat Quest Baru - Rekber Escrow" />
 
             <div className="flex h-full flex-1 flex-col gap-6 p-4 md:p-6 max-w-4xl mx-auto w-full">
                 {/* Back button & Title */}
@@ -49,7 +49,7 @@ export default function QuestCreate({ platformFeeFixed }: Props) {
                             Buat Quest Baru
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            Tentukan tugas dan dana hadiah yang akan ditahan secara aman di Rekber Midtrans Sandbox.
+                            Tentukan tugas dan dana hadiah yang akan ditahan secara aman di Rekening Bersama (Escrow).
                         </p>
                     </div>
                 </div>
@@ -164,7 +164,7 @@ export default function QuestCreate({ platformFeeFixed }: Props) {
                             <div className="space-y-1">
                                 <div className="font-semibold">Simulasi Non-Real (Sandbox)</div>
                                 <p className="text-[11px] leading-relaxed opacity-90">
-                                    Setelah formulir dikirim, Anda akan mendapatkan invoice Midtrans Sandbox. Anda dapat mensimulasikan pembayaran tanpa menggunakan uang asli.
+                                    Setelah formulir dikirim, Anda akan mendapatkan tagihan invoice resmi. Anda dapat mensimulasikan pembayaran tanpa menggunakan uang asli.
                                 </p>
                             </div>
                         </div>

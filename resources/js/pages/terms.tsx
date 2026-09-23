@@ -51,24 +51,29 @@ export default function TermsAndConditions() {
                 </div>
             </header>
 
+            {/* Dynamic Background Mesh Accents */}
+            <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+                <div className="absolute top-10 right-0 h-96 w-96 rounded-full bg-violet-500/10 blur-3xl dark:bg-violet-600/10"></div>
+                <div className="absolute top-1/2 left-0 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl dark:bg-blue-600/10"></div>
+            </div>
+
             {/* Content Container */}
-            <main className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
-                {/* Header Title */}
-                <div className="border-b border-slate-200 pb-8 dark:border-slate-800">
+            <main className="relative z-10 mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
+                {/* Header Title Card */}
+                <div className="rounded-[2.2rem] border border-slate-200/80 bg-white/80 p-8 shadow-sm backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/75 sm:p-10">
                     <div className="inline-flex items-center gap-2 rounded-full border border-violet-500/30 bg-violet-500/10 px-3.5 py-1 text-xs font-bold text-violet-700 dark:text-violet-300">
                         <FileText size={14} />
                         <span>Dokumen Resmi & Kepatuhan Layanan</span>
                     </div>
-                    <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
+                    <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl dark:text-white">
                         Syarat & Ketentuan Layanan (Terms & Conditions)
                     </h1>
-                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                    <p className="mt-2.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                         Terakhir diperbarui: 22 September 2026 • Berlaku untuk seluruh layanan pengembangan website dan aplikasi digital oleh Ridhwan Anang Ma'ruf.
                     </p>
-                </div>
 
-                {/* Terms Body */}
-                <div className="prose prose-slate mt-10 max-w-none space-y-8 text-xs sm:text-sm leading-relaxed text-slate-700 dark:prose-invert dark:text-slate-300">
+                    {/* Terms Body */}
+                    <div className="prose prose-slate mt-10 max-w-none space-y-8 text-xs sm:text-sm leading-relaxed text-slate-700 dark:prose-invert dark:text-slate-300 border-t border-slate-100 pt-8 dark:border-slate-800/80">
                     {/* Section 1 */}
                     <section className="space-y-2">
                         <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
@@ -153,7 +158,7 @@ export default function TermsAndConditions() {
                             8. Payment, Escrow & Refund Policy (Ketentuan Pembayaran & Pengembalian Dana)
                         </h2>
                         <p>
-                            Seluruh transaksi pembayaran diproses secara aman melalui gerbang pembayaran resmi <strong>Midtrans</strong> (mendukung QRIS, Virtual Account bank nasional, kartu debit/kredit, dan e-wallet).
+                            Seluruh transaksi pembayaran diproses secara aman melalui gerbang pembayaran resmi terverifikasi (mendukung QRIS, Virtual Account bank nasional, kartu debit/kredit, dan e-wallet).
                         </p>
                         <ul className="list-disc pl-5 space-y-1">
                             <li><strong>Jaminan Penahanan Dana (Escrow):</strong> Pembayaran yang disetorkan Klien disimpan secara aman dan terenkripsi, serta baru dicairkan setelah Klien melakukan konfirmasi persetujuan (*approval*) terhadap hasil demo proyek.</li>
@@ -208,7 +213,8 @@ export default function TermsAndConditions() {
                         </div>
                     </section>
                 </div>
-            </main>
-        </div>
+            </div>
+        </main>
+    </div>
     );
 }

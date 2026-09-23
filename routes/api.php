@@ -20,6 +20,9 @@ Route::get('/profile', [ProfileController::class, 'index']);
 Route::get('/projects', [ProjectController::class, 'index']);
 Route::get('/tech-stacks', [TechStackController::class, 'index']);
 Route::get('/certificates', [CertificateController::class, 'index']);
+Route::get('/service-packages', function () {
+    return response()->json(\App\Models\ServicePackage::where('is_active', true)->orderBy('sort_order')->orderBy('id')->get());
+});
 Route::post('/chat', [ChatController::class, 'store']);
 Route::post('/contact', [ContactController::class, 'store']);
 

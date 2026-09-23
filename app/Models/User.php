@@ -13,8 +13,6 @@ use Illuminate\Support\Carbon;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
-use Filament\Models\Contracts\FilamentUser;
-use Filament\Panel;
 
 /**
  * @property int $id
@@ -29,19 +27,19 @@ use Filament\Panel;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['name', 'email', 'password', 'is_admin'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
-class User extends Authenticatable implements PasskeyUser, FilamentUser
+class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
     /**
-     * Determine if the user can access the Filament panel.
+     * Determine if the user has administrator privileges.
      */
-    public function canAccessPanel(Panel $panel): bool
+    public function isAdmin(): bool
     {
-        return in_array($this->email, [
+        return (bool) ($this->attributes['is_admin'] ?? false) || in_array($this->email, [
             'ridhwananang@gmail.com',
             'test@example.com',
         ]);
@@ -55,6 +53,7 @@ class User extends Authenticatable implements PasskeyUser, FilamentUser
     protected function casts(): array
     {
         return [
+            'is_admin' => 'boolean',
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',

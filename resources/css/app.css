@@ -203,3 +203,71 @@
         @apply bg-background text-foreground;
     }
 }
+
+/* ==========================================================================
+   Global Print Styles for Official 1-Page A4 Invoices
+   ========================================================================== */
+@media print {
+    @page {
+        size: A4 portrait;
+        margin: 8mm 12mm;
+    }
+
+    html, body {
+        background: #ffffff !important;
+        color: #0f172a !important;
+        font-size: 11px !important;
+        line-height: 1.35 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Hide entire screen UI except print container */
+    body * {
+        visibility: hidden !important;
+    }
+
+    #print-modal-container {
+        position: static !important;
+        inset: auto !important;
+        display: block !important;
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: visible !important;
+    }
+
+    #print-invoice-sheet,
+    #print-invoice-sheet * {
+        visibility: visible !important;
+    }
+
+    #print-invoice-sheet {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        border-radius: 0 !important;
+        background: #ffffff !important;
+        color: #0f172a !important;
+        page-break-after: avoid !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    .no-print,
+    .no-print * {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+}

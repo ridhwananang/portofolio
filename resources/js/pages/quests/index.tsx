@@ -47,11 +47,11 @@ export default function QuestIndex({ quests, filters }: Props) {
                                 Rekber Quests
                             </h1>
                             <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                                100% Midtrans Sandbox
+                                100% Escrow Aman
                             </span>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                            Sistem escrow otomatis. Dana poster dijamin ditahan oleh Midtrans dan hanya cair ke worker saat hasil kerja disetujui.
+                            Sistem escrow otomatis. Dana poster dijamin ditahan di rekening bersama dan hanya cair ke worker saat hasil kerja disetujui.
                         </p>
                     </div>
 
@@ -93,7 +93,7 @@ export default function QuestIndex({ quests, filters }: Props) {
                         </div>
                         <h3 className="mt-4 text-lg font-semibold text-foreground">Belum ada Quest di kategori ini</h3>
                         <p className="mt-1 text-sm text-muted-foreground max-w-sm">
-                            Jadilah yang pertama membuat quest dan rasakan keamanan sistem Rekber Midtrans Sandbox.
+                            Jadilah yang pertama membuat quest dan rasakan keamanan sistem Rekening Bersama (Escrow).
                         </p>
                         <Button asChild className="mt-5 gap-2" variant="outline">
                             <Link href="/quests/create">

@@ -31,7 +31,7 @@ export function EscrowStepper({ status }: Props) {
     const steps = [
         {
             title: 'Rekber Didanai',
-            description: 'Dana ditahan aman di Midtrans',
+            description: 'Dana ditahan aman di Rekber',
             icon: ShieldCheck,
             isCompleted: ['open', 'in_progress', 'under_review', 'completed'].includes(status),
             isCurrent: status === 'pending_payment' || status === 'draft',

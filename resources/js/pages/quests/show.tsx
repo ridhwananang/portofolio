@@ -111,7 +111,7 @@ export default function QuestShow({ quest, authUserId, availableBanks }: Props) 
 
     return (
         <>
-            <Head title={`Quest: ${quest.title} - Rekber Midtrans`} />
+            <Head title={`Quest: ${quest.title} - Rekber Escrow`} />
 
             <div className="flex h-full flex-1 flex-col gap-6 p-4 md:p-6 max-w-5xl mx-auto w-full">
                 {/* Back button & Title Bar */}
@@ -205,7 +205,7 @@ export default function QuestShow({ quest, authUserId, availableBanks }: Props) 
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                {/* 1. Poster: Bayar Invoice Midtrans (jika pending_payment atau draft) */}
+                                {/* 1. Poster: Bayar Invoice (jika pending_payment atau draft) */}
                                 {isPoster && (quest.status === 'pending_payment' || quest.status === 'draft') && (
                                     <div className="flex flex-col gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
                                         <div className="space-y-1">
@@ -213,13 +213,13 @@ export default function QuestShow({ quest, authUserId, availableBanks }: Props) 
                                                 Menunggu Pembayaran Rekber
                                             </div>
                                             <p className="text-xs text-amber-700 dark:text-amber-400">
-                                                Dana hadiah belum ditahan di rekening rekber. Silakan buka invoice Midtrans Sandbox dan simulasikan pembayaran.
+                                                Dana hadiah belum ditahan di rekening rekber. Silakan buka tagihan invoice dan selesaikan pembayaran.
                                             </p>
                                         </div>
                                         {invoiceUrl ? (
                                             <Button asChild className="gap-2 bg-amber-600 hover:bg-amber-700 text-white w-full sm:w-auto">
                                                 <a href={invoiceUrl} target="_blank" rel="noopener noreferrer">
-                                                    <span>Buka Invoice Midtrans Sandbox</span>
+                                                    <span>Buka Invoice Pembayaran</span>
                                                     <ExternalLink className="size-4" />
                                                 </a>
                                             </Button>
@@ -237,7 +237,7 @@ export default function QuestShow({ quest, authUserId, availableBanks }: Props) 
                                                 Quest Ini Terbuka & Dana Sudah Ditahan
                                             </div>
                                             <p className="text-xs text-emerald-700 dark:text-emerald-400">
-                                                Dana hadiah telah aman dipegang oleh Rekber Midtrans. Anda dapat mengambil quest ini untuk mulai mengerjakan.
+                                                Dana hadiah telah aman dipegang oleh Rekening Bersama (Escrow). Anda dapat mengambil quest ini untuk mulai mengerjakan.
                                             </p>
                                         </div>
                                         <Button onClick={handleTakeQuest} className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white w-full sm:w-auto">
@@ -295,7 +295,7 @@ export default function QuestShow({ quest, authUserId, availableBanks }: Props) 
                                                 <DialogHeader>
                                                     <DialogTitle>Konfirmasi Pencairan Dana Rekber</DialogTitle>
                                                     <DialogDescription>
-                                                        Sistem akan mengirim instruksi disbursement Midtrans sebesar{' '}
+                                                        Sistem akan memproses pencairan dana escrow sebesar{' '}
                                                         <strong>{formatCurrency(quest.reward_amount)}</strong> ke rekening worker.
                                                     </DialogDescription>
                                                 </DialogHeader>
@@ -452,7 +452,7 @@ export default function QuestShow({ quest, authUserId, availableBanks }: Props) 
 
                                 {quest.deposit_transaction && (
                                     <div className="pt-2 space-y-1 text-[11px] text-muted-foreground">
-                                        <div>Ref Midtrans Deposit: <code className="text-foreground">{quest.deposit_transaction.xendit_external_id}</code></div>
+                                        <div>Ref Escrow Deposit: <code className="text-foreground">{quest.deposit_transaction.xendit_external_id}</code></div>
                                         <div>Status Deposit: <strong className="text-foreground uppercase">{quest.deposit_transaction.status}</strong></div>
                                         {quest.deposit_transaction.paid_at && (
                                             <div>Waktu Deposit: {new Date(quest.deposit_transaction.paid_at).toLocaleString('id-ID')}</div>
@@ -462,7 +462,7 @@ export default function QuestShow({ quest, authUserId, availableBanks }: Props) 
 
                                 {quest.payout_transaction && (
                                     <div className="pt-2 border-t border-border/50 space-y-1 text-[11px] text-muted-foreground">
-                                        <div>Ref Midtrans Payout: <code className="text-foreground">{quest.payout_transaction.xendit_external_id}</code></div>
+                                        <div>Ref Escrow Payout: <code className="text-foreground">{quest.payout_transaction.xendit_external_id}</code></div>
                                         <div>Status Payout: <strong className="text-foreground uppercase">{quest.payout_transaction.status}</strong></div>
                                         {quest.payout_transaction.released_at && (
                                             <div>Waktu Pencairan: {new Date(quest.payout_transaction.released_at).toLocaleString('id-ID')}</div>

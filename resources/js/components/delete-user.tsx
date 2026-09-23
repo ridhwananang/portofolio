@@ -15,6 +15,7 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { AlertTriangle, Trash2 } from 'lucide-react';
 
 export default function DeleteUser() {
     const passwordInput = useRef<HTMLInputElement>(null);
@@ -23,15 +24,20 @@ export default function DeleteUser() {
         <div className="space-y-6">
             <Heading
                 variant="small"
-                title="Delete account"
-                description="Delete your account and all of its resources"
+                title="Hapus Akun Pengembang"
+                description="Hapus akun Anda beserta seluruh data dan resource terkait secara permanen."
             />
-            <div className="space-y-4 rounded-lg border border-red-100 bg-red-50 p-4 dark:border-red-200/10 dark:bg-red-700/10">
-                <div className="relative space-y-0.5 text-red-600 dark:text-red-100">
-                    <p className="font-medium">Warning</p>
-                    <p className="text-sm">
-                        Please proceed with caution, this cannot be undone.
-                    </p>
+            <div className="space-y-4 rounded-[1.6rem] border border-rose-200/80 bg-rose-50/50 p-6 dark:border-rose-950/60 dark:bg-rose-950/20">
+                <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 shrink-0">
+                        <AlertTriangle className="size-4" />
+                    </div>
+                    <div className="space-y-1 text-rose-600 dark:text-rose-400">
+                        <p className="font-bold text-xs uppercase tracking-wider">Zona Berbahaya</p>
+                        <p className="text-xs text-rose-600/80 dark:text-rose-400/80 leading-relaxed">
+                            Setelah akun Anda dihapus, semua data profil, proyek, pesanan, dan kredensial akan dimusnahkan secara permanen. Tindakan ini tidak dapat dibatalkan.
+                        </p>
+                    </div>
                 </div>
 
                 <Dialog>
@@ -39,19 +45,18 @@ export default function DeleteUser() {
                         <Button
                             variant="destructive"
                             data-test="delete-user-button"
+                            className="rounded-2xl text-xs font-bold shadow-xs hover:bg-rose-600 cursor-pointer"
                         >
-                            Delete account
+                            <Trash2 className="size-3.5 mr-1.5" />
+                            Hapus Akun Permanen
                         </Button>
                     </DialogTrigger>
-                    <DialogContent>
-                        <DialogTitle>
-                            Are you sure you want to delete your account?
+                    <DialogContent className="rounded-[2rem] border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8">
+                        <DialogTitle className="text-lg font-black text-slate-900 dark:text-white">
+                            Apakah Anda yakin ingin menghapus akun?
                         </DialogTitle>
-                        <DialogDescription>
-                            Once your account is deleted, all of its resources
-                            and data will also be permanently deleted. Please
-                            enter your password to confirm you would like to
-                            permanently delete your account.
+                        <DialogDescription className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                            Semua data dan resource akan dihapus secara permanen. Masukkan kata sandi Anda untuk mengonfirmasi penghapusan akun.
                         </DialogDescription>
 
                         <Form
@@ -61,38 +66,40 @@ export default function DeleteUser() {
                             }}
                             onError={() => passwordInput.current?.focus()}
                             resetOnSuccess
-                            className="space-y-6"
+                            className="space-y-5 pt-2"
                         >
                             {({ resetAndClearErrors, processing, errors }) => (
                                 <>
-                                    <div className="grid gap-2">
+                                    <div className="space-y-1.5">
                                         <Label
                                             htmlFor="password"
-                                            className="sr-only"
+                                            className="text-xs font-bold text-slate-700 dark:text-slate-300"
                                         >
-                                            Password
+                                            Konfirmasi Kata Sandi
                                         </Label>
 
                                         <PasswordInput
                                             id="password"
                                             name="password"
                                             ref={passwordInput}
-                                            placeholder="Password"
+                                            placeholder="Masukkan kata sandi Anda"
                                             autoComplete="current-password"
+                                            className="rounded-xl border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white text-xs"
                                         />
 
                                         <InputError message={errors.password} />
                                     </div>
 
-                                    <DialogFooter className="gap-2">
+                                    <DialogFooter className="gap-2 pt-2">
                                         <DialogClose asChild>
                                             <Button
                                                 variant="secondary"
                                                 onClick={() =>
                                                     resetAndClearErrors()
                                                 }
+                                                className="rounded-xl text-xs font-bold cursor-pointer"
                                             >
-                                                Cancel
+                                                Batal
                                             </Button>
                                         </DialogClose>
 
@@ -100,12 +107,13 @@ export default function DeleteUser() {
                                             variant="destructive"
                                             disabled={processing}
                                             asChild
+                                            className="rounded-xl text-xs font-bold cursor-pointer"
                                         >
                                             <button
                                                 type="submit"
                                                 data-test="confirm-delete-user-button"
                                             >
-                                                Delete account
+                                                {processing ? 'Menghapus...' : 'Ya, Hapus Akun'}
                                             </button>
                                         </Button>
                                     </DialogFooter>

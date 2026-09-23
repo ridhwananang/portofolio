@@ -62,6 +62,26 @@ class Quest extends Model
         return $this->hasOne(Transaction::class)->where('type', TransactionType::DEPOSIT);
     }
 
+    public function dpDepositTransaction(): HasOne
+    {
+        return $this->hasOne(Transaction::class)
+            ->where('type', TransactionType::DEPOSIT)
+            ->where(function ($q) {
+                $q->where('xendit_external_id', 'like', '%-DP-%')
+                    ->orWhere('payment_details->stage', 'dp');
+            });
+    }
+
+    public function finalDepositTransaction(): HasOne
+    {
+        return $this->hasOne(Transaction::class)
+            ->where('type', TransactionType::DEPOSIT)
+            ->where(function ($q) {
+                $q->where('xendit_external_id', 'like', '%-FINAL-%')
+                    ->orWhere('payment_details->stage', 'final');
+            });
+    }
+
     public function payoutTransaction(): HasOne
     {
         return $this->hasOne(Transaction::class)->where('type', TransactionType::PAYOUT);

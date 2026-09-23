@@ -143,13 +143,13 @@ export default function Certificates({ certificates, loading }: CertificatesProp
                                     whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
                                     transition={{ delay: index * 0.05, duration: 0.4 }}
-                                    whileHover={{ y: -4, scale: 1.01 }}
+                                    whileHover={{ y: -5, scale: 1.01 }}
                                     key={cert.id}
                                     onClick={() => handlePreview(cert)}
-                                    className="glass-card flex flex-col justify-between gap-5 rounded-[2rem] border border-slate-200/50 bg-white p-6 shadow-sm hover:border-violet-500/40 hover:shadow-md dark:border-slate-800/45 dark:bg-slate-950 dark:hover:border-violet-500/45 transition-all duration-300 cursor-pointer group select-none relative overflow-hidden"
+                                    className="glass-card relative flex flex-col justify-between gap-5 overflow-hidden rounded-3xl border border-slate-200/70 bg-white/80 p-6 shadow-xs backdrop-blur-xl transition-all duration-300 hover:border-violet-500/50 hover:bg-white hover:shadow-xl dark:border-slate-800/80 dark:bg-slate-900/60 dark:hover:border-violet-500/40 dark:hover:bg-slate-900/90 cursor-pointer group select-none"
                                 >
                                     {/* Glow Accent Effect */}
-                                    <div className="pointer-events-none absolute -right-12 -top-12 h-24 w-24 rounded-full bg-gradient-to-tr from-violet-500/5 to-indigo-500/5 blur-lg transition-all group-hover:scale-150"></div>
+                                    <div className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-gradient-to-tr from-violet-500/10 to-indigo-500/10 blur-xl transition-all group-hover:scale-150"></div>
 
                                     <div className="space-y-3.5">
                                         {/* Certificate Static Thumbnail Preview */}

@@ -15,12 +15,14 @@ import ProfileCard from '../components/ProfileCard';
 import Projects from '../components/Projects';
 import TechStack from '../components/TechStack';
 import ServicesOverviewSection from '../components/ServicesOverviewSection';
+import TrackingModal from '../components/TrackingModal';
 
 interface WelcomeProps {
     initialProfile?: any;
     initialProjects?: any[];
     initialTechStacks?: any[];
     initialCertificates?: any[];
+    initialPackages?: any[];
 }
 
 export default function Welcome({
@@ -28,15 +30,18 @@ export default function Welcome({
     initialProjects = [],
     initialTechStacks = [],
     initialCertificates = [],
+    initialPackages = [],
 }: WelcomeProps) {
     const [activeSection, setActiveSection] = useState('hero');
     const [isContactOpen, setIsContactOpen] = useState(false);
+    const [isTrackingOpen, setIsTrackingOpen] = useState(false);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
     const [profile, setProfile] = useState<any>(initialProfile || null);
     const [projects, setProjects] = useState<any[]>(initialProjects);
     const [techStacks, setTechStacks] = useState<any[]>(initialTechStacks);
     const [certificates, setCertificates] = useState<any[]>(initialCertificates);
+    const [packages, setPackages] = useState<any[]>(initialPackages);
     const [loading, setLoading] = useState(!initialProfile);
 
     useEffect(() => {
@@ -50,12 +55,16 @@ export default function Welcome({
             fetch('/api/projects').then((res) => res.json()),
             fetch('/api/tech-stacks').then((res) => res.json()),
             fetch('/api/certificates').then((res) => res.json()),
+            fetch('/api/service-packages').then((res) => res.json()).catch(() => []),
         ])
-            .then(([profileData, projectsData, techStacksData, certificatesData]) => {
+            .then(([profileData, projectsData, techStacksData, certificatesData, packagesData]) => {
                 setProfile(profileData);
                 setProjects(projectsData);
                 setTechStacks(techStacksData);
                 setCertificates(certificatesData);
+                if (packagesData && packagesData.length > 0) {
+                    setPackages(packagesData);
+                }
                 setLoading(false);
             })
             .catch((err) => {
@@ -135,6 +144,7 @@ export default function Welcome({
                     activeSection={activeSection}
                     setActiveSection={setActiveSection}
                     onOpenContact={() => setIsContactOpen(true)}
+                    onOpenTracking={() => setIsTrackingOpen(true)}
                 />
             </motion.div>
 
@@ -174,7 +184,7 @@ export default function Welcome({
                                 delay: 0.2,
                             }}
                         >
-                            <MainHero />
+                            <MainHero onOpenTracking={() => setIsTrackingOpen(true)} />
                         </motion.div>
 
                         {/* Section 2: Technical Grid Wrapper */}
@@ -224,7 +234,7 @@ export default function Welcome({
                         delay: 0.55,
                     }}
                 >
-                    <ServicesOverviewSection />
+                    <ServicesOverviewSection packages={packages} onOpenTracking={() => setIsTrackingOpen(true)} />
                 </motion.div>
 
                 {/* Section 4: Certificates Grid Wrapper (Full-width section below the grid) */}
@@ -244,15 +254,20 @@ export default function Welcome({
             </main>
 
             {/* Aesthetic Footer Area */}
-            <footer className="mt-2 w-full border-t border-slate-200/50 bg-white/40 py-12 backdrop-blur-md dark:border-slate-800/45 dark:bg-slate-950/40">
+            <footer className="mt-16 w-full border-t border-slate-200/70 bg-white/60 py-14 backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-950/60">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-1 gap-8 border-b border-slate-200/50 pb-8 sm:grid-cols-2 md:grid-cols-4 dark:border-slate-800/45">
+                    <div className="grid grid-cols-1 gap-8 border-b border-slate-200/60 pb-10 sm:grid-cols-2 md:grid-cols-4 dark:border-slate-800/60">
                         {/* Brand / Name info */}
                         <div className="space-y-3">
-                            <h4 className="text-base font-extrabold tracking-tight text-slate-900 dark:text-white">
-                                Ridhwan Anang Ma'ruf
-                            </h4>
-                            <p className="max-w-xs text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                            <div className="flex items-center gap-2">
+                                <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-xs font-black text-white shadow-xs">
+                                    R
+                                </span>
+                                <h4 className="text-base font-extrabold tracking-tight text-slate-900 dark:text-white">
+                                    Ridhwan Anang Ma'ruf
+                                </h4>
+                            </div>
+                            <p className="max-w-xs text-xs leading-relaxed text-slate-600 dark:text-slate-400">
                                 Fullstack Web Developer yang berdedikasi
                                 membangun sistem backend Laravel yang andal dan
                                 antarmuka SPA React yang interaktif.
@@ -297,10 +312,22 @@ export default function Welcome({
                                         Kalkulator Layanan
                                     </Link>
                                 </li>
+                                <li>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsTrackingOpen(true)}
+                                        className="cursor-pointer transition-colors hover:text-violet-600 dark:hover:text-violet-400 flex items-center gap-1.5"
+                                    >
+                                        <span>Lacak Status Proyek</span>
+                                        <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-violet-500/10 text-violet-600 dark:text-violet-400 font-bold uppercase">
+                                            Resi
+                                        </span>
+                                    </button>
+                                </li>
                             </ul>
                         </div>
 
-                        {/* Legal & Compliance (Midtrans Requirements) */}
+                        {/* Legal & Compliance */}
                         <div className="space-y-3">
                             <h5 className="text-xs font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
                                 Legal & Kebijakan
@@ -378,6 +405,12 @@ export default function Welcome({
             <ContactModal
                 isOpen={isContactOpen}
                 onClose={() => setIsContactOpen(false)}
+            />
+
+            {/* Quick Project Tracker Modal */}
+            <TrackingModal
+                isOpen={isTrackingOpen}
+                onClose={() => setIsTrackingOpen(false)}
             />
 
             {/* Floating AI Chat Assistant widget */}

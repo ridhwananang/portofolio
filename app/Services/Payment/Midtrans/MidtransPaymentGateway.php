@@ -23,6 +23,21 @@ class MidtransPaymentGateway implements PaymentGatewayInterface
         $clientUser = $quest->poster;
         $projectOrder = $quest->projectOrder;
 
+        $stage = $transaction->payment_details['stage'] ?? null;
+        if (! $stage) {
+            if (str_contains($orderId, '-DP-')) {
+                $stage = 'dp';
+            } elseif (str_contains($orderId, '-FINAL-')) {
+                $stage = 'final';
+            }
+        }
+
+        $itemName = match ($stage) {
+            'dp' => 'DP (' . ($projectOrder?->dp_percentage ?? 50) . '%): ' . mb_substr($quest->title, 0, 35),
+            'final' => 'Pelunasan Final: ' . mb_substr($quest->title, 0, 32),
+            default => mb_substr($quest->title, 0, 50),
+        };
+
         $payload = [
             'transaction_details' => [
                 'order_id' => $orderId,
@@ -35,10 +50,10 @@ class MidtransPaymentGateway implements PaymentGatewayInterface
             ],
             'item_details' => [
                 [
-                    'id' => 'QUEST-' . $quest->id,
+                    'id' => 'TX-' . $transaction->id . ($stage ? '-' . $stage : ''),
                     'price' => $grossAmount,
                     'quantity' => 1,
-                    'name' => mb_substr($quest->title, 0, 50),
+                    'name' => $itemName,
                 ],
             ],
         ];

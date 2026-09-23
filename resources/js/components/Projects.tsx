@@ -100,33 +100,30 @@ export default function Projects({ projects, loading }: ProjectsProps) {
                                     key={p.title}
                                     onMouseEnter={() => setActiveProject(idx)}
                                     onMouseLeave={() => setActiveProject(null)}
-                                    className={`glass-card flex min-w-[250px] flex-1 flex-col items-stretch gap-6 rounded-[2rem] border p-6 select-none md:max-w-[calc(33.333%-16px)] ${
+                                    className={`glass-card flex min-w-[280px] flex-1 flex-col items-stretch gap-5 rounded-[2rem] border p-6 select-none backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 md:max-w-[calc(33.333%-16px)] ${
                                         isHovered
-                                            ? 'border-violet-500/50 shadow-xl shadow-slate-100/40 dark:shadow-none'
-                                            : 'border-slate-200/50 dark:border-slate-800/40'
+                                            ? 'border-violet-500/50 bg-white/90 shadow-xl shadow-slate-200/50 dark:bg-slate-900/80 dark:shadow-none'
+                                            : 'border-slate-200/70 bg-white/75 dark:border-slate-800/70 dark:bg-slate-900/50'
                                     } group`}
                                 >
-                                    {/* Screen Mockup Sandbox Container (Fits full width, 2:1 aspect ratio) */}
-                                    <div className="relative aspect-[2/1] w-full flex-shrink-0 overflow-hidden rounded-2xl border border-slate-200/40 bg-slate-50 dark:border-slate-800 dark:bg-slate-950">
-                                        <div className="relative flex h-full w-full flex-col justify-start overflow-hidden bg-slate-950">
-                                            <div className="relative w-full flex-grow overflow-hidden bg-slate-900">
-                                                <img
-                                                    src={getImageUrl(p.image)}
-                                                    alt={`${p.title} Screenshot`}
-                                                    className="h-full w-full object-cover object-top"
-                                                />
-                                            </div>
-                                        </div>
+                                    {/* Screen Mockup Sandbox Container (Fits full width, 16:9 / 2:1 aspect ratio) */}
+                                    <div className="relative aspect-[16/10] w-full flex-shrink-0 overflow-hidden rounded-2xl border border-slate-200/60 bg-slate-950 shadow-inner dark:border-slate-800">
+                                        <img
+                                            src={getImageUrl(p.image)}
+                                            alt={`${p.title} Screenshot`}
+                                            className="h-full w-full object-cover object-top transition-transform duration-500 ease-out group-hover:scale-105"
+                                        />
+                                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
                                     </div>
 
-                                    {/* Right Content details details Container */}
+                                    {/* Content details Container */}
                                     <div className="flex flex-1 flex-col justify-between py-1">
                                         {/* Tech Badges Container */}
-                                        <div className="mb-3.5 flex flex-wrap gap-1.5">
+                                        <div className="mb-3 flex flex-wrap gap-1.5">
                                             {p.tags.map((tag) => (
                                                 <span
                                                     key={tag}
-                                                    className="dark:bg-slate-850 rounded-md border border-slate-200/30 bg-slate-50 px-2.5 py-1 text-[9px] font-extrabold tracking-wider text-slate-500 dark:border-slate-700/30 dark:text-slate-400"
+                                                    className="rounded-lg border border-slate-200/60 bg-slate-100/70 px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-slate-600 dark:border-slate-800/80 dark:bg-slate-800/60 dark:text-slate-400"
                                                 >
                                                     {tag}
                                                 </span>
@@ -135,36 +132,37 @@ export default function Projects({ projects, loading }: ProjectsProps) {
 
                                         {/* Name & Explanations */}
                                         <div>
-                                            <h4 className="mb-2.5 flex items-center gap-1.5 text-xl font-extrabold tracking-tight text-slate-900 transition-colors group-hover:text-violet-600 dark:text-white dark:group-hover:text-violet-400">
-                                                {p.title}
+                                            <h4 className="mb-2 flex items-center gap-1.5 text-lg font-extrabold tracking-tight text-slate-900 transition-colors group-hover:text-violet-600 dark:text-white dark:group-hover:text-violet-400">
+                                                <span>{p.title}</span>
                                                 <ArrowUpRight
                                                     size={15}
-                                                    className={`text-slate-400 transition-all ${
+                                                    className={`text-slate-400 transition-all duration-300 ${
                                                         isHovered
                                                             ? 'translate-x-0.5 -translate-y-0.5 text-violet-500'
                                                             : ''
                                                     }`}
                                                 />
                                             </h4>
-                                            <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+                                            <p className="text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-400">
                                                 {p.description}
                                             </p>
                                         </div>
 
                                         {/* Project Links / Integration Meta */}
-                                        <div className="text-slate-450 mt-5 flex items-center gap-4 border-t border-slate-100 pt-4 text-xs dark:border-slate-800/85">
-                                            <span className="text-slate-650 flex items-center gap-1.5 font-semibold dark:text-slate-400">
+                                        <div className="mt-5 flex items-center gap-3 border-t border-slate-100/80 pt-3.5 text-xs dark:border-slate-800/70">
+                                            <span className="flex items-center gap-1.5 font-semibold text-slate-600 dark:text-slate-400">
                                                 <CheckCircle2
                                                     size={13}
                                                     className="text-emerald-500"
                                                 />
                                                 Clean Architecture
                                             </span>
-                                            <span>•</span>
-                                            <span className="text-slate-650 flex items-center gap-1.5 font-semibold dark:text-slate-400">
+                                            <span className="text-slate-300 dark:text-slate-700">•</span>
+                                            <span className="flex items-center gap-1.5 font-semibold text-slate-600 dark:text-slate-400">
                                                 <Layers
                                                     size={13}
                                                     strokeWidth={2.4}
+                                                    className="text-violet-500"
                                                 />
                                                 Inertia.js Ready
                                             </span>

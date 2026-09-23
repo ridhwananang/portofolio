@@ -78,7 +78,7 @@ const featureAddons: FeatureAddon[] = [
     },
     {
         id: 'payment_gateway',
-        name: 'Payment Gateway Midtrans',
+        name: 'Payment Gateway Otomatis (QRIS, VA, E-Wallet)',
         description: 'Menerima pembayaran otomatis via QRIS, VA, dan E-Wallet.',
         price: 50000,
         icon: CreditCard,
@@ -190,7 +190,7 @@ export default function ServicesSection() {
                 <div className="inline-flex items-center gap-2 rounded-full border border-violet-500/30 bg-violet-500/10 px-4 py-1.5 text-xs font-bold text-violet-700 dark:text-violet-300">
                     <Sparkles size={14} className="animate-pulse" />
                     <span>Jasa Pembuatan Website & Aplikasi</span>
-                    <span className="rounded-full bg-violet-600 px-2 py-0.5 text-[10px] text-white">Garansi Rekber Midtrans</span>
+                    <span className="rounded-full bg-violet-600 px-2 py-0.5 text-[10px] text-white">Garansi Rekber Escrow</span>
                 </div>
 
                 <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
@@ -198,7 +198,7 @@ export default function ServicesSection() {
                 </h2>
 
                 <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base leading-relaxed">
-                    Kalkulasikan kebutuhan website Anda secara transparan. Dana Anda <strong>100% aman ditahan di Rekber Midtrans</strong> dan hanya cair setelah Anda puas dengan hasilnya.
+                    Kalkulasikan kebutuhan website Anda secara transparan. Dana Anda <strong>100% aman ditahan di Rekening Bersama (Escrow)</strong> dan hanya cair setelah Anda puas dengan hasilnya.
                 </p>
             </div>
 
@@ -385,10 +385,10 @@ export default function ServicesSection() {
                         <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-xs text-emerald-800 dark:text-emerald-300 space-y-2">
                             <div className="flex items-center gap-2 font-bold">
                                 <ShieldCheck size={18} className="text-emerald-600 dark:text-emerald-400" />
-                                <span>Garansi Keamanan Rekber Midtrans</span>
+                                <span>Garansi Keamanan Rekening Bersama (Escrow)</span>
                             </div>
                             <p className="text-[11px] leading-relaxed text-emerald-700 dark:text-emerald-400">
-                                Dana Anda tidak langsung masuk ke rekening pribadi Ridhwan. Dana disimpan aman di sistem escrow Midtrans dan baru bisa dicairkan setelah Anda puas dengan hasil website.
+                                Dana Anda tidak langsung masuk ke rekening pribadi Ridhwan. Dana disimpan aman di sistem rekening bersama (escrow) terenkripsi dan baru bisa dicairkan setelah Anda puas dengan hasil website.
                             </p>
                         </div>
 

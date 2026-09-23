@@ -4,6 +4,7 @@ use App\Models\Profile;
 use App\Models\Project;
 use App\Models\TechStack;
 use App\Models\Certificate;
+use App\Models\ServicePackage;
 
 Route::get('/', function () {
     $profile = Profile::first();
@@ -54,11 +55,14 @@ Route::get('/', function () {
         return $cert;
     });
 
+    $packages = ServicePackage::where('is_active', true)->orderBy('sort_order')->orderBy('id')->get();
+
     return inertia('welcome', [
         'initialProfile' => $profile,
         'initialProjects' => $projects,
         'initialTechStacks' => $techStacks,
         'initialCertificates' => $certificates,
+        'initialPackages' => $packages,
     ]);
 })->name('home');
 
@@ -70,7 +74,9 @@ Route::get('/layanan', [ProjectOrderController::class, 'calculator'])->name('ser
 Route::post('/project-orders', [ProjectOrderController::class, 'store'])->name('project.order.store');
 Route::get('/track-project/{tracking_code}', [ProjectOrderController::class, 'track'])->name('project.tracker');
 Route::post('/track-project/{tracking_code}/approve', [ProjectOrderController::class, 'approve'])->name('project.tracker.approve');
+Route::post('/track-project/{tracking_code}/settle', [ProjectOrderController::class, 'requestSettlement'])->name('project.tracker.settle');
 Route::post('/track-project/{tracking_code}/staging', [ProjectOrderController::class, 'updateStaging'])->name('project.tracker.staging');
+Route::post('/track-project/{tracking_code}/revision', [ProjectOrderController::class, 'submitRevision'])->name('project.tracker.revision');
 
 // Legal & Compliance Pages (Midtrans Requirements)
 Route::inertia('/terms-and-conditions', 'terms')->name('terms');
@@ -88,4 +94,5 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 require __DIR__.'/settings.php';
+require __DIR__.'/admin.php';
 

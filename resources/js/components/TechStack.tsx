@@ -1,5 +1,6 @@
-import { Terminal } from 'lucide-react';
-import { useState } from 'react';
+import { Terminal, ChevronDown, ChevronUp } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { useState, useEffect } from 'react';
 import { SiLaravel, SiPhp, SiReact, SiJavascript, SiMysql, SiMongodb, SiHtml5, SiCss } from 'react-icons/si';
 
 const iconsMap: Record<string, React.ComponentType<any>> = {
@@ -14,6 +15,7 @@ const iconsMap: Record<string, React.ComponentType<any>> = {
 };
 
 interface TechStackItem {
+    id?: number;
     name: string;
     description: string;
     badge: string;
@@ -26,10 +28,25 @@ interface TechStackItem {
 interface TechStackProps {
     techStacks: TechStackItem[];
     loading: boolean;
+    initialCount?: number;
 }
 
-export default function TechStack({ techStacks, loading }: TechStackProps) {
+export default function TechStack({
+    techStacks,
+    loading,
+    initialCount = 4,
+}: TechStackProps) {
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+    const [isExpanded, setIsExpanded] = useState(false);
+
+    // Reset expand when techStacks count changes
+    useEffect(() => {
+        setIsExpanded(false);
+    }, [techStacks.length]);
+
+    const visibleTechStacks = isExpanded
+        ? techStacks
+        : techStacks.slice(0, initialCount);
 
     const renderIcon = (iconName: string) => {
         const IconComponent = iconsMap[iconName];
@@ -84,7 +101,7 @@ export default function TechStack({ techStacks, loading }: TechStackProps) {
     };
 
     return (
-        <section id="tech-stack" className="w-full py-2">
+        <section className="w-full py-2">
             {/* Title Header with custom subtle line decor */}
             <div className="mb-11 flex items-center gap-3.5">
                 <div className="rounded-2xl border border-slate-200/50 bg-white p-2.5 text-violet-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-violet-400">
@@ -129,117 +146,150 @@ export default function TechStack({ techStacks, loading }: TechStackProps) {
                     ))}
                 </div>
             ) : (
-                /* Grid Configuration */
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    {techStacks.map((t, idx) => {
-                        const isHovered = hoveredIndex === idx;
+                <>
+                    {/* Grid Configuration */}
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                        <AnimatePresence initial={false}>
+                            {visibleTechStacks.map((t, idx) => {
+                                const isHovered = hoveredIndex === idx;
 
-                        // Brand-specific borders and glow colors
-                        let hoverBorder =
-                            'hover:border-violet-500/40 dark:hover:border-violet-500/35';
-                        let hoverGlow = 'from-violet-500/10 to-transparent';
-                        let stripColor = 'from-blue-500 to-violet-500';
+                                // Brand-specific borders and glow colors
+                                let hoverBorder =
+                                    'hover:border-violet-500/40 dark:hover:border-violet-500/35';
+                                let hoverGlow = 'from-violet-500/10 to-transparent';
+                                let stripColor = 'from-blue-500 to-violet-500';
 
-                        if (t.name.includes('Laravel')) {
-                            hoverBorder =
-                                'hover:border-red-500/40 dark:hover:border-red-500/30';
-                            hoverGlow =
-                                'from-red-500/10 to-transparent dark:from-red-500/5';
-                            stripColor = 'from-red-500 to-rose-500';
-                        } else if (t.name.includes('PHP')) {
-                            hoverBorder =
-                                'hover:border-indigo-500/40 dark:hover:border-indigo-500/30';
-                            hoverGlow =
-                                'from-indigo-500/10 to-transparent dark:from-indigo-500/5';
-                            stripColor = 'from-indigo-500 to-blue-500';
-                        } else if (t.name.includes('React')) {
-                            hoverBorder =
-                                'hover:border-sky-400/50 dark:hover:border-sky-500/30';
-                            hoverGlow =
-                                'from-sky-400/10 to-transparent dark:from-sky-400/5';
-                            stripColor = 'from-sky-400 to-blue-500';
-                        } else if (t.name.includes('JavaScript')) {
-                            hoverBorder =
-                                'hover:border-amber-400/40 dark:hover:border-amber-500/30';
-                            hoverGlow =
-                                'from-amber-400/10 to-transparent dark:from-amber-500/5';
-                            stripColor = 'from-amber-400 to-yellow-500';
-                        } else if (t.name.includes('SQL')) {
-                            hoverBorder =
-                                'hover:border-blue-500/40 dark:hover:border-blue-500/30';
-                            hoverGlow =
-                                'from-blue-500/10 to-transparent dark:from-blue-500/5';
-                            stripColor = 'from-blue-500 to-teal-500';
-                        } else if (t.name.includes('MongoDB')) {
-                            hoverBorder =
-                                'hover:border-emerald-500/45 dark:hover:border-emerald-500/30';
-                            hoverGlow =
-                                'from-emerald-500/10 to-transparent dark:from-emerald-500/5';
-                            stripColor = 'from-emerald-500 to-green-500';
-                        } else if (t.name.includes('HTML5')) {
-                            hoverBorder =
-                                'hover:border-orange-500/40 dark:hover:border-orange-500/30';
-                            hoverGlow =
-                                'from-orange-500/10 to-transparent dark:from-orange-500/5';
-                            stripColor = 'from-orange-550 to-red-500';
-                        } else if (t.name.includes('CSS')) {
-                            hoverBorder =
-                                'hover:border-blue-600/40 dark:hover:border-blue-600/30';
-                            hoverGlow =
-                                'from-blue-600/10 to-transparent dark:from-blue-600/5';
-                            stripColor = 'from-blue-600 to-indigo-600';
-                        }
+                                if (t.name.includes('Laravel')) {
+                                    hoverBorder =
+                                        'hover:border-red-500/40 dark:hover:border-red-500/30';
+                                    hoverGlow =
+                                        'from-red-500/10 to-transparent dark:from-red-500/5';
+                                    stripColor = 'from-red-500 to-rose-500';
+                                } else if (t.name.includes('PHP')) {
+                                    hoverBorder =
+                                        'hover:border-indigo-500/40 dark:hover:border-indigo-500/30';
+                                    hoverGlow =
+                                        'from-indigo-500/10 to-transparent dark:from-indigo-500/5';
+                                    stripColor = 'from-indigo-500 to-blue-500';
+                                } else if (t.name.includes('React')) {
+                                    hoverBorder =
+                                        'hover:border-sky-400/50 dark:hover:border-sky-500/30';
+                                    hoverGlow =
+                                        'from-sky-400/10 to-transparent dark:from-sky-400/5';
+                                    stripColor = 'from-sky-400 to-blue-500';
+                                } else if (t.name.includes('JavaScript')) {
+                                    hoverBorder =
+                                        'hover:border-amber-400/40 dark:hover:border-amber-500/30';
+                                    hoverGlow =
+                                        'from-amber-400/10 to-transparent dark:from-amber-500/5';
+                                    stripColor = 'from-amber-400 to-yellow-500';
+                                } else if (t.name.includes('SQL')) {
+                                    hoverBorder =
+                                        'hover:border-blue-500/40 dark:hover:border-blue-500/30';
+                                    hoverGlow =
+                                        'from-blue-500/10 to-transparent dark:from-blue-500/5';
+                                    stripColor = 'from-blue-500 to-teal-500';
+                                } else if (t.name.includes('MongoDB')) {
+                                    hoverBorder =
+                                        'hover:border-emerald-500/45 dark:hover:border-emerald-500/30';
+                                    hoverGlow =
+                                        'from-emerald-500/10 to-transparent dark:from-emerald-500/5';
+                                    stripColor = 'from-emerald-500 to-green-500';
+                                } else if (t.name.includes('HTML5')) {
+                                    hoverBorder =
+                                        'hover:border-orange-500/40 dark:hover:border-orange-500/30';
+                                    hoverGlow =
+                                        'from-orange-500/10 to-transparent dark:from-orange-500/5';
+                                    stripColor = 'from-orange-550 to-red-500';
+                                } else if (t.name.includes('CSS')) {
+                                    hoverBorder =
+                                        'hover:border-blue-600/40 dark:hover:border-blue-600/30';
+                                    hoverGlow =
+                                        'from-blue-600/10 to-transparent dark:from-blue-600/5';
+                                    stripColor = 'from-blue-600 to-indigo-600';
+                                }
 
-                        return (
-                            <div
-                                key={t.name}
-                                onMouseEnter={() => setHoveredIndex(idx)}
-                                onMouseLeave={() => setHoveredIndex(null)}
-                                className={`glass-card relative flex cursor-pointer flex-col gap-4 overflow-hidden rounded-[1.8rem] border p-6 select-none ${
-                                    isHovered
-                                        ? `${hoverBorder} shadow-lg shadow-slate-100/50 dark:shadow-none`
-                                        : 'border-slate-200/50 dark:border-slate-800/40'
-                                } group`}
-                            >
-                                {/* Background glows on hover */}
-                                <div
-                                    className={`absolute top-0 right-0 h-24 w-24 rounded-full bg-gradient-to-l opacity-0 transition-opacity duration-300 group-hover:opacity-10 ${hoverGlow}`}
-                                ></div>
-
-                                {/* Icon Container with custom brand logo and Category badge */}
-                                <div className="flex items-center justify-between">
-                                    <div
-                                        className={`flex items-center justify-center rounded-2xl bg-slate-50 p-4 dark:bg-slate-950/60`}
+                                return (
+                                    <motion.div
+                                        key={t.id ?? `${t.name}-${idx}`}
+                                        initial={idx >= initialCount ? { opacity: 0, y: 16 } : false}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.96 }}
+                                        transition={{
+                                            duration: 0.3,
+                                            delay: idx >= initialCount ? (idx - initialCount) * 0.05 : 0,
+                                            ease: 'easeOut',
+                                        }}
+                                        onMouseEnter={() => setHoveredIndex(idx)}
+                                        onMouseLeave={() => setHoveredIndex(null)}
+                                        className={`glass-card relative flex cursor-pointer flex-col gap-4 overflow-hidden rounded-[1.8rem] border p-6 select-none backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 ${
+                                            isHovered
+                                                ? `${hoverBorder} bg-white/90 shadow-xl shadow-slate-100/50 dark:bg-slate-900/80 dark:shadow-none`
+                                                : 'border-slate-200/70 bg-white/70 dark:border-slate-800/70 dark:bg-slate-900/50'
+                                        } group`}
                                     >
-                                        {renderIcon(t.icon_name)}
-                                    </div>
+                                        {/* Background glows on hover */}
+                                        <div
+                                            className={`absolute top-0 right-0 h-28 w-28 rounded-full bg-gradient-to-l opacity-0 transition-opacity duration-300 group-hover:opacity-15 ${hoverGlow}`}
+                                        ></div>
 
-                                    {/* Category tag */}
-                                    <span className="rounded-lg bg-slate-100/70 px-2.5 py-1 text-[10px] font-extrabold tracking-widest text-slate-500 uppercase dark:bg-slate-800/80 dark:text-slate-400">
-                                        {t.badge}
-                                    </span>
-                                </div>
+                                        {/* Icon Container with custom brand logo and Category badge */}
+                                        <div className="flex items-center justify-between">
+                                            <div
+                                                className="flex items-center justify-center rounded-2xl border border-slate-200/60 bg-slate-50/80 p-3.5 shadow-xs transition-transform duration-300 group-hover:scale-105 dark:border-slate-800/80 dark:bg-slate-950/70"
+                                            >
+                                                {renderIcon(t.icon_name)}
+                                            </div>
 
-                                {/* Typography Details */}
-                                <div>
-                                    <h4 className="mb-2 text-lg font-extrabold tracking-tight text-slate-900 transition-colors group-hover:text-violet-600 dark:text-white dark:group-hover:text-violet-400">
-                                        {t.name}
-                                    </h4>
-                                    <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-                                        {t.description}
-                                    </p>
-                                </div>
+                                            {/* Category tag */}
+                                            <span className="rounded-lg border border-slate-200/50 bg-slate-100/80 px-2.5 py-1 text-[10px] font-extrabold tracking-widest text-slate-600 uppercase dark:border-slate-800 dark:bg-slate-800/80 dark:text-slate-400">
+                                                {t.badge}
+                                            </span>
+                                        </div>
 
-                                {/* Decorative hover indicator strip */}
-                                <div
-                                    className={`absolute inset-x-0 bottom-0 h-1 origin-left bg-gradient-to-r ${stripColor} transition-transform duration-300 ${
-                                        isHovered ? 'scale-x-100' : 'scale-x-0'
-                                    }`}
-                                ></div>
-                            </div>
-                        );
-                    })}
-                </div>
+                                        {/* Typography Details */}
+                                        <div>
+                                            <h4 className="mb-1.5 text-lg font-extrabold tracking-tight text-slate-900 transition-colors group-hover:text-violet-600 dark:text-white dark:group-hover:text-violet-400">
+                                                {t.name}
+                                            </h4>
+                                            <p className="text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                                                {t.description}
+                                            </p>
+                                        </div>
+
+                                        {/* Decorative hover indicator strip */}
+                                        <div
+                                            className={`absolute inset-x-0 bottom-0 h-1 origin-left bg-gradient-to-r ${stripColor} transition-transform duration-300 ${
+                                                isHovered ? 'scale-x-100' : 'scale-x-0'
+                                            }`}
+                                        ></div>
+                                    </motion.div>
+                                );
+                            })}
+                        </AnimatePresence>
+                    </div>
+
+                    {/* Toggle Button */}
+                    {!loading && techStacks.length > initialCount && (
+                        <div className="mt-8 flex justify-center">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (isExpanded) {
+                                        document.getElementById('tech-stack')?.scrollIntoView({ behavior: 'smooth' });
+                                        setTimeout(() => setIsExpanded(false), 100);
+                                    } else {
+                                        setIsExpanded(true);
+                                    }
+                                }}
+                                className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-violet-500 hover:text-violet-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400 dark:hover:border-violet-500 dark:hover:text-violet-400 cursor-pointer active:scale-95"
+                            >
+                                <span>{isExpanded ? 'Tampilkan Lebih Sedikit' : 'Tampilkan Lebih Banyak'}</span>
+                                {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                            </button>
+                        </div>
+                    )}
+                </>
             )}
         </section>
     );
