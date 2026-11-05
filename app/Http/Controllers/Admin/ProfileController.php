@@ -16,10 +16,11 @@ class ProfileController extends Controller
     public function edit(): Response
     {
         $profile = Profile::first();
+        $disk = config('filesystems.default');
 
         if ($profile) {
             if ($profile->image && !str_starts_with($profile->image, '/') && !str_starts_with($profile->image, 'http')) {
-                $profile->image = Storage::disk('public')->url($profile->image);
+                $profile->image = Storage::disk($disk)->url($profile->image);
             }
         }
 
@@ -32,18 +33,19 @@ class ProfileController extends Controller
     {
         $profile = Profile::first() ?? new Profile();
         $data = $request->validated();
+        $disk = config('filesystems.default');
 
-        // 1. Handle avatar image (upload, remove, or keep)
+        // 1. Handle avatar image (upload, remove, or keep via Cloud Storage)
         if ($request->boolean('remove_image')) {
-            if ($profile->image && Storage::disk('public')->exists($profile->image)) {
-                Storage::disk('public')->delete($profile->image);
+            if ($profile->image && !str_starts_with($profile->image, '/') && !str_starts_with($profile->image, 'http') && Storage::disk($disk)->exists($profile->image)) {
+                Storage::disk($disk)->delete($profile->image);
             }
             $data['image'] = null;
         } elseif ($request->hasFile('image')) {
-            if ($profile->image && Storage::disk('public')->exists($profile->image)) {
-                Storage::disk('public')->delete($profile->image);
+            if ($profile->image && !str_starts_with($profile->image, '/') && !str_starts_with($profile->image, 'http') && Storage::disk($disk)->exists($profile->image)) {
+                Storage::disk($disk)->delete($profile->image);
             }
-            $data['image'] = $request->file('image')->store('profiles', 'public');
+            $data['image'] = $request->file('image')->store('profiles', $disk);
         } else {
             unset($data['image']);
         }

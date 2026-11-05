@@ -15,7 +15,8 @@ class CertificateController extends Controller
 {
     public function index(): Response
     {
-        $certificates = Certificate::orderBy('id', 'desc')->get()->map(function ($cert) {
+        $disk = config('filesystems.default');
+        $certificates = Certificate::orderBy('id', 'desc')->get()->map(function ($cert) use ($disk) {
             $path = $cert->file_path;
             if ($path) {
                 if (str_starts_with($path, '/') || str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
@@ -25,11 +26,11 @@ class CertificateController extends Controller
                     $thumbnailPath = 'images/Sertifikat/thumbnails/' . $thumbnailName;
                     $cert->thumbnail_url = file_exists(public_path($thumbnailPath)) ? '/' . $thumbnailPath : $cert->file_url;
                 } else {
-                    $cert->file_url = Storage::disk('public')->url($path);
+                    $cert->file_url = Storage::disk($disk)->url($path);
                     $extension = pathinfo($path, PATHINFO_EXTENSION);
                     $thumbPathStorage = str_replace('.' . $extension, '_thumb.webp', $path);
-                    $cert->thumbnail_url = Storage::disk('public')->exists($thumbPathStorage)
-                        ? Storage::disk('public')->url($thumbPathStorage)
+                    $cert->thumbnail_url = Storage::disk($disk)->exists($thumbPathStorage)
+                        ? Storage::disk($disk)->url($thumbPathStorage)
                         : $cert->file_url;
                 }
             } else {
@@ -52,9 +53,10 @@ class CertificateController extends Controller
     public function store(CertificateRequest $request): RedirectResponse
     {
         $data = $request->validated();
+        $disk = config('filesystems.default');
 
         if ($request->hasFile('file')) {
-            $data['file_path'] = $request->file('file')->store('certificates', 'public');
+            $data['file_path'] = $request->file('file')->store('certificates', $disk);
         }
         unset($data['file']);
 
@@ -68,10 +70,11 @@ class CertificateController extends Controller
     public function edit(Certificate $certificate): Response
     {
         $path = $certificate->file_path;
+        $disk = config('filesystems.default');
         if ($path) {
             $certificate->file_url = str_starts_with($path, 'http') || str_starts_with($path, '/')
                 ? $path
-                : Storage::disk('public')->url($path);
+                : Storage::disk($disk)->url($path);
         }
 
         return Inertia::render('admin/certificates/edit', [
@@ -82,19 +85,20 @@ class CertificateController extends Controller
     public function update(CertificateRequest $request, Certificate $certificate): RedirectResponse
     {
         $data = $request->validated();
+        $disk = config('filesystems.default');
 
         if ($request->hasFile('file')) {
             // Delete old file and thumbnail
-            if ($certificate->file_path && Storage::disk('public')->exists($certificate->file_path)) {
-                Storage::disk('public')->delete($certificate->file_path);
+            if ($certificate->file_path && !str_starts_with($certificate->file_path, '/') && !str_starts_with($certificate->file_path, 'http') && Storage::disk($disk)->exists($certificate->file_path)) {
+                Storage::disk($disk)->delete($certificate->file_path);
                 $extension = pathinfo($certificate->file_path, PATHINFO_EXTENSION);
                 $oldThumb = str_replace('.' . $extension, '_thumb.webp', $certificate->file_path);
-                if (Storage::disk('public')->exists($oldThumb)) {
-                    Storage::disk('public')->delete($oldThumb);
+                if (Storage::disk($disk)->exists($oldThumb)) {
+                    Storage::disk($disk)->delete($oldThumb);
                 }
             }
 
-            $data['file_path'] = $request->file('file')->store('certificates', 'public');
+            $data['file_path'] = $request->file('file')->store('certificates', $disk);
         }
         unset($data['file']);
 
@@ -107,12 +111,13 @@ class CertificateController extends Controller
 
     public function destroy(Certificate $certificate): RedirectResponse
     {
-        if ($certificate->file_path && Storage::disk('public')->exists($certificate->file_path)) {
-            Storage::disk('public')->delete($certificate->file_path);
+        $disk = config('filesystems.default');
+        if ($certificate->file_path && !str_starts_with($certificate->file_path, '/') && !str_starts_with($certificate->file_path, 'http') && Storage::disk($disk)->exists($certificate->file_path)) {
+            Storage::disk($disk)->delete($certificate->file_path);
             $extension = pathinfo($certificate->file_path, PATHINFO_EXTENSION);
             $oldThumb = str_replace('.' . $extension, '_thumb.webp', $certificate->file_path);
-            if (Storage::disk('public')->exists($oldThumb)) {
-                Storage::disk('public')->delete($oldThumb);
+            if (Storage::disk($disk)->exists($oldThumb)) {
+                Storage::disk($disk)->delete($oldThumb);
             }
         }
 

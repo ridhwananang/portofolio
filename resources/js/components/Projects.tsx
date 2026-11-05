@@ -39,7 +39,7 @@ export default function Projects({ projects, loading }: ProjectsProps) {
             return imagePath;
         }
 
-        return `/storage/${imagePath}`;
+        return imagePath;
     };
 
     return (

@@ -56,6 +56,7 @@ return [
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
+            'visibility' => 'public',
             'throw' => false,
             'report' => false,
         ],
@@ -64,17 +65,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Symbolic Links
+    | Symbolic Links (Deprecated - Displaced by Cloud Object Storage)
     |--------------------------------------------------------------------------
     |
-    | Here you may configure the symbolic links that will be created when the
-    | `storage:link` Artisan command is executed. The array keys should be
-    | the locations of the links and the values should be their targets.
+    | When running on Laravel Cloud, AWS S3, or Cloudflare R2, files are
+    | uploaded directly to the cloud bucket and served via CDN/HTTPS URLs.
+    | Therefore, local symbolic links via `storage:link` are no longer needed.
     |
     */
 
     'links' => [
-        public_path('storage') => storage_path('app/public'),
+        // No local symlinks needed when using cloud object storage (S3 / R2 / Laravel Cloud)
     ],
 
 ];

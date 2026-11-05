@@ -35,7 +35,7 @@ class Certificate extends Model
                     // Check if Imagick is available (default on Laravel Cloud/Vapor PHP runtime)
                     if (class_exists('Imagick')) {
                         try {
-                            $disk = 'public'; // disk configured in Filament
+                            $disk = config('filesystems.default');
                             
                             // Check if file exists on disk
                             if (\Illuminate\Support\Facades\Storage::disk($disk)->exists($path)) {

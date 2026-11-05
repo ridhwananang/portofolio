@@ -24,9 +24,10 @@ class DashboardController extends Controller
         $totalOrders = ProjectOrder::count();
 
         $recentMessages = Message::latest()->take(5)->get();
-        $recentProjects = Project::latest()->take(3)->get()->map(function ($project) {
+        $disk = config('filesystems.default');
+        $recentProjects = Project::latest()->take(3)->get()->map(function ($project) use ($disk) {
             if ($project->image && !str_starts_with($project->image, '/') && !str_starts_with($project->image, 'http')) {
-                $project->image_url = \Illuminate\Support\Facades\Storage::disk('public')->url($project->image);
+                $project->image_url = \Illuminate\Support\Facades\Storage::disk($disk)->url($project->image);
             } else {
                 $project->image_url = $project->image;
             }

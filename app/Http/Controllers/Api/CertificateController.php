@@ -29,13 +29,14 @@ class CertificateController extends Controller
                         $cert->thumbnail_url = $cert->file_url;
                     }
                 } else {
-                    $cert->file_url = \Illuminate\Support\Facades\Storage::disk('public')->url($path);
+                    $disk = config('filesystems.default');
+                    $cert->file_url = \Illuminate\Support\Facades\Storage::disk($disk)->url($path);
 
                     // Check storage disk for _thumb.webp
                     $extension = pathinfo($path, PATHINFO_EXTENSION);
                     $thumbPathStorage = str_replace('.' . $extension, '_thumb.webp', $path);
-                    if (\Illuminate\Support\Facades\Storage::disk('public')->exists($thumbPathStorage)) {
-                        $cert->thumbnail_url = \Illuminate\Support\Facades\Storage::disk('public')->url($thumbPathStorage);
+                    if (\Illuminate\Support\Facades\Storage::disk($disk)->exists($thumbPathStorage)) {
+                        $cert->thumbnail_url = \Illuminate\Support\Facades\Storage::disk($disk)->url($thumbPathStorage);
                     } else {
                         $cert->thumbnail_url = $cert->file_url;
                     }

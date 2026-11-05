@@ -14,10 +14,11 @@ class ProjectController extends Controller
     public function index(): JsonResponse
     {
         $projects = Project::orderBy('id', 'asc')->get();
+        $disk = config('filesystems.default');
 
         foreach ($projects as $project) {
             if ($project->image && !str_starts_with($project->image, '/') && !str_starts_with($project->image, 'http')) {
-                $project->image = \Illuminate\Support\Facades\Storage::url($project->image);
+                $project->image = \Illuminate\Support\Facades\Storage::disk($disk)->url($project->image);
             }
         }
 

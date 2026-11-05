@@ -15,9 +15,10 @@ class ProjectController extends Controller
 {
     public function index(): Response
     {
-        $projects = Project::orderBy('id', 'desc')->get()->map(function ($project) {
+        $disk = config('filesystems.default');
+        $projects = Project::orderBy('id', 'desc')->get()->map(function ($project) use ($disk) {
             if ($project->image && !str_starts_with($project->image, '/') && !str_starts_with($project->image, 'http')) {
-                $project->image_url = Storage::disk('public')->url($project->image);
+                $project->image_url = Storage::disk($disk)->url($project->image);
             } else {
                 $project->image_url = $project->image;
             }
@@ -37,9 +38,10 @@ class ProjectController extends Controller
     public function store(ProjectRequest $request): RedirectResponse
     {
         $data = $request->validated();
+        $disk = config('filesystems.default');
 
         if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('projects', 'public');
+            $data['image'] = $request->file('image')->store('projects', $disk);
         }
 
         Project::create($data);
@@ -52,8 +54,9 @@ class ProjectController extends Controller
 
     public function edit(Project $project): Response
     {
+        $disk = config('filesystems.default');
         if ($project->image && !str_starts_with($project->image, '/') && !str_starts_with($project->image, 'http')) {
-            $project->image_url = Storage::disk('public')->url($project->image);
+            $project->image_url = Storage::disk($disk)->url($project->image);
         } else {
             $project->image_url = $project->image;
         }
@@ -66,12 +69,13 @@ class ProjectController extends Controller
     public function update(ProjectRequest $request, Project $project): RedirectResponse
     {
         $data = $request->validated();
+        $disk = config('filesystems.default');
 
         if ($request->hasFile('image')) {
-            if ($project->image && Storage::disk('public')->exists($project->image)) {
-                Storage::disk('public')->delete($project->image);
+            if ($project->image && !str_starts_with($project->image, '/') && !str_starts_with($project->image, 'http') && Storage::disk($disk)->exists($project->image)) {
+                Storage::disk($disk)->delete($project->image);
             }
-            $data['image'] = $request->file('image')->store('projects', 'public');
+            $data['image'] = $request->file('image')->store('projects', $disk);
         } else {
             unset($data['image']);
         }
@@ -86,8 +90,9 @@ class ProjectController extends Controller
 
     public function destroy(Project $project): RedirectResponse
     {
-        if ($project->image && Storage::disk('public')->exists($project->image)) {
-            Storage::disk('public')->delete($project->image);
+        $disk = config('filesystems.default');
+        if ($project->image && !str_starts_with($project->image, '/') && !str_starts_with($project->image, 'http') && Storage::disk($disk)->exists($project->image)) {
+            Storage::disk($disk)->delete($project->image);
         }
 
         $project->delete();
