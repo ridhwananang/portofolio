@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ProfileRequest;
 use App\Models\Profile;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -72,6 +73,9 @@ class ProfileController extends Controller
 
         $profile->fill($data);
         $profile->save();
+
+        Cache::forget('portfolio_home_payload');
+        Cache::forget('portfolio_gemini_system_prompt');
 
         return back()->with('success', 'Profil berhasil diperbarui.');
     }

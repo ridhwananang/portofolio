@@ -16,6 +16,7 @@ use App\Services\Payment\EscrowService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -87,7 +88,27 @@ class ProjectOrderController extends Controller
                 ]);
             }
 
-            $totalAmount = (float) $validated['total_amount'];
+            // 2. Hitung harga pesanan secara aman di sisi server (Server-Side Anti-Tampering Price Verification)
+            $package = ServicePackage::where('slug', $validated['project_type'])->where('is_active', true)->first();
+            if ($package) {
+                $basePrice = (float) $package->base_price;
+                $addonsTotal = 0.0;
+                if (! empty($validated['selected_features']) && is_array($validated['selected_features'])) {
+                    $addons = ServiceAddon::whereIn('slug', $validated['selected_features'])->where('is_active', true)->get();
+                    $addonsTotal = (float) $addons->sum('price');
+                }
+
+                $expressMultiplier = 1.0;
+                if ($validated['delivery_speed'] === 'express') {
+                    $multiplierVal = (float) ServiceSetting::getVal('express_multiplier', '1.20');
+                    $expressMultiplier = $multiplierVal > 0 ? $multiplierVal : 1.20;
+                }
+
+                $totalAmount = round(($basePrice + $addonsTotal) * $expressMultiplier);
+            } else {
+                $totalAmount = (float) $validated['total_amount'];
+            }
+
             $paymentScheme = $validated['payment_scheme'] ?? 'down_payment';
 
             // Hitung DP berdasarkan setting admin
@@ -178,11 +199,29 @@ class ProjectOrderController extends Controller
         // 0. Auto-healing / Sinkronisasi status pembayaran dari database & Payment Gateway API (Mayar / Midtrans / Xendit)
         $dpTx = $order->dpTransaction ?? $order->quest?->dpDepositTransaction ?? $order->quest?->depositTransaction;
 
-        // Jika status transaksi di database masih pending, periksa status terkini ke Payment Gateway API
-        if (! $order->isDpPaid() && $dpTx && $dpTx->status === TransactionStatus::PENDING) {
-            if ($this->syncPendingTransactionWithGateway($dpTx)) {
-                $order->refresh();
-                $dpTx = $order->dpTransaction;
+        // Jika status transaksi di database masih pending, periksa status terkini ke Payment Gateway API (dengan jeda cooldown 60s untuk cegah outgoing HTTP spam)
+        $syncCooldownKey = "sync_cooldown_order_{$order->id}";
+        if (! Cache::has($syncCooldownKey)) {
+            $hasSynced = false;
+            if (! $order->isDpPaid() && $dpTx && $dpTx->status === TransactionStatus::PENDING) {
+                if ($this->syncPendingTransactionWithGateway($dpTx)) {
+                    $order->refresh();
+                    $dpTx = $order->dpTransaction;
+                }
+                $hasSynced = true;
+            }
+
+            $finalTx = $order->finalTransaction ?? $order->quest?->finalDepositTransaction;
+            if (! $order->isFullyPaid() && $finalTx && $finalTx->status === TransactionStatus::PENDING) {
+                if ($this->syncPendingTransactionWithGateway($finalTx)) {
+                    $order->refresh();
+                    $finalTx = $order->finalTransaction;
+                }
+                $hasSynced = true;
+            }
+
+            if ($hasSynced) {
+                Cache::put($syncCooldownKey, true, 60);
             }
         }
 
@@ -199,14 +238,8 @@ class ProjectOrderController extends Controller
             }
         }
 
-        // Cek transaksi final jika ada
+        // Cek status transaksi final yang tersimpan
         $finalTx = $order->finalTransaction ?? $order->quest?->finalDepositTransaction;
-        if (! $order->isFullyPaid() && $finalTx && $finalTx->status === TransactionStatus::PENDING) {
-            if ($this->syncPendingTransactionWithGateway($finalTx)) {
-                $order->refresh();
-                $finalTx = $order->finalTransaction;
-            }
-        }
 
         if ($finalTx && in_array($finalTx->status, [TransactionStatus::HELD, TransactionStatus::RELEASED])) {
             if ($order->payment_stage !== 'fully_paid' || empty($order->final_paid_at)) {
@@ -429,10 +462,14 @@ class ProjectOrderController extends Controller
     }
 
     /**
-     * Ridhwan memperbarui link staging demo untuk direview klien
+     * Ridhwan memperbarui link staging demo untuk direview klien (Admin Only)
      */
     public function updateStaging(Request $request, string $tracking_code): RedirectResponse
     {
+        if (! $request->user()?->isAdmin()) {
+            abort(403, 'Akses ditolak. Hanya administrator yang dapat memperbarui link staging.');
+        }
+
         $request->validate([
             'staging_url' => ['required', 'url'],
         ]);

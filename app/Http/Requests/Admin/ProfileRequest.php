@@ -13,13 +13,17 @@ class ProfileRequest extends FormRequest
 
     public function rules(): array
     {
+        $imageRule = $this->hasFile('image')
+            ? ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120']
+            : ['nullable'];
+
         return [
             'name' => ['nullable', 'string', 'max:255'],
             'role' => ['nullable', 'string', 'max:255'],
             'bio' => ['nullable', 'string'],
             'location' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'string', 'max:255'],
-            'image' => ['nullable'],
+            'image' => $imageRule,
             'remove_image' => ['nullable'],
             'github_url' => ['nullable', 'string', 'max:255'],
             'linkedin_url' => ['nullable', 'string', 'max:255'],

@@ -73,7 +73,7 @@ class MayarWebhookController extends Controller
             Log::warning('Gagal mencatat payment_log Mayar: ' . $e->getMessage());
         }
 
-        // 3. Verifikasi Webhook Token jika MAYAR_WEBHOOK_TOKEN dikonfigurasi di .env
+        // 3. Verifikasi Webhook Token (Fail-Closed / Anti-Spoofing)
         if ($this->mayarClient->hasWebhookTokenConfigured()) {
             $callbackToken = $request->header('x-callback-token')
                 ?? $request->header('X-Webhook-Token')
@@ -91,6 +91,28 @@ class MayarWebhookController extends Controller
                 ]);
 
                 return response()->json(['error' => 'Invalid webhook token'], 403);
+            }
+        } else {
+            // Jika token belum dikonfigurasi di .env, wajib verifikasi balik status ke server Mayar langsung
+            if ($mayarId) {
+                try {
+                    $statusCheck = $this->mayarClient->getPaymentStatus($mayarId);
+                    $remoteStatus = strtolower((string) ($statusCheck['status'] ?? $statusCheck['data']['status'] ?? ''));
+                    if (! in_array($remoteStatus, ['paid', 'settled', 'success', 'completed', 'active', 'true'], true)) {
+                        $paymentLog?->update([
+                            'status' => PaymentLogStatus::FAILED,
+                            'error_message' => 'Unverified Mayar payment status from API: ' . $remoteStatus,
+                        ]);
+
+                        return response()->json(['error' => 'Payment status could not be verified by Mayar API'], 400);
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Mayar verification fallback failed: ' . $e->getMessage());
+
+                    return response()->json(['error' => 'Cannot verify transaction with gateway'], 400);
+                }
+            } else {
+                return response()->json(['error' => 'Webhook token not configured and transaction unverifiable'], 403);
             }
         }
 

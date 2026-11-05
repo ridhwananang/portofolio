@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ProjectRequest;
 use App\Models\Project;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -43,6 +44,9 @@ class ProjectController extends Controller
 
         Project::create($data);
 
+        Cache::forget('portfolio_home_payload');
+        Cache::forget('portfolio_gemini_system_prompt');
+
         return redirect()->route('admin.projects.index')->with('success', 'Proyek berhasil ditambahkan.');
     }
 
@@ -74,6 +78,9 @@ class ProjectController extends Controller
 
         $project->update($data);
 
+        Cache::forget('portfolio_home_payload');
+        Cache::forget('portfolio_gemini_system_prompt');
+
         return redirect()->route('admin.projects.index')->with('success', 'Proyek berhasil diperbarui.');
     }
 
@@ -84,6 +91,9 @@ class ProjectController extends Controller
         }
 
         $project->delete();
+
+        Cache::forget('portfolio_home_payload');
+        Cache::forget('portfolio_gemini_system_prompt');
 
         return redirect()->route('admin.projects.index')->with('success', 'Proyek berhasil dihapus.');
     }

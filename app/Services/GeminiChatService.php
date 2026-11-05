@@ -45,13 +45,14 @@ class GeminiChatService
             }
         }
 
-        // 1. Gather dynamic portfolio context from DB to construct the system prompt
-        $profile = Profile::first();
-        $projects = Project::all();
-        $techStacks = TechStack::all();
+        // 1. Gather dynamic portfolio context (Cached for high performance & anti-DB spam)
+        $systemPrompt = \Illuminate\Support\Facades\Cache::remember('portfolio_gemini_system_prompt', 3600, function () {
+            $profile = Profile::first();
+            $projects = Project::all();
+            $techStacks = TechStack::all();
 
-        // 2. Build the System Instruction block
-        $systemPrompt = $this->buildSystemPrompt($profile, $projects, $techStacks);
+            return $this->buildSystemPrompt($profile, $projects, $techStacks);
+        });
 
         // 3. Format message history for Gemini API (Must strictly alternate roles)
         $contents = $this->formatMessageHistory($messages);

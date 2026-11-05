@@ -17,15 +17,15 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::get('/profile', [ProfileController::class, 'index']);
-Route::get('/projects', [ProjectController::class, 'index']);
-Route::get('/tech-stacks', [TechStackController::class, 'index']);
-Route::get('/certificates', [CertificateController::class, 'index']);
+Route::get('/profile', [ProfileController::class, 'index'])->middleware('throttle:60,1');
+Route::get('/projects', [ProjectController::class, 'index'])->middleware('throttle:60,1');
+Route::get('/tech-stacks', [TechStackController::class, 'index'])->middleware('throttle:60,1');
+Route::get('/certificates', [CertificateController::class, 'index'])->middleware('throttle:60,1');
 Route::get('/service-packages', function () {
     return response()->json(\App\Models\ServicePackage::where('is_active', true)->orderBy('sort_order')->orderBy('id')->get());
-});
-Route::post('/chat', [ChatController::class, 'store']);
-Route::post('/contact', [ContactController::class, 'store']);
+})->middleware('throttle:60,1');
+Route::post('/chat', [ChatController::class, 'store'])->middleware('throttle:15,1');
+Route::post('/contact', [ContactController::class, 'store'])->middleware('throttle:6,1');
 
 /*
 |--------------------------------------------------------------------------

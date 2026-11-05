@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\CertificateRequest;
 use App\Models\Certificate;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -59,6 +60,8 @@ class CertificateController extends Controller
 
         Certificate::create($data);
 
+        Cache::forget('portfolio_home_payload');
+
         return redirect()->route('admin.certificates.index')->with('success', 'Sertifikat berhasil ditambahkan.');
     }
 
@@ -97,6 +100,8 @@ class CertificateController extends Controller
 
         $certificate->update($data);
 
+        Cache::forget('portfolio_home_payload');
+
         return redirect()->route('admin.certificates.index')->with('success', 'Sertifikat berhasil diperbarui.');
     }
 
@@ -112,6 +117,8 @@ class CertificateController extends Controller
         }
 
         $certificate->delete();
+
+        Cache::forget('portfolio_home_payload');
 
         return redirect()->route('admin.certificates.index')->with('success', 'Sertifikat berhasil dihapus.');
     }

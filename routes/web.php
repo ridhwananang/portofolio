@@ -5,78 +5,83 @@ use App\Models\Project;
 use App\Models\TechStack;
 use App\Models\Certificate;
 use App\Models\ServicePackage;
+use Illuminate\Support\Facades\Cache;
 
 Route::get('/', function () {
-    $profile = Profile::first();
-    if ($profile && $profile->image && !str_starts_with($profile->image, '/') && !str_starts_with($profile->image, 'http')) {
-        $profile->image = \Illuminate\Support\Facades\Storage::url($profile->image);
-    }
-
-    $projects = Project::orderBy('id', 'asc')->get();
-    foreach ($projects as $project) {
-        if ($project->image && !str_starts_with($project->image, '/') && !str_starts_with($project->image, 'http')) {
-            $project->image = \Illuminate\Support\Facades\Storage::url($project->image);
+    $payload = Cache::remember('portfolio_home_payload', 3600, function () {
+        $profile = Profile::first();
+        if ($profile && $profile->image && !str_starts_with($profile->image, '/') && !str_starts_with($profile->image, 'http')) {
+            $profile->image = \Illuminate\Support\Facades\Storage::url($profile->image);
         }
-    }
 
-    $techStacks = TechStack::all();
+        $projects = Project::orderBy('id', 'asc')->get();
+        foreach ($projects as $project) {
+            if ($project->image && !str_starts_with($project->image, '/') && !str_starts_with($project->image, 'http')) {
+                $project->image = \Illuminate\Support\Facades\Storage::url($project->image);
+            }
+        }
 
-    $certificates = Certificate::orderBy('id', 'asc')->get()->map(function ($cert) {
-        $path = $cert->file_path;
-        if ($path) {
-            if (str_starts_with($path, '/') || str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
-                $cert->file_url = $path;
+        $techStacks = TechStack::all();
 
-                // Check local public folder thumbnails
-                $filename = basename($path);
-                $thumbnailName = pathinfo($filename, PATHINFO_FILENAME) . '.webp';
-                $thumbnailPath = 'images/Sertifikat/thumbnails/' . $thumbnailName;
-                if (file_exists(public_path($thumbnailPath))) {
-                    $cert->thumbnail_url = '/' . $thumbnailPath;
+        $certificates = Certificate::orderBy('id', 'asc')->get()->map(function ($cert) {
+            $path = $cert->file_path;
+            if ($path) {
+                if (str_starts_with($path, '/') || str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+                    $cert->file_url = $path;
+
+                    // Check local public folder thumbnails
+                    $filename = basename($path);
+                    $thumbnailName = pathinfo($filename, PATHINFO_FILENAME) . '.webp';
+                    $thumbnailPath = 'images/Sertifikat/thumbnails/' . $thumbnailName;
+                    if (file_exists(public_path($thumbnailPath))) {
+                        $cert->thumbnail_url = '/' . $thumbnailPath;
+                    } else {
+                        $cert->thumbnail_url = $cert->file_url;
+                    }
                 } else {
-                    $cert->thumbnail_url = $cert->file_url;
+                    $cert->file_url = \Illuminate\Support\Facades\Storage::disk('public')->url($path);
+
+                    // Check storage disk for _thumb.webp
+                    $extension = pathinfo($path, PATHINFO_EXTENSION);
+                    $thumbPathStorage = str_replace('.' . $extension, '_thumb.webp', $path);
+                    if (\Illuminate\Support\Facades\Storage::disk('public')->exists($thumbPathStorage)) {
+                        $cert->thumbnail_url = \Illuminate\Support\Facades\Storage::disk('public')->url($thumbPathStorage);
+                    } else {
+                        $cert->thumbnail_url = $cert->file_url;
+                    }
                 }
             } else {
-                $cert->file_url = \Illuminate\Support\Facades\Storage::disk('public')->url($path);
-
-                // Check storage disk for _thumb.webp
-                $extension = pathinfo($path, PATHINFO_EXTENSION);
-                $thumbPathStorage = str_replace('.' . $extension, '_thumb.webp', $path);
-                if (\Illuminate\Support\Facades\Storage::disk('public')->exists($thumbPathStorage)) {
-                    $cert->thumbnail_url = \Illuminate\Support\Facades\Storage::disk('public')->url($thumbPathStorage);
-                } else {
-                    $cert->thumbnail_url = $cert->file_url;
-                }
+                $cert->file_url = null;
+                $cert->thumbnail_url = null;
             }
-        } else {
-            $cert->file_url = null;
-            $cert->thumbnail_url = null;
-        }
-        return $cert;
+            return $cert;
+        });
+
+        $packages = ServicePackage::where('is_active', true)->orderBy('sort_order')->orderBy('id')->get();
+
+        return [
+            'initialProfile' => $profile,
+            'initialProjects' => $projects,
+            'initialTechStacks' => $techStacks,
+            'initialCertificates' => $certificates,
+            'initialPackages' => $packages,
+        ];
     });
 
-    $packages = ServicePackage::where('is_active', true)->orderBy('sort_order')->orderBy('id')->get();
-
-    return inertia('welcome', [
-        'initialProfile' => $profile,
-        'initialProjects' => $projects,
-        'initialTechStacks' => $techStacks,
-        'initialCertificates' => $certificates,
-        'initialPackages' => $packages,
-    ]);
+    return inertia('welcome', $payload);
 })->name('home');
 
 use App\Http\Controllers\QuestController;
 use App\Http\Controllers\ProjectOrderController;
 
-// Client Project Orders & Live Tracker (Public & Guest-friendly)
+// Client Project Orders & Live Tracker (Public & Guest-friendly with Rate Limiting)
 Route::get('/layanan', [ProjectOrderController::class, 'calculator'])->name('services.calculator');
-Route::post('/project-orders', [ProjectOrderController::class, 'store'])->name('project.order.store');
-Route::get('/track-project/{tracking_code}', [ProjectOrderController::class, 'track'])->name('project.tracker');
-Route::post('/track-project/{tracking_code}/approve', [ProjectOrderController::class, 'approve'])->name('project.tracker.approve');
-Route::post('/track-project/{tracking_code}/settle', [ProjectOrderController::class, 'requestSettlement'])->name('project.tracker.settle');
-Route::post('/track-project/{tracking_code}/staging', [ProjectOrderController::class, 'updateStaging'])->name('project.tracker.staging');
-Route::post('/track-project/{tracking_code}/revision', [ProjectOrderController::class, 'submitRevision'])->name('project.tracker.revision');
+Route::post('/project-orders', [ProjectOrderController::class, 'store'])->middleware('throttle:10,1')->name('project.order.store');
+Route::get('/track-project/{tracking_code}', [ProjectOrderController::class, 'track'])->middleware('throttle:60,1')->name('project.tracker');
+Route::post('/track-project/{tracking_code}/approve', [ProjectOrderController::class, 'approve'])->middleware('throttle:10,1')->name('project.tracker.approve');
+Route::post('/track-project/{tracking_code}/settle', [ProjectOrderController::class, 'requestSettlement'])->middleware('throttle:10,1')->name('project.tracker.settle');
+Route::post('/track-project/{tracking_code}/staging', [ProjectOrderController::class, 'updateStaging'])->middleware(['auth', 'admin'])->name('project.tracker.staging');
+Route::post('/track-project/{tracking_code}/revision', [ProjectOrderController::class, 'submitRevision'])->middleware('throttle:10,1')->name('project.tracker.revision');
 
 // Legal & Compliance Pages (Midtrans Requirements)
 Route::inertia('/terms-and-conditions', 'terms')->name('terms');
