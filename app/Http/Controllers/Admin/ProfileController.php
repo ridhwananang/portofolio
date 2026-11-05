@@ -47,6 +47,16 @@ class ProfileController extends Controller
             $data['bio'] = '';
         }
 
+        // Handle education array: filter out empty items and allow clearing
+        $rawEducation = $request->input('education', []);
+        if (is_array($rawEducation)) {
+            $data['education'] = array_values(array_filter($rawEducation, function ($item) {
+                return is_array($item) && !empty(trim($item['school'] ?? ''));
+            }));
+        } else {
+            $data['education'] = [];
+        }
+
         $profile->fill($data);
         $profile->save();
 

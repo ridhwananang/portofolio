@@ -57,6 +57,10 @@ export default function ProfileCard({ onOpenContact, profile, loading }: Profile
         );
     }
 
+    const formalEducations = (profile.education || []).filter(
+        (edu) => !edu.school?.toLowerCase().includes('coding camp')
+    );
+
     return (
         <div
             id="profile-card"
@@ -225,7 +229,7 @@ export default function ProfileCard({ onOpenContact, profile, loading }: Profile
             </div>
 
             {/* Education History Section (Pendidikan Formal) */}
-            {profile.education && profile.education.length > 0 && (
+            {formalEducations.length > 0 && (
                 <div className="mt-5 w-full border-t border-slate-100/75 pt-5 text-left dark:border-slate-800/60">
                     <div className="mb-4 flex items-center gap-2">
                         <div className="rounded-lg bg-slate-100 p-1.5 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
@@ -237,9 +241,7 @@ export default function ProfileCard({ onOpenContact, profile, loading }: Profile
                     </div>
 
                     <div className="relative border-l-2 border-slate-100 dark:border-slate-800 ml-3.5 pl-5 space-y-4">
-                        {profile.education
-                            .filter((edu) => !edu.school.toLowerCase().includes('coding camp'))
-                            .map((edu, idx) => (
+                        {formalEducations.map((edu, idx) => (
                                 <div key={idx} className="relative group/edu">
                                     {/* Dot positioned precisely centered on border line */}
                                     <div className="absolute -left-[25px] top-1 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 group-hover/edu:border-amber-400 group-hover/edu:bg-amber-50 dark:group-hover/edu:bg-amber-950/40 transition-all duration-300">
