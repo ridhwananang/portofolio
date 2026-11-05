@@ -96,10 +96,12 @@ export default function ProfileCard({ onOpenContact, profile, loading }: Profile
                 {profile.role}
             </p>
 
-            {/* Brief bio text */}
-            <p className="mb-6 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-                {profile.bio}
-            </p>
+            {/* Brief bio text (Optional) */}
+            {profile.bio && (
+                <p className="mb-6 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                    {profile.bio}
+                </p>
+            )}
 
             {/* Decorative separator line */}
             <div className="mb-6 h-[1px] w-full bg-slate-100 dark:bg-slate-800"></div>

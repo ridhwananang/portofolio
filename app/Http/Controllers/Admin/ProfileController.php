@@ -43,6 +43,10 @@ class ProfileController extends Controller
             unset($data['image']);
         }
 
+        if (array_key_exists('bio', $data) && $data['bio'] === null) {
+            $data['bio'] = '';
+        }
+
         $profile->fill($data);
         $profile->save();
 

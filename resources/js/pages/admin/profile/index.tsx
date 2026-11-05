@@ -160,7 +160,6 @@ export default function AdminProfile({ profile }: ProfilePageProps) {
                                         value={data.name}
                                         onChange={(e) => setData('name', e.target.value)}
                                         placeholder="cth: Ridhwan Anang Ma'ruf"
-                                        required
                                         className="rounded-xl border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white text-xs focus-visible:ring-violet-500/30"
                                     />
                                     {errors.name && <p className="text-xs font-semibold text-rose-500">{errors.name}</p>}
@@ -174,7 +173,6 @@ export default function AdminProfile({ profile }: ProfilePageProps) {
                                         value={data.role}
                                         onChange={(e) => setData('role', e.target.value)}
                                         placeholder="cth: Fullstack Web Developer & Escrow Architect"
-                                        required
                                         className="rounded-xl border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white text-xs focus-visible:ring-violet-500/30"
                                     />
                                     {errors.role && <p className="text-xs font-semibold text-rose-500">{errors.role}</p>}
@@ -192,7 +190,6 @@ export default function AdminProfile({ profile }: ProfilePageProps) {
                                         value={data.email}
                                         onChange={(e) => setData('email', e.target.value)}
                                         placeholder="cth: hello@ridhwan.dev"
-                                        required
                                         className="rounded-xl border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white font-mono text-xs focus-visible:ring-violet-500/30"
                                     />
                                     {errors.email && <p className="text-xs font-semibold text-rose-500">{errors.email}</p>}
