@@ -18,9 +18,7 @@ class ProfileController extends Controller
 
         if ($profile) {
             if ($profile->image && !str_starts_with($profile->image, '/') && !str_starts_with($profile->image, 'http')) {
-                $profile->image_url = Storage::disk('public')->url($profile->image);
-            } else {
-                $profile->image_url = $profile->image;
+                $profile->image = Storage::disk('public')->url($profile->image);
             }
         }
 
@@ -34,7 +32,13 @@ class ProfileController extends Controller
         $profile = Profile::first() ?? new Profile();
         $data = $request->validated();
 
-        if ($request->hasFile('image')) {
+        // 1. Handle avatar image (upload, remove, or keep)
+        if ($request->boolean('remove_image')) {
+            if ($profile->image && Storage::disk('public')->exists($profile->image)) {
+                Storage::disk('public')->delete($profile->image);
+            }
+            $data['image'] = null;
+        } elseif ($request->hasFile('image')) {
             if ($profile->image && Storage::disk('public')->exists($profile->image)) {
                 Storage::disk('public')->delete($profile->image);
             }
@@ -43,18 +47,27 @@ class ProfileController extends Controller
             unset($data['image']);
         }
 
-        if (array_key_exists('bio', $data) && $data['bio'] === null) {
-            $data['bio'] = '';
+        // 2. All text fields: if empty, set to null (true nullable architecture)
+        foreach (['name', 'role', 'bio', 'location', 'email', 'github_url', 'linkedin_url'] as $field) {
+            if (array_key_exists($field, $data)) {
+                $val = is_string($data[$field]) ? trim($data[$field]) : $data[$field];
+                $data[$field] = ($val === '' || $val === null) ? null : $val;
+            }
         }
 
-        // Handle education array: filter out empty items and allow clearing
+        // 3. Handle education array: if empty or only blanks, set to null / empty array
         $rawEducation = $request->input('education', []);
         if (is_array($rawEducation)) {
-            $data['education'] = array_values(array_filter($rawEducation, function ($item) {
-                return is_array($item) && !empty(trim($item['school'] ?? ''));
+            $filtered = array_values(array_filter($rawEducation, function ($item) {
+                if (!is_array($item)) return false;
+                $school = trim($item['school'] ?? '');
+                $major = trim($item['major'] ?? '');
+                $period = trim($item['period'] ?? '');
+                return $school !== '' || $major !== '' || $period !== '';
             }));
+            $data['education'] = count($filtered) > 0 ? $filtered : null;
         } else {
-            $data['education'] = [];
+            $data['education'] = null;
         }
 
         $profile->fill($data);

@@ -42,17 +42,22 @@ export default function AdminProfile({ profile }: ProfilePageProps) {
         github_url: profile?.github_url || '',
         linkedin_url: profile?.linkedin_url || '',
         image: null as File | null,
+        remove_image: false,
         education: (profile?.education || []) as Education[],
     });
 
     const [avatarPreview, setAvatarPreview] = useState<string | null>(profile?.image || null);
 
     const handleAvatarChange = (file: File | null) => {
-        setData('image', file);
+        setData((prev) => ({
+            ...prev,
+            image: file,
+            remove_image: file === null,
+        }));
         if (file) {
             setAvatarPreview(URL.createObjectURL(file));
         } else {
-            setAvatarPreview(profile?.image || null);
+            setAvatarPreview(null);
         }
     };
 
@@ -337,176 +342,201 @@ export default function AdminProfile({ profile }: ProfilePageProps) {
                         </div>
 
                         {/* Public Profile Hero Card Mockup - Exact match to ProfileCard.tsx */}
-                        <div
-                            id="profile-card-preview"
-                            className="glass-card relative flex w-full flex-col items-center overflow-hidden rounded-[2.2rem] border border-slate-200/70 bg-white/75 p-8 text-center shadow-xl shadow-slate-100/50 backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/60 dark:shadow-none transition-all duration-300"
-                        >
-                            {/* Decorative top gradient accent bar */}
-                            <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-blue-500 via-violet-500 to-indigo-500" />
+                        {(() => {
+                            const validEducations = (data.education || []).filter(
+                                (edu) => edu.school?.trim() || edu.major?.trim() || edu.period?.trim()
+                            );
+                            const hasContacts = Boolean(data.location?.trim() || data.email?.trim());
+                            const hasSocials = Boolean(data.github_url?.trim() || data.linkedin_url?.trim());
 
-                            {/* Avatar Container with glowing rings */}
-                            <div className="group relative mb-6 select-none">
-                                <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-blue-500 via-violet-500 to-indigo-500 opacity-25 blur-md transition-opacity duration-300 group-hover:opacity-50 animate-spin-slow" />
-                                <div className="relative h-32 w-32 sm:h-36 sm:w-36 rounded-full bg-gradient-to-tr from-blue-500 via-violet-500 to-indigo-500 p-[3px] shadow-[0_0_20px_rgba(139,92,246,0.15)] group-hover:shadow-[0_0_25px_rgba(139,92,246,0.3)] transition-all duration-300">
-                                    <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-white dark:bg-slate-800">
-                                        {avatarPreview ? (
-                                            <img
-                                                src={avatarPreview}
-                                                alt={data.name || 'Preview'}
-                                                className="h-full w-full object-cover"
-                                            />
-                                        ) : (
-                                            <div className="h-full w-full flex items-center justify-center bg-violet-500/10 text-violet-600 dark:text-violet-300 font-black text-2xl">
-                                                {data.name ? data.name.slice(0, 2).toUpperCase() : 'RA'}
+                            return (
+                                <div
+                                    id="profile-card-preview"
+                                    className="glass-card relative flex w-full flex-col items-center overflow-hidden rounded-[2.2rem] border border-slate-200/70 bg-white/75 p-8 text-center shadow-xl shadow-slate-100/50 backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/60 dark:shadow-none transition-all duration-300"
+                                >
+                                    {/* Decorative top gradient accent bar */}
+                                    <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-blue-500 via-violet-500 to-indigo-500" />
+
+                                    {/* Avatar Container with glowing rings */}
+                                    <div className="group relative mb-6 select-none">
+                                        <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-blue-500 via-violet-500 to-indigo-500 opacity-25 blur-md transition-opacity duration-300 group-hover:opacity-50 animate-spin-slow" />
+                                        <div className="relative h-32 w-32 sm:h-36 sm:w-36 rounded-full bg-gradient-to-tr from-blue-500 via-violet-500 to-indigo-500 p-[3px] shadow-[0_0_20px_rgba(139,92,246,0.15)] group-hover:shadow-[0_0_25px_rgba(139,92,246,0.3)] transition-all duration-300">
+                                            <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-white dark:bg-slate-800">
+                                                {avatarPreview ? (
+                                                    <img
+                                                        src={avatarPreview}
+                                                        alt={data.name || 'Preview'}
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="h-full w-full flex items-center justify-center bg-violet-500/10 text-violet-600 dark:text-violet-300 font-black text-2xl select-none">
+                                                        {data.name?.trim() ? data.name.trim().slice(0, 2).toUpperCase() : <User className="size-8 text-slate-400" />}
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Dynamic Breathing Online Status Indicator Dot */}
-                                <span className="absolute right-2 bottom-1 flex h-4 w-4">
-                                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                                    <span
-                                        className="relative inline-flex h-4 w-4 rounded-full border-2 border-white bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.7)] dark:border-slate-900"
-                                        title="Aktif saat ini"
-                                    />
-                                </span>
-                            </div>
-
-                            {/* Profile Details */}
-                            <h2 className="mb-1 text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-                                {data.name || 'Nama Lengkap Anda'}
-                            </h2>
-                            <p className="mb-4 inline-block rounded-full bg-violet-50 px-3.5 py-1 text-xs sm:text-sm font-semibold text-violet-600 dark:bg-violet-950/40 dark:text-violet-400">
-                                {data.role || 'Role / Profesi Anda'}
-                            </p>
-
-                            {/* Brief bio text */}
-                            <p className="mb-6 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-                                {data.bio || 'Bio dan narasi perkenalan akan tampil di sini saat Anda mengetik...'}
-                            </p>
-
-                            {/* Decorative separator line */}
-                            <div className="mb-6 h-[1px] w-full bg-slate-100 dark:bg-slate-800" />
-
-                            {/* Contact Statistics List */}
-                            <div className="mb-6 w-full space-y-3.5 text-left">
-                                {/* Location Row */}
-                                <div className="group flex items-start gap-3.5">
-                                    <div className="rounded-xl bg-slate-100 p-2.5 text-slate-500 transition-colors duration-300 group-hover:bg-blue-100 group-hover:text-blue-600 dark:bg-slate-800 dark:text-slate-400 dark:group-hover:bg-blue-950 dark:group-hover:text-blue-400">
-                                        <MapPin size={16} />
-                                    </div>
-                                    <div>
-                                        <span className="mb-1 block text-[10px] leading-none font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
-                                            Location
-                                        </span>
-                                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                                            {data.location || 'Lokasi belum diatur'}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {/* Email Row */}
-                                <div className="group flex items-start gap-3.5">
-                                    <div className="rounded-xl bg-slate-100 p-2.5 text-slate-500 transition-colors duration-300 group-hover:bg-violet-100 group-hover:text-violet-600 dark:bg-slate-800 dark:text-slate-400 dark:group-hover:bg-violet-950 dark:group-hover:text-violet-400">
-                                        <Mail size={16} strokeWidth={2.2} />
-                                    </div>
-                                    <div>
-                                        <span className="mb-1 block text-[10px] leading-none font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
-                                            Email
-                                        </span>
-                                        <span className="text-xs font-semibold break-words text-slate-700 dark:text-slate-300">
-                                            {data.email || 'email@domain.com'}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Call To Action Buttons (Simulated) */}
-                            <div className="w-full space-y-2.5">
-                                <button
-                                    type="button"
-                                    className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-slate-900 py-3.5 text-xs font-semibold text-white shadow-md transition-all hover:bg-slate-800 active:scale-[0.98] dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"
-                                >
-                                    <Send size={14} strokeWidth={2.4} />
-                                    Hubungi Saya
-                                </button>
-
-                                <button
-                                    type="button"
-                                    className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border border-slate-200/60 bg-white py-3 text-xs font-bold text-slate-800 shadow-xs transition-all hover:bg-slate-50 active:scale-[0.98] dark:border-slate-800/80 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900"
-                                >
-                                    <Download size={14} strokeWidth={2.4} />
-                                    Download Resume (PDF)
-                                </button>
-                            </div>
-
-                            {/* Social Network Grid */}
-                            <div className="mt-5 flex items-center gap-3">
-                                {data.github_url && (
-                                    <a
-                                        href={data.github_url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="rounded-full border border-slate-200/50 bg-slate-50 p-2.5 text-slate-600 transition-all duration-300 hover:scale-110 hover:bg-slate-950 hover:text-white hover:border-slate-950 dark:border-slate-800/50 dark:bg-slate-800/60 dark:text-slate-400 dark:hover:bg-white dark:hover:text-slate-950 dark:hover:border-white"
-                                        aria-label="Kunjungi profil GitHub"
-                                    >
-                                        <Github size={16} />
-                                    </a>
-                                )}
-                                {data.linkedin_url && (
-                                    <a
-                                        href={data.linkedin_url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="rounded-full border border-slate-200/50 bg-slate-50 p-2.5 text-slate-600 transition-all duration-300 hover:scale-110 hover:bg-[#0A66C2] hover:text-white hover:border-[#0A66C2] dark:border-slate-800/50 dark:bg-slate-800/60 dark:text-slate-400 dark:hover:bg-[#0A66C2] dark:hover:text-white dark:hover:border-[#0A66C2]"
-                                        aria-label="Kunjungi profil LinkedIn"
-                                    >
-                                        <Linkedin size={16} />
-                                    </a>
-                                )}
-                            </div>
-
-                            {/* Education History Section */}
-                            {data.education && data.education.length > 0 && (
-                                <div className="mt-6 w-full border-t border-slate-100/75 pt-5 text-left dark:border-slate-800/60">
-                                    <div className="mb-4 flex items-center gap-2">
-                                        <div className="rounded-lg bg-slate-100 p-1.5 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                                            <GraduationCap size={14} />
                                         </div>
-                                        <span className="text-[10px] leading-none font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
-                                            Riwayat Pendidikan
+
+                                        {/* Dynamic Breathing Online Status Indicator Dot */}
+                                        <span className="absolute right-2 bottom-1 flex h-4 w-4">
+                                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                                            <span
+                                                className="relative inline-flex h-4 w-4 rounded-full border-2 border-white bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.7)] dark:border-slate-900"
+                                                title="Aktif saat ini"
+                                            />
                                         </span>
                                     </div>
 
-                                    <div className="relative border-l-2 border-slate-100 dark:border-slate-800 ml-3.5 pl-5 space-y-4">
-                                        {data.education.map((edu, idx) => (
-                                            <div key={idx} className="relative group/edu">
-                                                <div className="absolute -left-[25px] top-1 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 group-hover/edu:border-amber-400 group-hover/edu:bg-amber-50 dark:group-hover/edu:bg-amber-950/40 transition-all duration-300">
-                                                    <div className="h-1 w-1 rounded-full bg-slate-300 group-hover/edu:bg-amber-500 transition-colors" />
-                                                </div>
+                                    {/* Profile Details (Only render non-empty fields) */}
+                                    {data.name?.trim() ? (
+                                        <h2 className="mb-1 text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                                            {data.name}
+                                        </h2>
+                                    ) : null}
 
-                                                <div>
-                                                    <h5 className="text-[11px] font-extrabold leading-snug text-slate-800 dark:text-slate-200 group-hover/edu:text-amber-500 dark:group-hover/edu:text-amber-400 transition-colors">
-                                                        {edu.school || '-'}
-                                                    </h5>
-                                                    {edu.major && (
-                                                        <span className="block text-[10px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">
-                                                            {edu.major}
-                                                        </span>
-                                                    )}
-                                                    {edu.period && (
-                                                        <span className="block text-[9px] font-semibold text-slate-400 dark:text-slate-500 mt-0.5 font-mono">
-                                                            {edu.period}
-                                                        </span>
-                                                    )}
-                                                </div>
+                                    {data.role?.trim() ? (
+                                        <p className="mb-4 inline-block rounded-full bg-violet-50 px-3.5 py-1 text-xs sm:text-sm font-semibold text-violet-600 dark:bg-violet-950/40 dark:text-violet-400">
+                                            {data.role}
+                                        </p>
+                                    ) : null}
+
+                                    {/* Brief bio text (Only render if non-empty) */}
+                                    {data.bio?.trim() ? (
+                                        <p className="mb-6 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                                            {data.bio}
+                                        </p>
+                                    ) : null}
+
+                                    {/* Contact Statistics List (Only render if non-empty) */}
+                                    {hasContacts && (
+                                        <>
+                                            <div className="mb-6 h-[1px] w-full bg-slate-100 dark:bg-slate-800" />
+                                            <div className="mb-6 w-full space-y-3.5 text-left">
+                                                {data.location?.trim() ? (
+                                                    <div className="group flex items-start gap-3.5">
+                                                        <div className="rounded-xl bg-slate-100 p-2.5 text-slate-500 transition-colors duration-300 group-hover:bg-blue-100 group-hover:text-blue-600 dark:bg-slate-800 dark:text-slate-400 dark:group-hover:bg-blue-950 dark:group-hover:text-blue-400">
+                                                            <MapPin size={16} />
+                                                        </div>
+                                                        <div>
+                                                            <span className="mb-1 block text-[10px] leading-none font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
+                                                                Location
+                                                            </span>
+                                                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                                                {data.location}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                ) : null}
+
+                                                {data.email?.trim() ? (
+                                                    <div className="group flex items-start gap-3.5">
+                                                        <div className="rounded-xl bg-slate-100 p-2.5 text-slate-500 transition-colors duration-300 group-hover:bg-violet-100 group-hover:text-violet-600 dark:bg-slate-800 dark:text-slate-400 dark:group-hover:bg-violet-950 dark:group-hover:text-violet-400">
+                                                            <Mail size={16} strokeWidth={2.2} />
+                                                        </div>
+                                                        <div>
+                                                            <span className="mb-1 block text-[10px] leading-none font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
+                                                                Email
+                                                            </span>
+                                                            <span className="text-xs font-semibold break-words text-slate-700 dark:text-slate-300">
+                                                                {data.email}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                ) : null}
                                             </div>
-                                        ))}
+                                        </>
+                                    )}
+
+                                    {/* Call To Action Buttons (Simulated) */}
+                                    <div className="w-full space-y-2.5">
+                                        <button
+                                            type="button"
+                                            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-slate-900 py-3.5 text-xs font-semibold text-white shadow-md transition-all hover:bg-slate-800 active:scale-[0.98] dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"
+                                        >
+                                            <Send size={14} strokeWidth={2.4} />
+                                            Hubungi Saya
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border border-slate-200/60 bg-white py-3 text-xs font-bold text-slate-800 shadow-xs transition-all hover:bg-slate-50 active:scale-[0.98] dark:border-slate-800/80 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900"
+                                        >
+                                            <Download size={14} strokeWidth={2.4} />
+                                            Download Resume (PDF)
+                                        </button>
                                     </div>
+
+                                    {/* Social Network Grid (Only render if non-empty) */}
+                                    {hasSocials && (
+                                        <div className="mt-5 flex items-center gap-3">
+                                            {data.github_url?.trim() ? (
+                                                <a
+                                                    href={data.github_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="rounded-full border border-slate-200/50 bg-slate-50 p-2.5 text-slate-600 transition-all duration-300 hover:scale-110 hover:bg-slate-950 hover:text-white hover:border-slate-950 dark:border-slate-800/50 dark:bg-slate-800/60 dark:text-slate-400 dark:hover:bg-white dark:hover:text-slate-950 dark:hover:border-white"
+                                                    aria-label="Kunjungi profil GitHub"
+                                                >
+                                                    <Github size={16} />
+                                                </a>
+                                            ) : null}
+                                            {data.linkedin_url?.trim() ? (
+                                                <a
+                                                    href={data.linkedin_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="rounded-full border border-slate-200/50 bg-slate-50 p-2.5 text-slate-600 transition-all duration-300 hover:scale-110 hover:bg-[#0A66C2] hover:text-white hover:border-[#0A66C2] dark:border-slate-800/50 dark:bg-slate-800/60 dark:text-slate-400 dark:hover:bg-[#0A66C2] dark:hover:text-white dark:hover:border-[#0A66C2]"
+                                                    aria-label="Kunjungi profil LinkedIn"
+                                                >
+                                                    <Linkedin size={16} />
+                                                </a>
+                                            ) : null}
+                                        </div>
+                                    )}
+
+                                    {/* Education History Section (Only render if non-empty) */}
+                                    {validEducations.length > 0 && (
+                                        <div className="mt-6 w-full border-t border-slate-100/75 pt-5 text-left dark:border-slate-800/60">
+                                            <div className="mb-4 flex items-center gap-2">
+                                                <div className="rounded-lg bg-slate-100 p-1.5 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                                                    <GraduationCap size={14} />
+                                                </div>
+                                                <span className="text-[10px] leading-none font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
+                                                    Riwayat Pendidikan
+                                                </span>
+                                            </div>
+
+                                            <div className="relative border-l-2 border-slate-100 dark:border-slate-800 ml-3.5 pl-5 space-y-4">
+                                                {validEducations.map((edu, idx) => (
+                                                    <div key={idx} className="relative group/edu">
+                                                        <div className="absolute -left-[25px] top-1 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 group-hover/edu:border-amber-400 group-hover/edu:bg-amber-50 dark:group-hover/edu:bg-amber-950/40 transition-all duration-300">
+                                                            <div className="h-1 w-1 rounded-full bg-slate-300 group-hover/edu:bg-amber-500 transition-colors" />
+                                                        </div>
+
+                                                        <div>
+                                                            {edu.school && (
+                                                                <h5 className="text-[11px] font-extrabold leading-snug text-slate-800 dark:text-slate-200 group-hover/edu:text-amber-500 dark:group-hover/edu:text-amber-400 transition-colors">
+                                                                    {edu.school}
+                                                                </h5>
+                                                            )}
+                                                            {edu.major && (
+                                                                <span className="block text-[10px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+                                                                    {edu.major}
+                                                                </span>
+                                                            )}
+                                                            {edu.period && (
+                                                                <span className="block text-[9px] font-semibold text-slate-400 dark:text-slate-500 mt-0.5 font-mono">
+                                                                    {edu.period}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
-                            )}
-                        </div>
+                            );
+                        })()}
                     </div>
                 </div>
             </div>

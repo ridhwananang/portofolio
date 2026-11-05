@@ -6,26 +6,25 @@ import {
     Send,
     Download,
     GraduationCap,
-    Trophy,
-    Award,
+    User,
 } from 'lucide-react';
 
 interface ProfileCardProps {
     onOpenContact: () => void;
     profile: {
-        name: string;
-        role: string;
-        bio: string;
-        location: string;
-        email: string;
-        image?: string;
-        github_url?: string;
-        linkedin_url?: string;
+        name?: string | null;
+        role?: string | null;
+        bio?: string | null;
+        location?: string | null;
+        email?: string | null;
+        image?: string | null;
+        github_url?: string | null;
+        linkedin_url?: string | null;
         education?: Array<{
-            school: string;
+            school?: string;
             major?: string;
             period?: string;
-        }>;
+        }> | null;
     } | null;
     loading: boolean;
 }
@@ -57,9 +56,11 @@ export default function ProfileCard({ onOpenContact, profile, loading }: Profile
         );
     }
 
-    const formalEducations = (profile.education || []).filter(
-        (edu) => !edu.school?.toLowerCase().includes('coding camp')
+    const validEducations = (profile.education || []).filter(
+        (edu) => Boolean(edu.school?.trim() || edu.major?.trim() || edu.period?.trim())
     );
+    const hasContacts = Boolean(profile.location?.trim() || profile.email?.trim());
+    const hasSocials = Boolean(profile.github_url?.trim() || profile.linkedin_url?.trim());
 
     return (
         <div
@@ -67,88 +68,103 @@ export default function ProfileCard({ onOpenContact, profile, loading }: Profile
             className="glass-card relative flex w-full flex-col items-center overflow-hidden rounded-[2.2rem] border border-slate-200/70 bg-white/75 p-8 text-center shadow-xl shadow-slate-100/50 backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/60 dark:shadow-none"
         >
             {/* Decorative top gradient accent bar */}
-            <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-blue-500 via-violet-500 to-indigo-500"></div>
+            <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-blue-500 via-violet-500 to-indigo-500" />
 
             {/* Avatar Container with glowing rings */}
             <div className="group relative mb-6 select-none">
-                <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-blue-500 via-violet-500 to-indigo-500 opacity-25 blur-md transition-opacity duration-300 group-hover:opacity-50 animate-spin-slow"></div>
+                <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-blue-500 via-violet-500 to-indigo-500 opacity-25 blur-md transition-opacity duration-300 group-hover:opacity-50 animate-spin-slow" />
                 <div className="relative h-36 w-36 rounded-full bg-gradient-to-tr from-blue-500 via-violet-500 to-indigo-500 p-[3px] shadow-[0_0_20px_rgba(139,92,246,0.15)] group-hover:shadow-[0_0_25px_rgba(139,92,246,0.3)] transition-all duration-300">
                     <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-white dark:bg-slate-800">
-                        <img
-                            src={profile.image || "/images/me.jpeg"}
-                            alt={profile.name}
-                            className="h-full w-full object-cover"
-                        />
+                        {profile.image ? (
+                            <img
+                                src={profile.image}
+                                alt={profile.name || 'Avatar'}
+                                className="h-full w-full object-cover"
+                            />
+                        ) : (
+                            <div className="flex h-full w-full items-center justify-center bg-violet-500/10 text-violet-600 dark:text-violet-300 font-black text-2xl select-none">
+                                {profile.name?.trim() ? profile.name.trim().slice(0, 2).toUpperCase() : <User size={36} className="text-slate-400" />}
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 {/* Dynamic Breathing Online Status Indicator Dot */}
                 <span className="absolute right-2 bottom-1 flex h-4 w-4">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                     <span
                         className="relative inline-flex h-4 w-4 rounded-full border-2 border-white bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.7)] dark:border-slate-900"
                         title="Aktif saat ini"
-                    ></span>
+                    />
                 </span>
             </div>
 
-            {/* Profile Details */}
-            <h2 className="mb-1 text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-                {profile.name}
-            </h2>
-            <p className="mb-4 inline-block rounded-full bg-violet-50 px-3.5 py-1 text-sm font-semibold text-violet-600 dark:bg-violet-950/40 dark:text-violet-400">
-                {profile.role}
-            </p>
+            {/* Profile Details (Only render if non-empty) */}
+            {profile.name?.trim() ? (
+                <h2 className="mb-1 text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                    {profile.name}
+                </h2>
+            ) : null}
 
-            {/* Brief bio text (Optional) */}
-            {profile.bio && (
+            {profile.role?.trim() ? (
+                <p className="mb-4 inline-block rounded-full bg-violet-50 px-3.5 py-1 text-sm font-semibold text-violet-600 dark:bg-violet-950/40 dark:text-violet-400">
+                    {profile.role}
+                </p>
+            ) : null}
+
+            {/* Brief bio text (Only render if non-empty) */}
+            {profile.bio?.trim() ? (
                 <p className="mb-6 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
                     {profile.bio}
                 </p>
+            ) : null}
+
+            {/* Contact Statistics List (Only render if non-empty) */}
+            {hasContacts && (
+                <>
+                    <div className="mb-6 h-[1px] w-full bg-slate-100 dark:bg-slate-800" />
+                    <div className="mb-8 w-full space-y-4 text-left">
+                        {profile.location?.trim() ? (
+                            <div className="group flex items-start gap-3.5">
+                                <div className="rounded-xl bg-slate-100 p-2.5 text-slate-500 transition-colors duration-300 group-hover:bg-blue-100 group-hover:text-blue-600 dark:bg-slate-800 dark:text-slate-400 dark:group-hover:bg-blue-950 dark:group-hover:text-blue-400">
+                                    <MapPin size={16} id="location-pin-icon" />
+                                </div>
+                                <div>
+                                    <span className="mb-1 block text-[10px] leading-none font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
+                                        Location
+                                    </span>
+                                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                        {profile.location}
+                                    </span>
+                                </div>
+                            </div>
+                        ) : null}
+
+                        {profile.email?.trim() ? (
+                            <div className="group flex items-start gap-3.5">
+                                <div className="rounded-xl bg-slate-100 p-2.5 text-slate-500 transition-colors duration-300 group-hover:bg-violet-100 group-hover:text-violet-600 dark:bg-slate-800 dark:text-slate-400 dark:group-hover:bg-violet-950 dark:group-hover:text-violet-400">
+                                    <Mail
+                                        size={16}
+                                        id="email-envelope-icon"
+                                        strokeWidth={2.2}
+                                    />
+                                </div>
+                                <div>
+                                    <span className="mb-1 block text-[10px] leading-none font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
+                                        Email
+                                    </span>
+                                    <a
+                                        href={`mailto:${profile.email}`}
+                                        className="text-xs font-semibold break-words text-slate-700 transition-colors hover:text-violet-600 dark:text-slate-300 dark:hover:text-violet-400"
+                                    >
+                                        {profile.email}
+                                    </a>
+                                </div>
+                            </div>
+                        ) : null}
+                    </div>
+                </>
             )}
-
-            {/* Decorative separator line */}
-            <div className="mb-6 h-[1px] w-full bg-slate-100 dark:bg-slate-800"></div>
-
-            {/* Contact Statistics List */}
-            <div className="mb-8 w-full space-y-4 text-left">
-                {/* Location Row */}
-                <div className="group flex items-start gap-3.5">
-                    <div className="rounded-xl bg-slate-100 p-2.5 text-slate-500 transition-colors duration-300 group-hover:bg-blue-100 group-hover:text-blue-600 dark:bg-slate-800 dark:text-slate-400 dark:group-hover:bg-blue-950 dark:group-hover:text-blue-400">
-                        <MapPin size={16} id="location-pin-icon" />
-                    </div>
-                    <div>
-                        <span className="mb-1 block text-[10px] leading-none font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
-                            Location
-                        </span>
-                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                            {profile.location}
-                        </span>
-                    </div>
-                </div>
-
-                {/* Email Row */}
-                <div className="group flex items-start gap-3.5">
-                    <div className="rounded-xl bg-slate-100 p-2.5 text-slate-500 transition-colors duration-300 group-hover:bg-violet-100 group-hover:text-violet-600 dark:bg-slate-800 dark:text-slate-400 dark:group-hover:bg-violet-950 dark:group-hover:text-violet-400">
-                        <Mail
-                            size={16}
-                            id="email-envelope-icon"
-                            strokeWidth={2.2}
-                        />
-                    </div>
-                    <div>
-                        <span className="mb-1 block text-[10px] leading-none font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
-                            Email
-                        </span>
-                        <a
-                            href={`mailto:${profile.email}`}
-                            className="text-xs font-semibold break-words text-slate-700 transition-colors hover:text-violet-600 dark:text-slate-300 dark:hover:text-violet-400"
-                        >
-                            {profile.email}
-                        </a>
-                    </div>
-                </div>
-            </div>
 
             {/* Call To Action Buttons */}
             <button
@@ -168,103 +184,72 @@ export default function ProfileCard({ onOpenContact, profile, loading }: Profile
                 Download Resume (PDF)
             </a>
 
-            {/* Social Network Grid */}
-            <div className="mt-5 flex items-center gap-3.5">
-                {profile.github_url && (
-                    <a
-                        href={profile.github_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="rounded-full border border-slate-200/50 bg-slate-50 p-3 text-slate-600 transition-all duration-300 hover:scale-110 hover:bg-slate-950 hover:text-white hover:border-slate-950 dark:border-slate-800/50 dark:bg-slate-800/60 dark:text-slate-400 dark:hover:bg-white dark:hover:text-slate-950 dark:hover:border-white"
-                        aria-label="Kunjungi profil GitHub Ridhwan"
-                    >
-                        <Github size={18} id="profile-github-icon" />
-                    </a>
-                )}
-                {profile.linkedin_url && (
-                    <a
-                        href={profile.linkedin_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="rounded-full border border-slate-200/50 bg-slate-50 p-3 text-slate-600 transition-all duration-300 hover:scale-110 hover:bg-[#0A66C2] hover:text-white hover:border-[#0A66C2] dark:border-slate-800/50 dark:bg-slate-800/60 dark:text-slate-400 dark:hover:bg-[#0A66C2] dark:hover:text-white dark:hover:border-[#0A66C2]"
-                        aria-label="Kunjungi profil LinkedIn Ridhwan"
-                    >
-                        <Linkedin size={18} id="profile-linkedin-icon" />
-                    </a>
-                )}
-            </div>
-
-            {/* Key Achievement / Pencapaian Utama */}
-            <div className="mt-6 w-full border-t border-slate-100/75 pt-5 text-left dark:border-slate-800/60">
-                <div className="mb-3 flex items-center gap-2">
-                    <div className="rounded-lg bg-amber-100/80 p-1.5 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
-                        <Trophy size={14} />
-                    </div>
-                    <span className="text-[10px] leading-none font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
-                        Pencapaian Utama (Achievement)
-                    </span>
+            {/* Social Network Grid (Only render if non-empty) */}
+            {hasSocials && (
+                <div className="mt-5 flex items-center gap-3.5">
+                    {profile.github_url?.trim() ? (
+                        <a
+                            href={profile.github_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-full border border-slate-200/50 bg-slate-50 p-3 text-slate-600 transition-all duration-300 hover:scale-110 hover:bg-slate-950 hover:text-white hover:border-slate-950 dark:border-slate-800/50 dark:bg-slate-800/60 dark:text-slate-400 dark:hover:bg-white dark:hover:text-slate-950 dark:hover:border-white"
+                            aria-label="Kunjungi profil GitHub Ridhwan"
+                        >
+                            <Github size={18} id="profile-github-icon" />
+                        </a>
+                    ) : null}
+                    {profile.linkedin_url?.trim() ? (
+                        <a
+                            href={profile.linkedin_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-full border border-slate-200/50 bg-slate-50 p-3 text-slate-600 transition-all duration-300 hover:scale-110 hover:bg-[#0A66C2] hover:text-white hover:border-[#0A66C2] dark:border-slate-800/50 dark:bg-slate-800/60 dark:text-slate-400 dark:hover:bg-[#0A66C2] dark:hover:text-white dark:hover:border-[#0A66C2]"
+                            aria-label="Kunjungi profil LinkedIn Ridhwan"
+                        >
+                            <Linkedin size={18} id="profile-linkedin-icon" />
+                        </a>
+                    ) : null}
                 </div>
+            )}
 
-                <div className="group rounded-2xl border border-amber-200/70 bg-gradient-to-br from-amber-50/60 via-white to-amber-50/30 p-3.5 shadow-xs transition-all duration-300 hover:border-amber-400/60 hover:shadow-md dark:border-amber-900/40 dark:bg-gradient-to-br dark:from-amber-950/20 dark:via-slate-900/50 dark:to-amber-950/10">
-                    <div className="flex items-start gap-2.5">
-                        <div className="rounded-xl bg-amber-500/10 p-2 text-amber-600 dark:text-amber-400 shrink-0">
-                            <Award size={16} strokeWidth={2.2} />
-                        </div>
-                        <div>
-                            <span className="inline-block rounded-md bg-amber-500/15 px-2 py-0.5 text-[9px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wide">
-                                Intensive Graduate • 943 Jam
-                            </span>
-                            <h5 className="mt-1 text-xs font-black leading-snug text-slate-900 dark:text-slate-100">
-                                Coding Camp 2026 - Powered by DBS Foundation
-                            </h5>
-                            <p className="mt-0.5 text-[11px] font-semibold text-slate-600 dark:text-slate-400">
-                                Full-Stack Web Developer
-                            </p>
-                            <span className="mt-1 block text-[10px] font-medium text-slate-400 dark:text-slate-500 font-mono">
-                                February 2026 - July 2026
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Education History Section (Pendidikan Formal) */}
-            {formalEducations.length > 0 && (
-                <div className="mt-5 w-full border-t border-slate-100/75 pt-5 text-left dark:border-slate-800/60">
+            {/* Education History Section (Only render if non-empty) */}
+            {validEducations.length > 0 && (
+                <div className="mt-6 w-full border-t border-slate-100/75 pt-5 text-left dark:border-slate-800/60">
                     <div className="mb-4 flex items-center gap-2">
                         <div className="rounded-lg bg-slate-100 p-1.5 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                             <GraduationCap size={14} />
                         </div>
                         <span className="text-[10px] leading-none font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
-                            Riwayat Pendidikan Formal
+                            Riwayat Pendidikan
                         </span>
                     </div>
 
                     <div className="relative border-l-2 border-slate-100 dark:border-slate-800 ml-3.5 pl-5 space-y-4">
-                        {formalEducations.map((edu, idx) => (
-                                <div key={idx} className="relative group/edu">
-                                    {/* Dot positioned precisely centered on border line */}
-                                    <div className="absolute -left-[25px] top-1 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 group-hover/edu:border-amber-400 group-hover/edu:bg-amber-50 dark:group-hover/edu:bg-amber-950/40 transition-all duration-300">
-                                        <div className="h-1 w-1 rounded-full bg-slate-300 group-hover/edu:bg-amber-500 transition-colors"></div>
-                                    </div>
+                        {validEducations.map((edu, idx) => (
+                            <div key={idx} className="relative group/edu">
+                                <div className="absolute -left-[25px] top-1 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 group-hover/edu:border-amber-400 group-hover/edu:bg-amber-50 dark:group-hover/edu:bg-amber-950/40 transition-all duration-300">
+                                    <div className="h-1 w-1 rounded-full bg-slate-300 group-hover/edu:bg-amber-500 transition-colors" />
+                                </div>
 
-                                    <div>
+                                <div>
+                                    {edu.school && (
                                         <h5 className="text-[11px] font-extrabold leading-snug text-slate-850 dark:text-slate-200 group-hover/edu:text-amber-500 dark:group-hover/edu:text-amber-400 transition-colors">
                                             {edu.school}
                                         </h5>
-                                        {edu.major && (
-                                            <span className="block text-[10px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">
-                                                {edu.major}
-                                            </span>
-                                        )}
-                                        {edu.period && (
-                                            <span className="block text-[9px] font-semibold text-slate-450 dark:text-slate-500 mt-0.5 font-mono">
-                                                {edu.period}
-                                            </span>
-                                        )}
-                                    </div>
+                                    )}
+                                    {edu.major && (
+                                        <span className="block text-[10px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+                                            {edu.major}
+                                        </span>
+                                    )}
+                                    {edu.period && (
+                                        <span className="block text-[9px] font-semibold text-slate-450 dark:text-slate-500 mt-0.5 font-mono">
+                                            {edu.period}
+                                        </span>
+                                    )}
                                 </div>
-                            ))}
+                            </div>
+                        ))}
                     </div>
                 </div>
             )}

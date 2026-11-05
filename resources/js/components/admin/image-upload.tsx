@@ -19,16 +19,19 @@ export function ImageUpload({
 }: ImageUploadProps) {
     const inputRef = useRef<HTMLInputElement>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [isRemoved, setIsRemoved] = useState(false);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0] || null;
         if (file) {
+            setIsRemoved(false);
             setPreviewUrl(URL.createObjectURL(file));
             onChange(file);
         }
     };
 
     const handleRemove = () => {
+        setIsRemoved(true);
         setPreviewUrl(null);
         onChange(null);
         if (inputRef.current) {
@@ -36,7 +39,7 @@ export function ImageUpload({
         }
     };
 
-    const displayUrl = previewUrl || currentImageUrl;
+    const displayUrl = isRemoved ? null : (previewUrl || currentImageUrl);
 
     return (
         <div className="space-y-2">
