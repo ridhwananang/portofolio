@@ -175,36 +175,20 @@ class ProjectOrderController extends Controller
 
         $needsSave = false;
 
-        // 0. Auto-healing / Sinkronisasi status pembayaran dari database & Midtrans Core API
+        // 0. Auto-healing / Sinkronisasi status pembayaran dari database & Payment Gateway API (Mayar / Midtrans / Xendit)
         $dpTx = $order->dpTransaction ?? $order->quest?->dpDepositTransaction ?? $order->quest?->depositTransaction;
 
-        // Jika status transaksi di database masih pending, periksa status terkini ke Midtrans API
-        if (!$order->isDpPaid() && $dpTx && $dpTx->status === TransactionStatus::PENDING && !empty($dpTx->xendit_external_id)) {
-            try {
-                /** @var \App\Services\Payment\Midtrans\MidtransClient $midtransClient */
-                $midtransClient = app(\App\Services\Payment\Midtrans\MidtransClient::class);
-                $statusResp = $midtransClient->getTransactionStatus($dpTx->xendit_external_id);
-                $txStatus = strtolower($statusResp['transaction_status'] ?? '');
-                if (in_array($txStatus, ['settlement', 'capture'])) {
-                    $this->escrowService->holdEscrow($dpTx->xendit_external_id, [
-                        'id' => $statusResp['transaction_id'] ?? null,
-                        'order_id' => $dpTx->xendit_external_id,
-                        'transaction_status' => $txStatus,
-                        'gross_amount' => $statusResp['gross_amount'] ?? (string) $dpTx->amount,
-                        'payment_type' => $statusResp['payment_type'] ?? 'qris',
-                        'payment_channel' => $statusResp['payment_type'] ?? 'qris',
-                    ]);
-                    $order->refresh();
-                    $dpTx = $order->dpTransaction;
-                }
-            } catch (\Throwable $e) {
-                // Silently continue if API is unreachable
+        // Jika status transaksi di database masih pending, periksa status terkini ke Payment Gateway API
+        if (! $order->isDpPaid() && $dpTx && $dpTx->status === TransactionStatus::PENDING) {
+            if ($this->syncPendingTransactionWithGateway($dpTx)) {
+                $order->refresh();
+                $dpTx = $order->dpTransaction;
             }
         }
 
         // Jika transaksi DP berstatus HELD / RELEASED, pastikan order dan milestone konsisten
         if ($dpTx && in_array($dpTx->status, [TransactionStatus::HELD, TransactionStatus::RELEASED])) {
-            if (!in_array($order->payment_stage, ['dp_paid', 'awaiting_final', 'fully_paid']) || empty($order->dp_paid_at)) {
+            if (! in_array($order->payment_stage, ['dp_paid', 'awaiting_final', 'fully_paid']) || empty($order->dp_paid_at)) {
                 $order->payment_stage = 'dp_paid';
                 $order->dp_paid_at = $order->dp_paid_at ?? ($dpTx->paid_at ?? now());
                 $order->dp_transaction_id = $dpTx->id;
@@ -217,26 +201,10 @@ class ProjectOrderController extends Controller
 
         // Cek transaksi final jika ada
         $finalTx = $order->finalTransaction ?? $order->quest?->finalDepositTransaction;
-        if (!$order->isFullyPaid() && $finalTx && $finalTx->status === TransactionStatus::PENDING && !empty($finalTx->xendit_external_id)) {
-            try {
-                /** @var \App\Services\Payment\Midtrans\MidtransClient $midtransClient */
-                $midtransClient = app(\App\Services\Payment\Midtrans\MidtransClient::class);
-                $statusResp = $midtransClient->getTransactionStatus($finalTx->xendit_external_id);
-                $txStatus = strtolower($statusResp['transaction_status'] ?? '');
-                if (in_array($txStatus, ['settlement', 'capture'])) {
-                    $this->escrowService->holdEscrow($finalTx->xendit_external_id, [
-                        'id' => $statusResp['transaction_id'] ?? null,
-                        'order_id' => $finalTx->xendit_external_id,
-                        'transaction_status' => $txStatus,
-                        'gross_amount' => $statusResp['gross_amount'] ?? (string) $finalTx->amount,
-                        'payment_type' => $statusResp['payment_type'] ?? 'qris',
-                        'payment_channel' => $statusResp['payment_type'] ?? 'qris',
-                    ]);
-                    $order->refresh();
-                    $finalTx = $order->finalTransaction;
-                }
-            } catch (\Throwable $e) {
-                // Silently continue
+        if (! $order->isFullyPaid() && $finalTx && $finalTx->status === TransactionStatus::PENDING) {
+            if ($this->syncPendingTransactionWithGateway($finalTx)) {
+                $order->refresh();
+                $finalTx = $order->finalTransaction;
             }
         }
 
@@ -497,5 +465,51 @@ class ProjectOrderController extends Controller
         ]);
 
         return back()->with('success', 'Link preview staging website berhasil diperbarui.');
+    }
+
+    /**
+     * Memeriksa status transaksi pending ke Payment Gateway yang aktif (Mayar / Midtrans / Xendit)
+     */
+    protected function syncPendingTransactionWithGateway(Transaction $tx): bool
+    {
+        try {
+            /** @var \App\Contracts\PaymentGatewayInterface $gateway */
+            $gateway = app(\App\Contracts\PaymentGatewayInterface::class);
+            $driver = strtolower((string) config('services.payment_gateway', 'mayar'));
+
+            // Midtrans menggunakan order_id (xendit_external_id), sedangkan Mayar & Xendit menggunakan invoice id (xendit_id)
+            $lookupId = $driver === 'midtrans'
+                ? $tx->xendit_external_id
+                : ($tx->xendit_id ?: $tx->xendit_external_id);
+
+            if (empty($lookupId)) {
+                return false;
+            }
+
+            $statusResp = $gateway->getInvoice($lookupId);
+            $data = is_array($statusResp['data'] ?? null) ? $statusResp['data'] : $statusResp;
+
+            $rawStatus = $data['status'] ?? $data['transaction_status'] ?? '';
+            $isPaid = ($rawStatus === true)
+                || ($rawStatus === 1)
+                || in_array(strtolower((string) $rawStatus), ['paid', 'settled', 'settlement', 'capture', 'completed', 'success', 'true', '1'], true);
+
+            if ($isPaid && ! empty($tx->xendit_external_id)) {
+                $this->escrowService->holdEscrow($tx->xendit_external_id, [
+                    'id' => $data['id'] ?? $data['transaction_id'] ?? $lookupId,
+                    'order_id' => $tx->xendit_external_id,
+                    'status' => 'paid',
+                    'gross_amount' => (string) ($data['amount'] ?? $data['gross_amount'] ?? $tx->amount),
+                    'payment_method' => $data['payment_type'] ?? $data['paymentMethod'] ?? $data['payment_method'] ?? strtoupper($driver),
+                    'payment_channel' => $data['payment_channel'] ?? $data['paymentChannel'] ?? strtoupper($driver),
+                ]);
+
+                return true;
+            }
+        } catch (\Throwable $e) {
+            // Silently continue if gateway API is unreachable or key is not set
+        }
+
+        return false;
     }
 }

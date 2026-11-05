@@ -25,11 +25,6 @@ class ProfileSeeder extends Seeder
             'linkedin_url' => 'https://www.linkedin.com/in/ridhwan-anang-ma-ruf/',
             'education' => [
                 [
-                    'school' => 'Coding Camp 2026 - Powered by DBS Foundation',
-                    'major' => 'Full-Stack Web Developer',
-                    'period' => 'February 2026 - July 2026',
-                ],
-                [
                     'school' => 'Universitas Pamulang',
                     'major' => 'B.S. in Informatics Engineering – Software Engineering Focus',
                     'period' => 'March 2024 – Present',

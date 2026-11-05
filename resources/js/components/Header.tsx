@@ -63,7 +63,7 @@ export default function Header({
         { label: 'Beranda', id: 'hero', icon: Home },
         { label: 'Tech Stack', id: 'tech-stack', icon: Code },
         { label: 'Karya', id: 'karya', icon: Briefcase },
-        { label: 'Layanan', id: 'layanan', icon: Sparkles },
+        // { label: 'Layanan', id: 'layanan', icon: Sparkles }, // Hidden per request (jangan dihapus)
         { label: 'Sertifikat', id: 'sertifikat', icon: Award },
     ];
 
@@ -189,7 +189,8 @@ export default function Header({
                         )}
                     </button>
 
-                    {/* Quick Project Tracker Button (Desktop) */}
+                    {/* Quick Project Tracker Button (Desktop) - Hidden per request (jangan dihapus) */}
+                    {/*
                     <button
                         onClick={onOpenTracking}
                         className="hidden cursor-pointer items-center gap-1.5 rounded-xl border border-violet-500/30 bg-violet-500/10 hover:bg-violet-500/20 px-3.5 py-2.5 text-xs font-bold text-violet-700 dark:border-violet-500/30 dark:bg-violet-950/40 dark:text-violet-300 dark:hover:bg-violet-900/50 shadow-xs transition-all duration-200 active:scale-95 sm:inline-flex"
@@ -198,6 +199,7 @@ export default function Header({
                         <Search size={13} className="text-violet-600 dark:text-violet-400" />
                         <span>Lacak Proyek</span>
                     </button>
+                    */}
 
                     {/* Quick Contact Button */}
                     <button
@@ -277,7 +279,8 @@ export default function Header({
                                 );
                             })}
 
-                            {/* Mobile Project Tracker Item */}
+                            {/* Mobile Project Tracker Item - Hidden per request (jangan dihapus) */}
+                            {/*
                             <button
                                 type="button"
                                 onClick={() => {
@@ -297,6 +300,7 @@ export default function Header({
                                 </div>
                                 <ChevronRight size={16} className="text-slate-400 dark:text-slate-600" />
                             </button>
+                            */}
 
                             <a
                                 href="https://www.dicoding.com/users/riedmarf12/academies"

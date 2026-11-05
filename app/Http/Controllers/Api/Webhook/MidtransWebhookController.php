@@ -88,25 +88,23 @@ class MidtransWebhookController extends Controller
             ], 200);
         }
 
-        // 4. Verifikasi Signature Key Midtrans (jika server key dikonfigurasi)
-        if (! empty($this->midtransClient->getServerKey())) {
-            $isValidSignature = $this->midtransClient->verifySignature(
-                $orderId,
-                $statusCode,
-                $grossAmount,
-                $signatureKey
-            );
+        // 4. Verifikasi Signature Key Midtrans (Fail-Closed: wajib valid)
+        $isValidSignature = $this->midtransClient->verifySignature(
+            $orderId,
+            $statusCode,
+            $grossAmount,
+            $signatureKey
+        );
 
-            if (! $isValidSignature) {
-                $paymentLog?->update([
-                    'status' => PaymentLogStatus::FAILED,
-                    'error_message' => 'Invalid Midtrans signature_key',
-                ]);
+        if (! $isValidSignature) {
+            $paymentLog?->update([
+                'status' => PaymentLogStatus::FAILED,
+                'error_message' => 'Invalid Midtrans signature_key',
+            ]);
 
-                Log::warning("Midtrans Webhook Ditolak: Signature key tidak valid untuk order {$orderId}");
+            Log::warning("Midtrans Webhook Ditolak: Signature key tidak valid untuk order {$orderId}");
 
-                return response()->json(['error' => 'Invalid signature'], 403);
-            }
+            return response()->json(['error' => 'Invalid signature'], 403);
         }
 
         // 5. Cek apakah transaksi berhasil (settlement atau capture dengan accept)

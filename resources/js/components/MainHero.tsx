@@ -1,4 +1,4 @@
-import { Terminal, Database, Server, Layout, ArrowRight, Calculator, Sparkles, Search } from 'lucide-react';
+import { Terminal, Database, Server, Layout, ArrowRight, Calculator, Sparkles, Search, Award } from 'lucide-react';
 import { Link } from '@inertiajs/react';
 
 interface MainHeroProps {
@@ -41,6 +41,25 @@ export default function MainHero({ onOpenTracking }: MainHeroProps) {
 
             {/* Action CTA Buttons */}
             <div className="mt-7 flex flex-wrap items-center gap-3">
+                <a
+                    href="#karya"
+                    className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 px-5 py-3 text-xs font-bold text-white shadow-lg shadow-violet-500/25 transition-all duration-300 hover:shadow-violet-500/40 hover:scale-[1.02] active:scale-[0.98]"
+                >
+                    <Sparkles size={14} />
+                    <span>Lihat Portofolio</span>
+                    <ArrowRight size={13} />
+                </a>
+
+                <a
+                    href="#sertifikat"
+                    className="inline-flex items-center gap-2 rounded-2xl border border-slate-200/80 bg-white/80 px-4 py-3 text-xs font-bold text-slate-700 shadow-xs transition-all duration-300 hover:border-slate-300 hover:bg-slate-50 active:scale-[0.98] dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-850"
+                >
+                    <Award size={14} className="text-violet-500" />
+                    <span>Sertifikasi & Kelulusan</span>
+                </a>
+
+                {/* Commercial service & tracker buttons - Hidden per request (jangan dihapus) */}
+                {/*
                 <Link
                     href="/layanan"
                     className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 px-5 py-3 text-xs font-bold text-white shadow-lg shadow-violet-500/25 transition-all duration-300 hover:shadow-violet-500/40 hover:scale-[1.02] active:scale-[0.98]"
@@ -60,14 +79,7 @@ export default function MainHero({ onOpenTracking }: MainHeroProps) {
                         <span>Lacak Proyek</span>
                     </button>
                 )}
-
-                <a
-                    href="#karya"
-                    className="inline-flex items-center gap-2 rounded-2xl border border-slate-200/80 bg-white/80 px-4 py-3 text-xs font-bold text-slate-700 shadow-xs transition-all duration-300 hover:border-slate-300 hover:bg-slate-50 active:scale-[0.98] dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-850"
-                >
-                    <Sparkles size={14} className="text-violet-500" />
-                    <span>Lihat Portofolio</span>
-                </a>
+                */}
             </div>
 
             {/* High-fidelity Micro Stats/Aesthetic pills */}

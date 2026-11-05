@@ -237,11 +237,17 @@ export default function ServicesCalculator({ initialPackages, initialAddons, ini
         setErrorMessage('');
 
         try {
+            const xsrfCookie = document.cookie
+                .split('; ')
+                .find((row) => row.startsWith('XSRF-TOKEN='))
+                ?.split('=')[1];
+
             const response = await fetch('/project-orders', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
+                    ...(xsrfCookie ? { 'X-XSRF-TOKEN': decodeURIComponent(xsrfCookie) } : {}),
                 },
                 body: JSON.stringify({
                     client_name: clientName,

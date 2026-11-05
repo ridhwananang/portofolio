@@ -446,7 +446,7 @@ class EscrowService
                 'quest_id' => $lockedQuest->id,
                 'user_id' => $lockedQuest->poster_id,
                 'type' => TransactionType::REFUND,
-                'amount' => $lockedQuest->total_amount,
+                'amount' => $deposit->amount,
                 'currency' => $lockedQuest->currency,
                 'status' => TransactionStatus::REFUNDED,
                 'xendit_external_id' => $externalId,

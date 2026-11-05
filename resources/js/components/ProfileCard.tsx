@@ -6,6 +6,8 @@ import {
     Send,
     Download,
     GraduationCap,
+    Trophy,
+    Award,
 } from 'lucide-react';
 
 interface ProfileCardProps {
@@ -186,43 +188,79 @@ export default function ProfileCard({ onOpenContact, profile, loading }: Profile
                 )}
             </div>
 
-            {/* Education History Section */}
+            {/* Key Achievement / Pencapaian Utama */}
+            <div className="mt-6 w-full border-t border-slate-100/75 pt-5 text-left dark:border-slate-800/60">
+                <div className="mb-3 flex items-center gap-2">
+                    <div className="rounded-lg bg-amber-100/80 p-1.5 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
+                        <Trophy size={14} />
+                    </div>
+                    <span className="text-[10px] leading-none font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
+                        Pencapaian Utama (Achievement)
+                    </span>
+                </div>
+
+                <div className="group rounded-2xl border border-amber-200/70 bg-gradient-to-br from-amber-50/60 via-white to-amber-50/30 p-3.5 shadow-xs transition-all duration-300 hover:border-amber-400/60 hover:shadow-md dark:border-amber-900/40 dark:bg-gradient-to-br dark:from-amber-950/20 dark:via-slate-900/50 dark:to-amber-950/10">
+                    <div className="flex items-start gap-2.5">
+                        <div className="rounded-xl bg-amber-500/10 p-2 text-amber-600 dark:text-amber-400 shrink-0">
+                            <Award size={16} strokeWidth={2.2} />
+                        </div>
+                        <div>
+                            <span className="inline-block rounded-md bg-amber-500/15 px-2 py-0.5 text-[9px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wide">
+                                Intensive Graduate • 943 Jam
+                            </span>
+                            <h5 className="mt-1 text-xs font-black leading-snug text-slate-900 dark:text-slate-100">
+                                Coding Camp 2026 - Powered by DBS Foundation
+                            </h5>
+                            <p className="mt-0.5 text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                                Full-Stack Web Developer
+                            </p>
+                            <span className="mt-1 block text-[10px] font-medium text-slate-400 dark:text-slate-500 font-mono">
+                                February 2026 - July 2026
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Education History Section (Pendidikan Formal) */}
             {profile.education && profile.education.length > 0 && (
-                <div className="mt-6 w-full border-t border-slate-100/75 pt-5 text-left dark:border-slate-800/60">
+                <div className="mt-5 w-full border-t border-slate-100/75 pt-5 text-left dark:border-slate-800/60">
                     <div className="mb-4 flex items-center gap-2">
                         <div className="rounded-lg bg-slate-100 p-1.5 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                             <GraduationCap size={14} />
                         </div>
                         <span className="text-[10px] leading-none font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
-                            Riwayat Pendidikan
+                            Riwayat Pendidikan Formal
                         </span>
                     </div>
 
                     <div className="relative border-l-2 border-slate-100 dark:border-slate-800 ml-3.5 pl-5 space-y-4">
-                        {profile.education.map((edu, idx) => (
-                            <div key={idx} className="relative group/edu">
-                                {/* Dot positioned precisely centered on border line */}
-                                <div className="absolute -left-[25px] top-1 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 group-hover/edu:border-amber-400 group-hover/edu:bg-amber-50 dark:group-hover/edu:bg-amber-950/40 transition-all duration-300">
-                                    <div className="h-1 w-1 rounded-full bg-slate-300 group-hover/edu:bg-amber-500 transition-colors"></div>
-                                </div>
+                        {profile.education
+                            .filter((edu) => !edu.school.toLowerCase().includes('coding camp'))
+                            .map((edu, idx) => (
+                                <div key={idx} className="relative group/edu">
+                                    {/* Dot positioned precisely centered on border line */}
+                                    <div className="absolute -left-[25px] top-1 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 group-hover/edu:border-amber-400 group-hover/edu:bg-amber-50 dark:group-hover/edu:bg-amber-950/40 transition-all duration-300">
+                                        <div className="h-1 w-1 rounded-full bg-slate-300 group-hover/edu:bg-amber-500 transition-colors"></div>
+                                    </div>
 
-                                <div>
-                                    <h5 className="text-[11px] font-extrabold leading-snug text-slate-850 dark:text-slate-200 group-hover/edu:text-amber-500 dark:group-hover/edu:text-amber-400 transition-colors">
-                                        {edu.school}
-                                    </h5>
-                                    {edu.major && (
-                                        <span className="block text-[10px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">
-                                            {edu.major}
-                                        </span>
-                                    )}
-                                    {edu.period && (
-                                        <span className="block text-[9px] font-semibold text-slate-450 dark:text-slate-500 mt-0.5 font-mono">
-                                            {edu.period}
-                                        </span>
-                                    )}
+                                    <div>
+                                        <h5 className="text-[11px] font-extrabold leading-snug text-slate-850 dark:text-slate-200 group-hover/edu:text-amber-500 dark:group-hover/edu:text-amber-400 transition-colors">
+                                            {edu.school}
+                                        </h5>
+                                        {edu.major && (
+                                            <span className="block text-[10px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+                                                {edu.major}
+                                            </span>
+                                        )}
+                                        {edu.period && (
+                                            <span className="block text-[9px] font-semibold text-slate-450 dark:text-slate-500 mt-0.5 font-mono">
+                                                {edu.period}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
                     </div>
                 </div>
             )}

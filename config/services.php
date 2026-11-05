@@ -40,6 +40,15 @@ return [
         'model' => env('GEMINI_MODEL', 'gemini-2.5-flash'),
     ],
 
+    'payment_gateway' => env('PAYMENT_GATEWAY', 'mayar'),
+
+    'mayar' => [
+        'api_key' => env('MAYAR_API_KEY', ''),
+        'webhook_token' => env('MAYAR_WEBHOOK_TOKEN', ''),
+        'is_production' => env('MAYAR_IS_PRODUCTION', false),
+        'base_url' => env('MAYAR_BASE_URL'),
+    ],
+
     'xendit' => [
         'secret_key' => env('XENDIT_SECRET_KEY'),
         'webhook_token' => env('XENDIT_WEBHOOK_VERIFICATION_TOKEN'),

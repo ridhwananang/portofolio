@@ -22,7 +22,15 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->bind(
             \App\Contracts\PaymentGatewayInterface::class,
-            \App\Services\Payment\Midtrans\MidtransPaymentGateway::class
+            function ($app) {
+                $driver = strtolower((string) config('services.payment_gateway', 'mayar'));
+
+                return match ($driver) {
+                    'midtrans' => $app->make(\App\Services\Payment\Midtrans\MidtransPaymentGateway::class),
+                    'xendit' => $app->make(\App\Services\Payment\Xendit\XenditPaymentGateway::class),
+                    default => $app->make(\App\Services\Payment\Mayar\MayarPaymentGateway::class),
+                };
+            }
         );
     }
 

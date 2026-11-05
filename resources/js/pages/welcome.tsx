@@ -88,7 +88,7 @@ export default function Welcome({
         const handleScroll = () => {
             const scrollPosition = window.scrollY + 200; // Offset for trigger
 
-            const sections = ['hero', 'tech-stack', 'karya', 'layanan', 'sertifikat'];
+            const sections = ['hero', 'tech-stack', 'karya', 'sertifikat'];
 
             for (const section of sections) {
                 const element = document.getElementById(section);
@@ -222,7 +222,8 @@ export default function Welcome({
                     <Projects projects={projects} loading={loading} />
                 </motion.div>
 
-                {/* Section: Jasa & Layanan Pembuatan Website (Overview & Paket) */}
+                {/* Section: Jasa & Layanan Pembuatan Website (Overview & Paket) - Hidden per request (jangan dihapus) */}
+                {/*
                 <motion.div
                     id="layanan"
                     className="scroll-mt-28 border-t border-slate-200/40 pt-8 dark:border-slate-800/20"
@@ -236,6 +237,7 @@ export default function Welcome({
                 >
                     <ServicesOverviewSection packages={packages} onOpenTracking={() => setIsTrackingOpen(true)} />
                 </motion.div>
+                */}
 
                 {/* Section 4: Certificates Grid Wrapper (Full-width section below the grid) */}
                 <motion.div
@@ -305,6 +307,15 @@ export default function Welcome({
                                     </a>
                                 </li>
                                 <li>
+                                    <a
+                                        href="#sertifikat"
+                                        className="transition-colors hover:text-violet-600 dark:hover:text-violet-400"
+                                    >
+                                        Sertifikasi & Kelulusan
+                                    </a>
+                                </li>
+                                {/* Hidden per request (jangan dihapus)
+                                <li>
                                     <Link
                                         href="/layanan"
                                         className="transition-colors hover:text-violet-600 dark:hover:text-violet-400"
@@ -324,6 +335,7 @@ export default function Welcome({
                                         </span>
                                     </button>
                                 </li>
+                                */}
                             </ul>
                         </div>
 

@@ -49,6 +49,13 @@ export default function Certificates({ certificates, loading }: CertificatesProp
     const getStyleForCategory = (category: string) => {
         const cat = category.toLowerCase();
 
+        if (cat.includes('achievement') || cat.includes('kelulusan')) {
+            return {
+                color: 'border-amber-500/40 bg-amber-50/40 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400',
+                dot: 'bg-amber-500',
+            };
+        }
+
         if (cat.includes('backend')) {
             return {
                 color: 'border-emerald-500/20 bg-emerald-50/20 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400',
@@ -63,10 +70,24 @@ export default function Certificates({ certificates, loading }: CertificatesProp
             };
         }
 
+        if (cat.includes('cloud')) {
+            return {
+                color: 'border-cyan-500/20 bg-cyan-50/20 dark:bg-cyan-950/20 text-cyan-600 dark:text-cyan-400',
+                dot: 'bg-cyan-500',
+            };
+        }
+
         if (cat.includes('database') || cat.includes('sql') || cat.includes('query')) {
             return {
                 color: 'border-amber-500/20 bg-amber-50/20 dark:bg-amber-950/10 text-amber-600 dark:text-amber-400',
                 dot: 'bg-amber-500',
+            };
+        }
+
+        if (cat.includes('ai') || cat.includes('data')) {
+            return {
+                color: 'border-purple-500/20 bg-purple-50/20 dark:bg-purple-950/20 text-purple-600 dark:text-purple-400',
+                dot: 'bg-purple-500',
             };
         }
 
@@ -136,6 +157,7 @@ export default function Certificates({ certificates, loading }: CertificatesProp
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {visibleCertificates.map((cert, index) => {
                             const style = getStyleForCategory(cert.category);
+                            const isAchievement = cert.category.toLowerCase().includes('achievement') || cert.category.toLowerCase().includes('kelulusan') || cert.title.toLowerCase().includes('coding camp');
 
                             return (
                                 <motion.div
@@ -146,10 +168,16 @@ export default function Certificates({ certificates, loading }: CertificatesProp
                                     whileHover={{ y: -5, scale: 1.01 }}
                                     key={cert.id}
                                     onClick={() => handlePreview(cert)}
-                                    className="glass-card relative flex flex-col justify-between gap-5 overflow-hidden rounded-3xl border border-slate-200/70 bg-white/80 p-6 shadow-xs backdrop-blur-xl transition-all duration-300 hover:border-violet-500/50 hover:bg-white hover:shadow-xl dark:border-slate-800/80 dark:bg-slate-900/60 dark:hover:border-violet-500/40 dark:hover:bg-slate-900/90 cursor-pointer group select-none"
+                                    className={`glass-card relative flex flex-col justify-between gap-5 overflow-hidden rounded-3xl p-6 shadow-xs backdrop-blur-xl transition-all duration-300 hover:shadow-xl cursor-pointer group select-none ${
+                                        isAchievement
+                                            ? 'border-2 border-amber-400/60 bg-gradient-to-b from-amber-50/30 via-white/90 to-white/90 shadow-amber-500/10 hover:border-amber-500 dark:border-amber-500/40 dark:from-amber-950/20 dark:via-slate-900/80 dark:to-slate-900/80'
+                                            : 'border border-slate-200/70 bg-white/80 hover:border-violet-500/50 hover:bg-white dark:border-slate-800/80 dark:bg-slate-900/60 dark:hover:border-violet-500/40 dark:hover:bg-slate-900/90'
+                                    }`}
                                 >
                                     {/* Glow Accent Effect */}
-                                    <div className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-gradient-to-tr from-violet-500/10 to-indigo-500/10 blur-xl transition-all group-hover:scale-150"></div>
+                                    <div className={`pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full blur-xl transition-all group-hover:scale-150 ${
+                                        isAchievement ? 'bg-gradient-to-tr from-amber-500/20 to-yellow-500/20' : 'bg-gradient-to-tr from-violet-500/10 to-indigo-500/10'
+                                    }`}></div>
 
                                     <div className="space-y-3.5">
                                         {/* Certificate Static Thumbnail Preview */}
@@ -162,16 +190,30 @@ export default function Certificates({ certificates, loading }: CertificatesProp
                                             />
                                             {/* Light overlay on hover */}
                                             <div className="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/[0.02] transition-colors duration-300"></div>
+
+                                            {isAchievement && (
+                                                <div className="absolute top-2 left-2 flex items-center gap-1 rounded-md bg-amber-500/90 px-2 py-0.5 text-[9px] font-black text-white shadow-xs backdrop-blur-xs">
+                                                    ★ Pencapaian Utama
+                                                </div>
+                                            )}
                                         </div>
 
                                         {/* Top Metadata */}
                                         <div className="flex items-center justify-between">
-                                            <span className="text-[10px] font-extrabold tracking-widest text-slate-400 uppercase">
+                                            <span className={`text-[10px] font-extrabold tracking-widest uppercase ${isAchievement ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'}`}>
                                                 {cert.category}
                                             </span>
-                                            <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
-                                                <Calendar size={11} />
-                                                {cert.date}
+                                            <div className="flex items-center gap-2 text-[10px] text-slate-500">
+                                                {cert.duration && (
+                                                    <span className="flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
+                                                        <Clock size={10} />
+                                                        {cert.duration}
+                                                    </span>
+                                                )}
+                                                <span className="flex items-center gap-1">
+                                                    <Calendar size={11} />
+                                                    {cert.date}
+                                                </span>
                                             </div>
                                         </div>
 
@@ -180,7 +222,11 @@ export default function Certificates({ certificates, loading }: CertificatesProp
                                             <div className={`flex flex-shrink-0 items-center justify-center rounded-xl border p-2.5 ${style.color}`}>
                                                 <ShieldCheck size={18} strokeWidth={2.2} />
                                             </div>
-                                            <h4 className="text-sm font-extrabold leading-snug text-slate-900 group-hover:text-violet-600 dark:text-white dark:group-hover:text-violet-400 transition-colors duration-250">
+                                            <h4 className={`text-sm font-extrabold leading-snug transition-colors duration-250 ${
+                                                isAchievement
+                                                    ? 'text-slate-900 group-hover:text-amber-600 dark:text-white dark:group-hover:text-amber-400'
+                                                    : 'text-slate-900 group-hover:text-violet-600 dark:text-white dark:group-hover:text-violet-400'
+                                            }`}>
                                                 {cert.title}
                                             </h4>
                                         </div>
