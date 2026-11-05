@@ -9,7 +9,7 @@ export default function MainHero({ onOpenTracking }: MainHeroProps) {
     return (
         <div
             id="main-hero"
-            className="glass-card relative w-full overflow-hidden rounded-[2.2rem] border border-slate-200/70 bg-white/75 p-6 sm:p-8 md:p-9 shadow-xl shadow-slate-100/50 backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/60 dark:shadow-none"
+            className="glass-card transform-gpu relative w-full overflow-hidden rounded-[2.2rem] border border-slate-200/70 bg-white/75 p-6 sm:p-8 md:p-9 shadow-xl shadow-slate-100/50 dark:border-slate-800/80 dark:bg-slate-900/60 dark:shadow-none"
         >
             {/* Dynamic Background Mesh Accents inside the card */}
             <div className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-gradient-to-tr from-violet-500/15 via-indigo-500/10 to-transparent blur-2xl dark:from-violet-500/10 dark:via-indigo-500/5"></div>

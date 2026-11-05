@@ -163,19 +163,19 @@ export default function Certificates({ certificates, loading }: CertificatesProp
                                 <motion.div
                                     initial={{ opacity: 0, y: 15 }}
                                     whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true }}
-                                    transition={{ delay: index * 0.05, duration: 0.4 }}
+                                    viewport={{ once: true, margin: '-40px' }}
+                                    transition={{ delay: index * 0.04, duration: 0.35 }}
                                     whileHover={{ y: -5, scale: 1.01 }}
                                     key={cert.id}
                                     onClick={() => handlePreview(cert)}
-                                    className={`glass-card relative flex flex-col justify-between gap-5 overflow-hidden rounded-3xl p-6 shadow-xs backdrop-blur-xl transition-all duration-300 hover:shadow-xl cursor-pointer group select-none ${
+                                    className={`glass-card transform-gpu relative flex flex-col justify-between gap-5 overflow-hidden rounded-3xl p-6 shadow-xs transition-all duration-300 hover:shadow-xl cursor-pointer group select-none ${
                                         isAchievement
                                             ? 'border-2 border-amber-400/60 bg-gradient-to-b from-amber-50/30 via-white/90 to-white/90 shadow-amber-500/10 hover:border-amber-500 dark:border-amber-500/40 dark:from-amber-950/20 dark:via-slate-900/80 dark:to-slate-900/80'
                                             : 'border border-slate-200/70 bg-white/80 hover:border-violet-500/50 hover:bg-white dark:border-slate-800/80 dark:bg-slate-900/60 dark:hover:border-violet-500/40 dark:hover:bg-slate-900/90'
                                     }`}
                                 >
                                     {/* Glow Accent Effect */}
-                                    <div className={`pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full blur-xl transition-all group-hover:scale-150 ${
+                                    <div className={`pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full blur-xl transition-transform duration-300 group-hover:scale-150 ${
                                         isAchievement ? 'bg-gradient-to-tr from-amber-500/20 to-yellow-500/20' : 'bg-gradient-to-tr from-violet-500/10 to-indigo-500/10'
                                     }`}></div>
 

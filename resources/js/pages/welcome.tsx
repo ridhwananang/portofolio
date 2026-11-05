@@ -11,6 +11,7 @@ import Certificates from '../components/Certificates';
 import ContactModal from '../components/ContactModal';
 import Header from '../components/Header';
 import MainHero from '../components/MainHero';
+import MouseAmbientAura from '../components/MouseAmbientAura';
 import ProfileCard from '../components/ProfileCard';
 import Projects from '../components/Projects';
 import TechStack from '../components/TechStack';
@@ -35,7 +36,6 @@ export default function Welcome({
     const [activeSection, setActiveSection] = useState('hero');
     const [isContactOpen, setIsContactOpen] = useState(false);
     const [isTrackingOpen, setIsTrackingOpen] = useState(false);
-    const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
     const [profile, setProfile] = useState<any>(initialProfile || null);
     const [projects, setProjects] = useState<any[]>(initialProjects);
@@ -73,45 +73,34 @@ export default function Welcome({
             });
     }, [initialProfile]);
 
-    // Track mouse cursor to create mouse-following ambient aura
+    // Monitor section visibility via native IntersectionObserver (60fps, 0 scroll listeners, 0 forced reflows)
     useEffect(() => {
-        const handleMouseMove = (e: MouseEvent) => {
-            setMousePos({ x: e.clientX, y: e.clientY });
-        };
-        window.addEventListener('mousemove', handleMouseMove);
+        const sections = ['hero', 'tech-stack', 'karya', 'sertifikat'];
+        const sectionElements = sections
+            .map((id) => document.getElementById(id))
+            .filter((el): el is HTMLElement => el !== null);
 
-        return () => window.removeEventListener('mousemove', handleMouseMove);
-    }, []);
+        if (sectionElements.length === 0) return;
 
-    // Monitor scrolling to highlight correct navigation item dynamically
-    useEffect(() => {
-        const handleScroll = () => {
-            const scrollPosition = window.scrollY + 200; // Offset for trigger
-
-            const sections = ['hero', 'tech-stack', 'karya', 'sertifikat'];
-
-            for (const section of sections) {
-                const element = document.getElementById(section);
-
-                if (element) {
-                    const top = element.offsetTop;
-                    const height = element.offsetHeight;
-
-                    if (
-                        scrollPosition >= top &&
-                        scrollPosition < top + height
-                    ) {
-                        setActiveSection(section);
-                        break;
-                    }
+        const observer = new IntersectionObserver(
+            (entries) => {
+                const intersecting = entries.filter((e) => e.isIntersecting);
+                if (intersecting.length > 0) {
+                    intersecting.sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+                    setActiveSection(intersecting[0].target.id);
                 }
+            },
+            {
+                root: null,
+                rootMargin: '-15% 0px -40% 0px',
+                threshold: [0, 0.25, 0.5, 0.75],
             }
-        };
+        );
 
-        window.addEventListener('scroll', handleScroll);
+        sectionElements.forEach((el) => observer.observe(el));
 
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
+        return () => observer.disconnect();
+    }, [loading]);
 
     return (
         <div
@@ -122,17 +111,12 @@ export default function Welcome({
                 <title>Ridhwan Anang Ma'ruf</title>
             </Head>
 
-            {/* Interactive Mouse follow highlight (Hidden on mobile/tablet) */}
-            <div
-                className="pointer-events-none fixed inset-0 z-0 hidden opacity-70 transition-opacity duration-300 md:block"
-                style={{
-                    background: `radial-gradient(700px at ${mousePos.x}px ${mousePos.y}px, rgba(139, 92, 246, 0.05), rgba(59, 130, 246, 0.03), transparent 70%)`,
-                }}
-            />
+            {/* Interactive Mouse follow highlight (Decoupled & GPU accelerated, 0 re-renders) */}
+            <MouseAmbientAura />
 
-            {/* Absolute Decorative Smooth Gradient Blur Mesh Circles (Matches screenshot aura) */}
-            <div className="pointer-events-none absolute top-0 right-0 z-0 h-[500px] w-[500px] animate-pulse-glow rounded-full bg-gradient-to-l from-violet-300/15 via-blue-200/10 to-transparent blur-[120px] dark:from-violet-950/20 dark:via-indigo-950/10 dark:to-transparent"></div>
-            <div className="pointer-events-none absolute top-20 left-0 z-0 h-[450px] w-[450px] animate-pulse-glow rounded-full bg-gradient-to-r from-blue-300/10 via-purple-200/10 to-transparent blur-[100px] [animation-delay:2s] dark:from-blue-950/10 dark:via-purple-950/10 dark:to-transparent"></div>
+            {/* Absolute Decorative Smooth Gradient Blur Mesh Circles (GPU accelerated) */}
+            <div className="pointer-events-none absolute top-0 right-0 z-0 h-[500px] w-[500px] animate-pulse-glow rounded-full bg-gradient-to-l from-violet-300/15 via-blue-200/10 to-transparent blur-3xl transform-gpu will-change-transform dark:from-violet-950/20 dark:via-indigo-950/10 dark:to-transparent"></div>
+            <div className="pointer-events-none absolute top-20 left-0 z-0 h-[450px] w-[450px] animate-pulse-glow rounded-full bg-gradient-to-r from-blue-300/10 via-purple-200/10 to-transparent blur-3xl [animation-delay:2s] transform-gpu will-change-transform dark:from-blue-950/10 dark:via-purple-950/10 dark:to-transparent"></div>
 
             {/* Main Responsive Header Navigation */}
             <motion.div
@@ -210,7 +194,7 @@ export default function Welcome({
                 {/* Section 3: Project Cases List Wrapper (Full-width section below the grid) */}
                 <motion.div
                     id="karya"
-                    className="scroll-mt-28 border-t border-slate-200/40 pt-8 dark:border-slate-800/20"
+                    className="content-auto scroll-mt-28 border-t border-slate-200/40 pt-8 dark:border-slate-800/20"
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{
@@ -242,7 +226,7 @@ export default function Welcome({
                 {/* Section 4: Certificates Grid Wrapper (Full-width section below the grid) */}
                 <motion.div
                     id="sertifikat"
-                    className="scroll-mt-28"
+                    className="content-auto scroll-mt-28"
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{
@@ -256,7 +240,7 @@ export default function Welcome({
             </main>
 
             {/* Aesthetic Footer Area */}
-            <footer className="mt-16 w-full border-t border-slate-200/70 bg-white/60 py-14 backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-950/60">
+            <footer className="content-auto mt-16 w-full border-t border-slate-200/70 bg-white/70 py-14 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-950/70">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 gap-8 border-b border-slate-200/60 pb-10 sm:grid-cols-2 md:grid-cols-4 dark:border-slate-800/60">
                         {/* Brand / Name info */}

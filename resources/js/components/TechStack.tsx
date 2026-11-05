@@ -222,7 +222,7 @@ export default function TechStack({
                                         }}
                                         onMouseEnter={() => setHoveredIndex(idx)}
                                         onMouseLeave={() => setHoveredIndex(null)}
-                                        className={`glass-card relative flex cursor-pointer flex-col gap-4 overflow-hidden rounded-[1.8rem] border p-6 select-none backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 ${
+                                        className={`glass-card transform-gpu relative flex cursor-pointer flex-col gap-4 overflow-hidden rounded-[1.8rem] border p-6 select-none transition-all duration-300 hover:-translate-y-1 ${
                                             isHovered
                                                 ? `${hoverBorder} bg-white/90 shadow-xl shadow-slate-100/50 dark:bg-slate-900/80 dark:shadow-none`
                                                 : 'border-slate-200/70 bg-white/70 dark:border-slate-800/70 dark:bg-slate-900/50'

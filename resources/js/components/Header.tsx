@@ -12,7 +12,7 @@ import {
     Search,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAppearance } from '@/hooks/use-appearance';
 
 interface HeaderProps {
@@ -32,26 +32,42 @@ export default function Header({
     const isDarkMode = resolvedAppearance === 'dark';
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
-    const [scrollProgress, setScrollProgress] = useState(0);
+    const progressBarRef = useRef<HTMLDivElement>(null);
+    const isScrolledRef = useRef(false);
 
     useEffect(() => {
+        let rafId: number | null = null;
+
         const handleScroll = () => {
-            setIsScrolled(window.scrollY > 20);
+            if (rafId !== null) return;
 
-            // Calculate scroll progress percentage
-            const totalScroll =
-                document.documentElement.scrollHeight - window.innerHeight;
+            rafId = requestAnimationFrame(() => {
+                const scrollY = window.scrollY;
+                const scrolled = scrollY > 20;
 
-            if (totalScroll > 0) {
-                setScrollProgress((window.scrollY / totalScroll) * 100);
-            } else {
-                setScrollProgress(0);
-            }
+                if (scrolled !== isScrolledRef.current) {
+                    isScrolledRef.current = scrolled;
+                    setIsScrolled(scrolled);
+                }
+
+                if (progressBarRef.current) {
+                    const totalScroll =
+                        document.documentElement.scrollHeight - window.innerHeight;
+                    const progress =
+                        totalScroll > 0 ? Math.min(scrollY / totalScroll, 1) : 0;
+                    progressBarRef.current.style.transform = `scaleX(${progress})`;
+                }
+
+                rafId = null;
+            });
         };
 
-        window.addEventListener('scroll', handleScroll);
+        window.addEventListener('scroll', handleScroll, { passive: true });
 
-        return () => window.removeEventListener('scroll', handleScroll);
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            if (rafId !== null) cancelAnimationFrame(rafId);
+        };
     }, []);
 
     const toggleTheme = () => {
@@ -93,10 +109,11 @@ export default function Header({
                     : 'bg-transparent py-4 sm:py-5'
             }`}
         >
-            {/* Top Scroll Progress Indicator */}
+            {/* Top Scroll Progress Indicator (GPU accelerated scaleX) */}
             <div
-                className="absolute top-0 left-0 h-[2.5px] bg-gradient-to-r from-violet-500 via-indigo-500 to-cyan-400 transition-all duration-150 ease-out z-50 pointer-events-none"
-                style={{ width: `${scrollProgress}%` }}
+                ref={progressBarRef}
+                className="absolute top-0 left-0 h-[2.5px] w-full origin-left bg-gradient-to-r from-violet-500 via-indigo-500 to-cyan-400 z-50 pointer-events-none will-change-transform"
+                style={{ transform: 'scaleX(0)' }}
             />
 
             <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">

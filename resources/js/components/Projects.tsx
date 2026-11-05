@@ -100,7 +100,7 @@ export default function Projects({ projects, loading }: ProjectsProps) {
                                     key={p.title}
                                     onMouseEnter={() => setActiveProject(idx)}
                                     onMouseLeave={() => setActiveProject(null)}
-                                    className={`glass-card flex min-w-[280px] flex-1 flex-col items-stretch gap-5 rounded-[2rem] border p-6 select-none backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 md:max-w-[calc(33.333%-16px)] ${
+                                    className={`glass-card transform-gpu flex min-w-[280px] flex-1 flex-col items-stretch gap-5 rounded-[2rem] border p-6 select-none transition-all duration-300 hover:-translate-y-1.5 md:max-w-[calc(33.333%-16px)] ${
                                         isHovered
                                             ? 'border-violet-500/50 bg-white/90 shadow-xl shadow-slate-200/50 dark:bg-slate-900/80 dark:shadow-none'
                                             : 'border-slate-200/70 bg-white/75 dark:border-slate-800/70 dark:bg-slate-900/50'

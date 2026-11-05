@@ -122,6 +122,12 @@
     border: 1px solid rgba(30, 41, 59, 0.8);
 }
 
+/* Offscreen scroll performance booster */
+.content-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 600px;
+}
+
 
 :root {
     --background: oklch(1 0 0);
