@@ -75,24 +75,99 @@
     }
 }
 
-/* Custom modern scrollbar styling */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+/* ==========================================================================
+   Ultra-Modern Custom Scrollbar Design System (Public Showcase & Admin Studio)
+   ========================================================================== */
+
+/* Cross-browser CSS standard properties */
+html {
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.45) transparent;
 }
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.45) transparent;
+}
+
+.dark html,
+.dark *,
+html.dark,
+html.dark * {
+    scrollbar-color: rgba(100, 116, 139, 0.4) transparent;
+}
+
+/* WebKit-based browsers (Chrome, Edge, Safari, Opera) */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
 ::-webkit-scrollbar-track {
     background: transparent;
-}
-::-webkit-scrollbar-thumb {
-    background: oklch(0.87 0 0);
     border-radius: 9999px;
-    border: 2px solid transparent;
 }
-.dark ::-webkit-scrollbar-thumb {
-    background: oklch(0.269 0 0);
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(148, 163, 184, 0.35), rgba(148, 163, 184, 0.55));
+    border-radius: 9999px;
+    border: 1px solid transparent;
+    background-clip: padding-box;
+    transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
 }
+
 ::-webkit-scrollbar-thumb:hover {
-    background: oklch(0.556 0 0);
+    background: linear-gradient(180deg, rgba(139, 92, 246, 0.7), rgba(99, 102, 241, 0.8));
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.35);
+}
+
+::-webkit-scrollbar-thumb:active {
+    background: linear-gradient(180deg, rgba(124, 58, 237, 0.9), rgba(79, 70, 229, 0.95));
+    box-shadow: 0 0 14px rgba(124, 58, 237, 0.5);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(71, 85, 105, 0.4), rgba(100, 116, 139, 0.5));
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(167, 139, 250, 0.75), rgba(129, 140, 248, 0.85));
+    box-shadow: 0 0 12px rgba(167, 139, 250, 0.4);
+}
+
+.dark ::-webkit-scrollbar-thumb:active {
+    background: linear-gradient(180deg, rgba(192, 132, 252, 0.95), rgba(165, 180, 252, 0.95));
+    box-shadow: 0 0 16px rgba(192, 132, 252, 0.6);
+}
+
+::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+/* Specialized container scrollbar classes */
+.scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+    display: none;
+}
+
+.scrollbar-sleek {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(139, 92, 246, 0.4) transparent;
+}
+.scrollbar-sleek::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+.scrollbar-sleek::-webkit-scrollbar-thumb {
+    background: rgba(139, 92, 246, 0.4);
+    border-radius: 9999px;
+}
+.scrollbar-sleek::-webkit-scrollbar-thumb:hover {
+    background: rgba(139, 92, 246, 0.8);
 }
 
 /* Glassmorphism custom components */

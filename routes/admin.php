@@ -10,7 +10,10 @@ use App\Http\Controllers\Admin\ServiceManagementController;
 use App\Http\Controllers\Admin\TechStackController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'admin'])->prefix('admin')->as('admin.')->group(function () {
+/**
+ * Administrative studio core routes definition
+ */
+$registerAdminRoutes = function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -41,4 +44,53 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->as('admin.')->group(funct
     Route::delete('/services/addons/{addon}', [ServiceManagementController::class, 'destroyAddon'])->name('services.addons.destroy');
 
     Route::post('/services/settings', [ServiceManagementController::class, 'updateSettings'])->name('services.settings.update');
+};
+
+$adminDomain = env('ADMIN_DOMAIN', 'admin.ridhwananang.id');
+
+// 1. Primary Dedicated Subdomain Routing: admin.ridhwananang.id
+Route::domain($adminDomain)
+    ->middleware(['auth', 'admin'])
+    ->as('admin.')
+    ->group(function () use ($registerAdminRoutes) {
+        // Clean Subdomain URLs: e.g. https://admin.ridhwananang.id/, /profile, /projects, /orders
+        $registerAdminRoutes();
+
+        // Also alias /admin/* on the subdomain to ensure zero dead links
+        Route::prefix('admin')->group($registerAdminRoutes);
+    });
+
+// 2. Local Development Subdomains (Laravel Herd: admin.portofolio.test & admin.localhost)
+if (app()->environment('local')) {
+    Route::domain('admin.portofolio.test')
+        ->middleware(['auth', 'admin'])
+        ->as('admin.herd.')
+        ->group(function () use ($registerAdminRoutes) {
+            $registerAdminRoutes();
+            Route::prefix('admin')->group($registerAdminRoutes);
+        });
+
+    Route::domain('admin.localhost')
+        ->middleware(['auth', 'admin'])
+        ->as('admin.local.')
+        ->group(function () use ($registerAdminRoutes) {
+            $registerAdminRoutes();
+            Route::prefix('admin')->group($registerAdminRoutes);
+        });
+}
+
+// 3. Fallback & Main Domain Redirect:
+// When accessing /admin on the main domain (e.g. ridhwananang.id/admin/*),
+// permanently redirect (301) to the dedicated admin subdomain (admin.ridhwananang.id/*)
+Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () use ($registerAdminRoutes, $adminDomain) {
+    if (! app()->environment('local') || request()->getHost() === $adminDomain) {
+        Route::any('/{any?}', function ($any = null) use ($adminDomain) {
+            $scheme = request()->getScheme();
+            $path = $any ? '/' . ltrim($any, '/') : '';
+            return redirect()->to($scheme . '://' . $adminDomain . $path, 301);
+        })->where('any', '.*');
+    } else {
+        // Local environment fallback when accessing directly via IP (e.g. 127.0.0.1:8000/admin)
+        Route::as('admin.fallback.')->group($registerAdminRoutes);
+    }
 });
