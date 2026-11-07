@@ -24,66 +24,105 @@ class HomeController extends Controller
 
             // 1. Profil Pengembang
             $profile = Profile::first();
-            if ($profile && $profile->image && ! str_starts_with($profile->image, '/') && ! str_starts_with($profile->image, 'http')) {
-                $profile->image = Storage::disk($disk)->url($profile->image);
+            $profileData = null;
+            if ($profile) {
+                $profileArray = $profile->toArray();
+                $profileArray['image'] = ($profile->image && ! str_starts_with($profile->image, '/') && ! str_starts_with($profile->image, 'http'))
+                    ? Storage::disk($disk)->url($profile->image)
+                    : $profile->image;
+                $profileData = $profileArray;
             }
 
             // 2. Daftar Karya & Proyek
-            $projects = Project::orderBy('id', 'asc')->get();
-            foreach ($projects as $project) {
-                if ($project->image && ! str_starts_with($project->image, '/') && ! str_starts_with($project->image, 'http')) {
-                    $project->image = Storage::disk($disk)->url($project->image);
+            $projectsData = Project::orderBy('id', 'asc')->get()->map(function ($project) use ($disk) {
+                $image = $project->image;
+                if ($image && ! str_starts_with($image, '/') && ! str_starts_with($image, 'http')) {
+                    $image = Storage::disk($disk)->url($image);
                 }
-            }
+
+                return [
+                    'id' => $project->id,
+                    'title' => $project->title,
+                    'description' => $project->description,
+                    'tags' => is_string($project->tech_stack)
+                        ? (json_decode($project->tech_stack, true) ?: [])
+                        : (is_array($project->tech_stack) ? $project->tech_stack : []),
+                    'mockup_type' => $project->mockup_type ?? 'browser',
+                    'image' => $image ?: '/images/finverra.png',
+                    'image_url' => $image,
+                ];
+            })->values()->toArray();
 
             // 3. Keahlian & Tech Stack
-            $techStacks = TechStack::all();
+            $techStacksData = TechStack::all()->map(function ($stack) {
+                return [
+                    'id' => $stack->id,
+                    'name' => $stack->name,
+                    'description' => $stack->description,
+                    'badge' => $stack->badge,
+                    'color' => $stack->color,
+                    'text_color' => $stack->text_color,
+                    'accent' => $stack->accent,
+                    'icon_name' => $stack->icon_name,
+                ];
+            })->values()->toArray();
 
             // 4. Sertifikasi & Kelulusan (Cloud Bucket / Asset Storage Ready)
-            $certificates = Certificate::orderBy('id', 'asc')->get()->map(function ($cert) use ($disk) {
+            $certificatesData = Certificate::orderBy('id', 'asc')->get()->map(function ($cert) use ($disk) {
                 $path = $cert->file_path;
+                $fileUrl = null;
+                $thumbnailUrl = null;
+
                 if ($path) {
                     if (str_starts_with($path, '/') || str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
-                        $cert->file_url = $path;
-
-                        // Check local public folder thumbnails for static assets
+                        $fileUrl = $path;
                         $filename = basename($path);
                         $thumbnailName = pathinfo($filename, PATHINFO_FILENAME) . '.webp';
                         $thumbnailPath = 'images/Sertifikat/thumbnails/' . $thumbnailName;
-                        if (file_exists(public_path($thumbnailPath))) {
-                            $cert->thumbnail_url = '/' . $thumbnailPath;
-                        } else {
-                            $cert->thumbnail_url = $cert->file_url;
-                        }
+                        $thumbnailUrl = file_exists(public_path($thumbnailPath)) ? '/' . $thumbnailPath : $fileUrl;
                     } else {
-                        $cert->file_url = Storage::disk($disk)->url($path);
-
-                        // Check cloud bucket storage for _thumb.webp
+                        $fileUrl = Storage::disk($disk)->url($path);
                         $extension = pathinfo($path, PATHINFO_EXTENSION);
                         $thumbPathStorage = str_replace('.' . $extension, '_thumb.webp', $path);
-                        if (Storage::disk($disk)->exists($thumbPathStorage)) {
-                            $cert->thumbnail_url = Storage::disk($disk)->url($thumbPathStorage);
-                        } else {
-                            $cert->thumbnail_url = $cert->file_url;
-                        }
+                        $thumbnailUrl = Storage::disk($disk)->exists($thumbPathStorage)
+                            ? Storage::disk($disk)->url($thumbPathStorage)
+                            : $fileUrl;
                     }
-                } else {
-                    $cert->file_url = null;
-                    $cert->thumbnail_url = null;
                 }
 
-                return $cert;
-            });
+                $skills = is_string($cert->skills)
+                    ? (json_decode($cert->skills, true) ?: [])
+                    : (is_array($cert->skills) ? $cert->skills : []);
+
+                return [
+                    'id' => $cert->id,
+                    'title' => $cert->title,
+                    'category' => $cert->category,
+                    'issuer' => $cert->issuer,
+                    'credential_id' => $cert->credential_id,
+                    'date' => $cert->date,
+                    'duration' => $cert->duration,
+                    'skills' => $skills,
+                    'file_path' => $cert->file_path,
+                    'file_url' => $fileUrl,
+                    'thumbnail_url' => $thumbnailUrl,
+                ];
+            })->values()->toArray();
 
             // 5. Paket Layanan Website Aktif
-            $packages = ServicePackage::where('is_active', true)->orderBy('sort_order')->orderBy('id')->get();
+            $packagesData = ServicePackage::where('is_active', true)
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->get()
+                ->values()
+                ->toArray();
 
             return [
-                'initialProfile' => $profile,
-                'initialProjects' => $projects,
-                'initialTechStacks' => $techStacks,
-                'initialCertificates' => $certificates,
-                'initialPackages' => $packages,
+                'initialProfile' => $profileData,
+                'initialProjects' => $projectsData,
+                'initialTechStacks' => $techStacksData,
+                'initialCertificates' => $certificatesData,
+                'initialPackages' => $packagesData,
             ];
         });
 

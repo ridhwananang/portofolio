@@ -19,12 +19,13 @@ export default function Projects({ projects, loading }: ProjectsProps) {
     const ITEMS_PER_PAGE = 3;
     const [isExpanded, setIsExpanded] = useState(false);
 
-    const visibleProjects = isExpanded ? projects : projects.slice(0, ITEMS_PER_PAGE);
+    const safeProjects = Array.isArray(projects) ? projects : [];
+    const visibleProjects = isExpanded ? safeProjects : safeProjects.slice(0, ITEMS_PER_PAGE);
 
     // Reset expand when projects count changes
     useEffect(() => {
         setIsExpanded(false);
-    }, [projects.length]);
+    }, [safeProjects.length]);
 
     const getImageUrl = (imagePath: string) => {
         if (!imagePath) {
@@ -174,7 +175,7 @@ export default function Projects({ projects, loading }: ProjectsProps) {
                     </div>
 
                     {/* Toggle Button */}
-                    {!loading && projects.length > ITEMS_PER_PAGE && (
+                    {!loading && safeProjects.length > ITEMS_PER_PAGE && (
                         <div className="mt-10 flex justify-center w-full">
                             <button
                                 onClick={() => {

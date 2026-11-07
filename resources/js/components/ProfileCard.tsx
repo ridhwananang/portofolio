@@ -56,7 +56,7 @@ export default function ProfileCard({ onOpenContact, profile, loading }: Profile
         );
     }
 
-    const validEducations = (profile.education || []).filter(
+    const validEducations = (Array.isArray(profile.education) ? profile.education : []).filter(
         (edu) => Boolean(edu.school?.trim() || edu.major?.trim() || edu.period?.trim())
     );
     const hasContacts = Boolean(profile.location?.trim() || profile.email?.trim());

@@ -39,14 +39,16 @@ export default function TechStack({
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
     const [isExpanded, setIsExpanded] = useState(false);
 
+    const safeTechStacks = Array.isArray(techStacks) ? techStacks : [];
+
     // Reset expand when techStacks count changes
     useEffect(() => {
         setIsExpanded(false);
-    }, [techStacks.length]);
+    }, [safeTechStacks.length]);
 
     const visibleTechStacks = isExpanded
-        ? techStacks
-        : techStacks.slice(0, initialCount);
+        ? safeTechStacks
+        : safeTechStacks.slice(0, initialCount);
 
     const renderIcon = (iconName: string) => {
         const IconComponent = iconsMap[iconName];
@@ -270,7 +272,7 @@ export default function TechStack({
                     </div>
 
                     {/* Toggle Button */}
-                    {!loading && techStacks.length > initialCount && (
+                    {!loading && safeTechStacks.length > initialCount && (
                         <div className="mt-8 flex justify-center">
                             <button
                                 type="button"

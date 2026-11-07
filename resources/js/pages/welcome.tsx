@@ -38,10 +38,10 @@ export default function Welcome({
     const [isTrackingOpen, setIsTrackingOpen] = useState(false);
 
     const [profile, setProfile] = useState<any>(initialProfile || null);
-    const [projects, setProjects] = useState<any[]>(initialProjects);
-    const [techStacks, setTechStacks] = useState<any[]>(initialTechStacks);
-    const [certificates, setCertificates] = useState<any[]>(initialCertificates);
-    const [packages, setPackages] = useState<any[]>(initialPackages);
+    const [projects, setProjects] = useState<any[]>(Array.isArray(initialProjects) ? initialProjects : []);
+    const [techStacks, setTechStacks] = useState<any[]>(Array.isArray(initialTechStacks) ? initialTechStacks : []);
+    const [certificates, setCertificates] = useState<any[]>(Array.isArray(initialCertificates) ? initialCertificates : []);
+    const [packages, setPackages] = useState<any[]>(Array.isArray(initialPackages) ? initialPackages : []);
     const [loading, setLoading] = useState(!initialProfile);
 
     useEffect(() => {
@@ -58,11 +58,11 @@ export default function Welcome({
             fetch('/api/service-packages').then((res) => res.json()).catch(() => []),
         ])
             .then(([profileData, projectsData, techStacksData, certificatesData, packagesData]) => {
-                setProfile(profileData);
-                setProjects(projectsData);
-                setTechStacks(techStacksData);
-                setCertificates(certificatesData);
-                if (packagesData && packagesData.length > 0) {
+                setProfile(profileData && !profileData.message ? profileData : null);
+                setProjects(Array.isArray(projectsData) ? projectsData : []);
+                setTechStacks(Array.isArray(techStacksData) ? techStacksData : []);
+                setCertificates(Array.isArray(certificatesData) ? certificatesData : []);
+                if (Array.isArray(packagesData) && packagesData.length > 0) {
                     setPackages(packagesData);
                 }
                 setLoading(false);
