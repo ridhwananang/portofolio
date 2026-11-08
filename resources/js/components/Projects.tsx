@@ -91,17 +91,17 @@ export default function Projects({ projects, loading }: ProjectsProps) {
 
                                     <div>
                                         {/* Realistic Titanium Window Mockup Frame */}
-                                        <div className="relative mb-3.5 overflow-hidden rounded-lg border border-zinc-200/90 dark:border-blue-400/15 bg-black/80 shadow-sm">
+                                        <div className="relative mb-3.5 overflow-hidden rounded-lg border border-zinc-200/90 bg-zinc-100 dark:border-blue-400/15 dark:bg-[#091126] shadow-sm">
                                             {/* Window Header Toolbar */}
-                                            <div className="flex items-center justify-between border-b border-zinc-200/80 dark:border-blue-400/15 bg-zinc-100/90 dark:bg-[#091126] px-3 py-1.5 backdrop-blur-md">
+                                            <div className="flex items-center justify-between border-b border-zinc-200/80 bg-zinc-100 px-3 py-1.5 dark:border-blue-400/15 dark:bg-[#091126]">
                                                 <div className="flex items-center gap-1.5">
                                                     <span className="size-2 rounded-full bg-[#FF5F56]" />
                                                     <span className="size-2 rounded-full bg-[#FFBD2E]" />
                                                     <span className="size-2 rounded-full bg-[#27C93F]" />
                                                 </div>
 
-                                                <div className="flex items-center gap-1 rounded border border-zinc-200/80 dark:border-blue-400/15 bg-white/60 dark:bg-[#0c162f]/80 px-2 py-0.5 text-[8.5px] font-mono text-zinc-500 dark:text-amber-300/85">
-                                                    <Cloud size={9} className="text-amber-400" />
+                                                <div className="flex items-center gap-1 rounded border border-zinc-200/80 bg-white/80 px-2 py-0.5 text-[8.5px] font-mono text-zinc-600 dark:border-blue-400/15 dark:bg-[#0c162f]/80 dark:text-amber-300/85">
+                                                    <Cloud size={9} className="text-amber-500 dark:text-amber-400" />
                                                     <span>cloud.production.app</span>
                                                 </div>
 
@@ -109,14 +109,14 @@ export default function Projects({ projects, loading }: ProjectsProps) {
                                             </div>
 
                                             {/* Window Canvas / Image */}
-                                            <div className="relative aspect-[16/10] w-full overflow-hidden bg-zinc-950">
+                                            <div className="relative aspect-[16/10] w-full overflow-hidden bg-zinc-100 dark:bg-[#091126]">
                                                 <img
                                                     src={getImageUrl(p.image)}
                                                     alt={p.title}
                                                     className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-103"
                                                     loading="lazy"
                                                 />
-                                                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60" />
+                                                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-60 dark:from-black/50" />
                                             </div>
                                         </div>
 

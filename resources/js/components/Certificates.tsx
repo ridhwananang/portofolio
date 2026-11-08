@@ -103,7 +103,7 @@ export default function Certificates({ certificates, loading }: CertificatesProp
                             <div className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 items-center">
                                 {/* Left: Certificate Visual Mockup */}
                                 <div className="md:col-span-5 relative">
-                                    <div className="relative aspect-[1.414/1] w-full overflow-hidden rounded-lg border border-amber-500/30 bg-zinc-950 shadow-md">
+                                    <div className="relative aspect-[1.414/1] w-full overflow-hidden rounded-lg border border-amber-500/30 bg-zinc-100 dark:bg-[#091126] shadow-md">
                                         <img
                                             src={cert.thumbnail_url || cert.file_url}
                                             alt={cert.title}
@@ -225,7 +225,7 @@ export default function Certificates({ certificates, loading }: CertificatesProp
 
                                     <div>
                                         {/* Thumbnail Preview */}
-                                        <div className="relative mb-3 aspect-[1.414/1] w-full overflow-hidden rounded-lg border border-zinc-200/90 dark:border-blue-400/20 bg-zinc-950 shadow-xs">
+                                        <div className="relative mb-3 aspect-[1.414/1] w-full overflow-hidden rounded-lg border border-zinc-200/90 dark:border-blue-400/20 bg-zinc-100 dark:bg-[#091126] shadow-xs">
                                             <img
                                                 src={cert.thumbnail_url || cert.file_url}
                                                 alt={cert.title}
