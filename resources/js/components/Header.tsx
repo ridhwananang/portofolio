@@ -6,7 +6,6 @@ import {
     Code,
     Home,
     Sparkles,
-    ExternalLink,
     Send,
     ChevronRight,
 } from 'lucide-react';
@@ -16,7 +15,7 @@ import { useAppearance } from '@/hooks/use-appearance';
 
 interface HeaderProps {
     onOpenContact: () => void;
-    onOpenTracking: () => void;
+    onOpenTracking?: () => void;
     activeSection: string;
     setActiveSection: (section: string) => void;
 }
@@ -41,7 +40,7 @@ export default function Header({
 
             rafId = requestAnimationFrame(() => {
                 const scrollY = window.scrollY;
-                const scrolled = scrollY > 20;
+                const scrolled = scrollY > 15;
 
                 if (scrolled !== isScrolledRef.current) {
                     isScrolledRef.current = scrolled;
@@ -100,47 +99,51 @@ export default function Header({
     return (
         <header
             id="main-header"
-            className={`fixed top-0 left-0 z-45 w-full transition-all duration-200 ${
+            className={`fixed top-0 left-0 z-45 w-full transition-all duration-300 ${
                 isScrolled
-                    ? 'border-b border-zinc-200/90 bg-white/90 py-2.5 shadow-2xs backdrop-blur-md dark:border-blue-400/15 dark:bg-[#080e21]/90'
-                    : 'bg-transparent py-4'
+                    ? 'border-b border-zinc-200/80 bg-white/85 py-2.5 shadow-[0_4px_30px_rgba(0,0,0,0.15)] backdrop-blur-xl dark:border-blue-400/15 dark:bg-[#080e21]/85'
+                    : 'bg-transparent py-4 sm:py-5'
             }`}
         >
-            {/* Top Scroll Progress Indicator (Sapphire to Gold) */}
+            {/* Top Scroll Progress Indicator (Sapphire to Champagne Gold) */}
             <div
                 ref={progressBarRef}
-                className="absolute top-0 left-0 h-[2px] w-full origin-left bg-gradient-to-r from-blue-600 via-sky-400 to-amber-400 z-50 pointer-events-none will-change-transform"
+                className="absolute top-0 left-0 h-[2px] w-full origin-left bg-gradient-to-r from-blue-600 via-sky-400 to-amber-400 z-50 pointer-events-none will-change-transform shadow-[0_0_8px_rgba(245,158,11,0.5)]"
                 style={{ transform: 'scaleX(0)' }}
             />
 
             <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-                {/* Brand Logo & Name */}
+                {/* Brand Identity: Monogram Logo & Title */}
                 <div
                     onClick={() => handleNavClick('hero')}
                     className="group flex cursor-pointer items-center gap-3 select-none"
                 >
                     <div className="relative">
-                        <img
-                            src="/images/anang-logo.png"
-                            alt="Ridhwan Anang Logo"
-                            className="size-8 object-contain rounded-lg border border-zinc-200 dark:border-blue-400/20 transition-transform duration-200 group-hover:scale-105"
-                        />
-                        <span className="absolute -bottom-0.5 -right-0.5 size-2 rounded-full bg-emerald-500 border border-white dark:border-zinc-950 shadow-[0_0_6px_rgba(16,185,129,0.8)]" />
+                        <div className="relative p-[1.5px] rounded-xl bg-gradient-to-tr from-amber-400/60 via-yellow-500/30 to-blue-500/60 shadow-xs transition-transform duration-300 group-hover:scale-105">
+                            <div className="size-8 overflow-hidden rounded-[10px] bg-[#091024]">
+                                <img
+                                    src="/images/anang-logo.png"
+                                    alt="Ridhwan Anang Logo"
+                                    className="h-full w-full object-contain p-0.5"
+                                />
+                            </div>
+                        </div>
+                        <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-emerald-500 border-2 border-white dark:border-[#080e21] shadow-[0_0_6px_rgba(16,185,129,0.9)]" />
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-100 transition-colors group-hover:text-amber-500 dark:group-hover:text-amber-400">
+                        <span className="text-sm font-black tracking-tight text-zinc-900 dark:text-zinc-100 transition-colors group-hover:text-amber-500 dark:group-hover:text-amber-400">
                             Ridhwan Anang
                         </span>
-                        <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-amber-500/10 dark:bg-amber-400/10 text-amber-600 dark:text-amber-300 border border-amber-500/20 dark:border-amber-400/20">
-                            v2.5
+                        <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/10 text-amber-600 dark:text-amber-300 border border-amber-500/25 shadow-2xs">
+                            <Sparkles size={9} className="text-amber-500 dark:text-amber-400" />
+                            <span>v2.5</span>
                         </span>
                     </div>
                 </div>
 
-                {/* Desktop Minimalist Floating Nav Dock */}
-                <nav className="luxury-card hidden items-center gap-0.5 rounded-lg p-1 shadow-md md:flex dark:border-blue-400/15">
-                    <div className="specular-top" />
+                {/* Center Floating Pill Dock (Ultra-Luxury Glass Capsule) */}
+                <nav className="hidden md:flex items-center gap-1 rounded-full border border-zinc-200/80 bg-white/80 p-1.5 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.15),inset_0_1px_1px_rgba(255,255,255,0.6)] backdrop-blur-xl dark:border-blue-400/20 dark:bg-[#0c162f]/85 dark:shadow-[0_4px_24px_-4px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.08)]">
                     {navItems.map((item) => {
                         const Icon = item.icon;
                         const isActive = activeSection === item.id;
@@ -149,16 +152,16 @@ export default function Header({
                             <button
                                 key={item.id}
                                 onClick={() => handleNavClick(item.id)}
-                                className={`relative z-10 flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-150 ${
+                                className={`relative z-10 flex cursor-pointer items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 select-none ${
                                     isActive
-                                        ? 'text-amber-600 dark:text-amber-300 font-bold'
+                                        ? 'text-amber-700 dark:text-amber-300 font-bold'
                                         : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-amber-200'
                                 }`}
                             >
                                 {isActive && (
                                     <motion.div
                                         layoutId="activeNavBackground"
-                                        className="absolute inset-0 -z-10 rounded-md bg-amber-500/10 shadow-2xs border border-amber-500/20 dark:bg-amber-400/15 dark:border-amber-400/30"
+                                        className="absolute inset-0 -z-10 rounded-full bg-gradient-to-r from-amber-500/20 via-yellow-400/15 to-amber-500/20 border border-amber-500/40 dark:border-amber-400/50 shadow-[0_0_12px_rgba(245,158,11,0.25)]"
                                         transition={{
                                             type: 'spring',
                                             stiffness: 450,
@@ -166,44 +169,37 @@ export default function Header({
                                         }}
                                     />
                                 )}
-                                <Icon size={13} className={isActive ? 'text-amber-500 dark:text-amber-400' : 'opacity-70'} />
+                                <Icon
+                                    size={13}
+                                    className={`transition-colors ${
+                                        isActive ? 'text-amber-600 dark:text-amber-400' : 'opacity-70 group-hover:opacity-100'
+                                    }`}
+                                />
                                 <span>{item.label}</span>
                             </button>
                         );
                     })}
-
-                    <div className="h-4 w-[1px] bg-zinc-200 dark:bg-blue-400/20 mx-1" />
-
-                    <a
-                        href="https://www.dicoding.com/users/riedmarf12/academies"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex cursor-pointer items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:text-amber-600 dark:text-zinc-400 dark:hover:text-amber-300"
-                    >
-                        <span>Dicoding</span>
-                        <ExternalLink size={10} className="opacity-60" />
-                    </a>
                 </nav>
 
-                {/* Right Action Buttons */}
-                <div className="flex items-center gap-2">
-                    {/* Theme Toggle Button */}
+                {/* Right Controls: Theme Toggle & Gold CTA Button */}
+                <div className="flex items-center gap-2.5">
+                    {/* Refined Circular Theme Toggle Button */}
                     <button
                         onClick={toggleTheme}
-                        className="luxury-btn-secondary cursor-pointer rounded-lg p-2 text-zinc-700 dark:text-zinc-300"
+                        className="cursor-pointer flex size-9 items-center justify-center rounded-full border border-zinc-200/80 bg-white/80 text-zinc-700 shadow-2xs backdrop-blur-md transition-all duration-200 hover:border-amber-400/50 hover:scale-105 active:scale-95 dark:border-blue-400/20 dark:bg-[#0c162f]/80 dark:text-amber-300 dark:hover:border-amber-400/40 dark:hover:shadow-[0_0_10px_rgba(245,158,11,0.25)]"
                         aria-label="Toggle tema gelap/terang"
                     >
                         {isDarkMode ? (
-                            <Sun size={14} className="text-amber-400" />
+                            <Sun size={15} className="text-amber-400 transition-transform duration-300 hover:rotate-45" />
                         ) : (
-                            <Moon size={14} className="text-zinc-700" />
+                            <Moon size={15} className="text-zinc-700 transition-transform duration-300 hover:-rotate-12" />
                         )}
                     </button>
 
-                    {/* Quick Contact Button */}
+                    {/* Champagne Gold Luxury Pill CTA */}
                     <button
                         onClick={onOpenContact}
-                        className="luxury-btn-primary hidden cursor-pointer items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-bold tracking-wide sm:inline-flex"
+                        className="luxury-btn-primary hidden cursor-pointer items-center gap-1.5 rounded-full px-4 py-2 text-xs font-black tracking-wide sm:inline-flex"
                     >
                         <Send size={11} />
                         <span>Hubungi</span>
@@ -212,13 +208,13 @@ export default function Header({
                     {/* Mobile Hamburger Toggle */}
                     <button
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        className="relative flex size-9 items-center justify-center rounded-lg border border-zinc-200/90 bg-white/80 shadow-2xs transition-all hover:bg-zinc-100 md:hidden dark:border-white/8 dark:bg-[#12141c]/80 cursor-pointer"
+                        className="relative flex size-9 cursor-pointer items-center justify-center rounded-full border border-zinc-200/80 bg-white/80 shadow-2xs backdrop-blur-md transition-all duration-200 hover:border-amber-400/40 md:hidden dark:border-blue-400/20 dark:bg-[#0c162f]/80"
                         aria-label={isMobileMenuOpen ? 'Tutup menu' : 'Buka menu'}
                     >
                         <div className="relative flex size-4 flex-col items-center justify-center gap-1">
                             <span
                                 className={`h-0.5 w-4 rounded-full bg-zinc-700 transition-all duration-200 dark:bg-zinc-200 ${
-                                    isMobileMenuOpen ? 'translate-y-[6px] rotate-45' : ''
+                                    isMobileMenuOpen ? 'translate-y-[6px] rotate-45 bg-amber-500 dark:bg-amber-400' : ''
                                 }`}
                             />
                             <span
@@ -228,7 +224,7 @@ export default function Header({
                             />
                             <span
                                 className={`h-0.5 w-4 rounded-full bg-zinc-700 transition-all duration-200 dark:bg-zinc-200 ${
-                                    isMobileMenuOpen ? '-translate-y-[6px] -rotate-45' : ''
+                                    isMobileMenuOpen ? '-translate-y-[6px] -rotate-45 bg-amber-500 dark:bg-amber-400' : ''
                                 }`}
                             />
                         </div>
@@ -236,15 +232,15 @@ export default function Header({
                 </div>
             </div>
 
-            {/* Mobile Drawer Navigation */}
+            {/* Mobile Drawer Navigation (Frosted Luxury Vault Floating Panel) */}
             <AnimatePresence>
                 {isMobileMenuOpen && (
                     <motion.div
-                        initial={{ opacity: 0, y: -8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -8 }}
-                        transition={{ duration: 0.15, ease: 'easeOut' }}
-                        className="absolute top-full left-0 w-full border-b border-zinc-200 bg-white/95 px-4 py-4 shadow-xl backdrop-blur-xl md:hidden dark:border-blue-400/15 dark:bg-[#080e21]/95"
+                        initial={{ opacity: 0, y: -10, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                        transition={{ duration: 0.2, ease: 'easeOut' }}
+                        className="mx-4 mt-2 overflow-hidden rounded-2xl border border-zinc-200/90 bg-white/95 p-3 shadow-2xl backdrop-blur-2xl md:hidden dark:border-blue-400/25 dark:bg-[#0c162f]/98"
                     >
                         <div className="space-y-1">
                             {navItems.map((item) => {
@@ -255,45 +251,37 @@ export default function Header({
                                     <button
                                         key={item.id}
                                         onClick={() => handleNavClick(item.id)}
-                                        className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-xs font-medium transition-all ${
+                                        className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-semibold transition-all ${
                                             isActive
-                                                ? 'bg-amber-500/10 text-amber-600 font-bold dark:bg-amber-400/15 dark:text-amber-300'
-                                                : 'text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-white/[0.04]'
+                                                ? 'bg-gradient-to-r from-amber-500/20 via-yellow-400/15 to-amber-500/20 text-amber-700 font-bold border border-amber-500/30 dark:text-amber-300 dark:border-amber-400/40 shadow-xs'
+                                                : 'text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-blue-400/10'
                                         }`}
                                     >
                                         <div className="flex items-center gap-2.5">
-                                            <Icon size={14} className={isActive ? 'text-amber-500 dark:text-amber-400' : 'text-zinc-400'} />
+                                            <Icon
+                                                size={15}
+                                                className={isActive ? 'text-amber-600 dark:text-amber-400' : 'text-zinc-400 dark:text-zinc-500'}
+                                            />
                                             <span>{item.label}</span>
                                         </div>
-                                        <ChevronRight size={14} className="text-zinc-400" />
+                                        <ChevronRight
+                                            size={14}
+                                            className={isActive ? 'text-amber-500 dark:text-amber-400' : 'text-zinc-400 dark:text-zinc-600'}
+                                        />
                                     </button>
                                 );
                             })}
-
-                            <a
-                                href="https://www.dicoding.com/users/riedmarf12/academies"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-850"
-                                onClick={() => setIsMobileMenuOpen(false)}
-                            >
-                                <div className="flex items-center gap-2.5">
-                                    <Award size={14} className="text-zinc-400" />
-                                    <span>Dicoding Profile</span>
-                                </div>
-                                <ExternalLink size={13} className="text-zinc-400" />
-                            </a>
                         </div>
 
-                        <div className="pt-3 mt-3 border-t border-zinc-200 dark:border-white/10">
+                        <div className="pt-2.5 mt-2.5 border-t border-zinc-200/80 dark:border-blue-400/15">
                             <button
                                 onClick={() => {
                                     setIsMobileMenuOpen(false);
                                     onOpenContact();
                                 }}
-                                className="flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-xs font-semibold text-white transition-all active:scale-98 dark:bg-white dark:text-zinc-900"
+                                className="luxury-btn-primary flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-black tracking-wide cursor-pointer"
                             >
-                                <Send size={13} />
+                                <Send size={12} />
                                 <span>Hubungi Saya</span>
                             </button>
                         </div>
