@@ -12,7 +12,6 @@ import {
     Check,
     Clock,
     Sparkles,
-    ExternalLink,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -174,33 +173,8 @@ export default function ProfileCard({ onOpenContact, profile, loading }: Profile
                     )}
                 </div>
 
-                {/* Module 3: Micro Tech Chips */}
-                <div className="relative z-10 mt-4 grid grid-cols-2 gap-1.5">
-                    {[
-                        { label: 'Laravel 12', spec: 'Backend Core', dot: 'bg-red-500' },
-                        { label: 'React 19 & TS', spec: 'Reactive UI', dot: 'bg-sky-400' },
-                        { label: 'PostgreSQL', spec: 'Relational DB', dot: 'bg-blue-500' },
-                        { label: 'Clean Arch', spec: 'Architecture', dot: 'bg-amber-400' },
-                    ].map((item) => (
-                        <div
-                            key={item.label}
-                            className="flex items-center gap-2 rounded-lg border border-zinc-200/80 bg-zinc-50/80 p-2 dark:border-blue-400/15 dark:bg-[#0c162f]/80 transition-colors hover:border-zinc-300 dark:hover:border-amber-400/30 shadow-2xs"
-                        >
-                            <span className={`size-1.5 rounded-full ${item.dot} flex-shrink-0 shadow-xs`} />
-                            <div className="min-w-0">
-                                <p className="truncate text-[11px] font-bold text-zinc-800 dark:text-zinc-100 leading-none">
-                                    {item.label}
-                                </p>
-                                <p className="truncate text-[9px] font-mono text-zinc-400 dark:text-zinc-400 mt-0.5 leading-none">
-                                    {item.spec}
-                                </p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
                 {/* Module 4: Location & Inset Email */}
-                <div className="relative z-10 mt-3.5 space-y-1.5">
+                <div className="relative z-10 mt-4 space-y-1.5">
                     {profile.location?.trim() && (
                         <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-400 px-1">
                             <MapPin size={12} className="text-zinc-400 dark:text-amber-400/70" />
@@ -259,15 +233,15 @@ export default function ProfileCard({ onOpenContact, profile, loading }: Profile
 
                 {/* Module 6: Social Links Dock */}
                 {hasSocials && (
-                    <div className="relative z-10 mt-3.5 flex items-center gap-1.5 pt-3 border-t border-zinc-200/80 dark:border-blue-400/15">
+                    <div className="relative z-10 mt-3.5 flex items-center gap-2 pt-3 border-t border-zinc-200/80 dark:border-blue-400/15">
                         {profile.github_url?.trim() && (
                             <a
                                 href={profile.github_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-zinc-200/80 bg-zinc-50 py-1.5 text-[11px] font-semibold text-zinc-700 dark:border-blue-400/15 dark:bg-[#0c162f]/80 dark:text-zinc-300 transition-all hover:bg-zinc-950 hover:text-white dark:hover:bg-[#152549] dark:hover:text-amber-300 dark:hover:border-amber-400/30 shadow-2xs"
+                                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-zinc-200/80 bg-zinc-50 py-2 text-[11px] font-semibold text-zinc-700 dark:border-blue-400/15 dark:bg-[#0c162f]/80 dark:text-zinc-300 transition-all hover:bg-zinc-950 hover:text-white dark:hover:bg-[#152549] dark:hover:text-amber-300 dark:hover:border-amber-400/30 shadow-2xs"
                             >
-                                <Github size={12} />
+                                <Github size={13} />
                                 <span>GitHub</span>
                             </a>
                         )}
@@ -276,22 +250,12 @@ export default function ProfileCard({ onOpenContact, profile, loading }: Profile
                                 href={profile.linkedin_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-zinc-200/80 bg-zinc-50 py-1.5 text-[11px] font-semibold text-zinc-700 dark:border-blue-400/15 dark:bg-[#0c162f]/80 dark:text-zinc-300 transition-all hover:bg-[#0A66C2] hover:text-white dark:hover:bg-[#0A66C2] dark:hover:text-white shadow-2xs"
+                                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-zinc-200/80 bg-zinc-50 py-2 text-[11px] font-semibold text-zinc-700 dark:border-blue-400/15 dark:bg-[#0c162f]/80 dark:text-zinc-300 transition-all hover:bg-[#0A66C2] hover:text-white dark:hover:bg-[#0A66C2] dark:hover:text-white shadow-2xs"
                             >
-                                <Linkedin size={12} />
+                                <Linkedin size={13} />
                                 <span>LinkedIn</span>
                             </a>
                         )}
-                        <a
-                            href="https://www.dicoding.com/users/riedmarf12/academies"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-50 px-2.5 py-1.5 text-[11px] font-semibold text-zinc-700 dark:border-blue-400/15 dark:bg-[#0c162f]/80 dark:text-zinc-300 transition-all hover:border-amber-400/40 hover:text-amber-500 dark:hover:text-amber-300 shadow-2xs"
-                            title="Dicoding Profile"
-                        >
-                            <span>Dicoding</span>
-                            <ExternalLink size={10} className="ml-1 opacity-60" />
-                        </a>
                     </div>
                 )}
             </div>
