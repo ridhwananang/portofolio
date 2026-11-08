@@ -1,6 +1,6 @@
-import { FolderGit2, ArrowUpRight, CheckCircle2, Layers, ChevronDown, ChevronUp, Cloud, Maximize2, X, ExternalLink } from 'lucide-react';
+import { FolderGit2, ArrowUpRight, CheckCircle2, Layers, ChevronDown, ChevronUp, Cloud, Maximize2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import ProjectPreviewModal from './ProjectPreviewModal';
 
 interface ProjectItem {
     title: string;
@@ -27,15 +27,6 @@ export default function Projects({ projects, loading }: ProjectsProps) {
     useEffect(() => {
         setIsExpanded(false);
     }, [safeProjects.length]);
-
-    // Close preview modal on ESC
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') setSelectedProject(null);
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, []);
 
     const getImageUrl = (imagePath: string) => {
         if (!imagePath) {
@@ -218,85 +209,11 @@ export default function Projects({ projects, loading }: ProjectsProps) {
             )}
 
             {/* High-Resolution Full-Screen Project Lightbox Modal */}
-            <AnimatePresence>
-                {selectedProject && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md"
-                        onClick={() => setSelectedProject(null)}
-                    >
-                        <motion.div
-                            initial={{ scale: 0.95, opacity: 0, y: 10 }}
-                            animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.95, opacity: 0, y: 10 }}
-                            transition={{ duration: 0.25, ease: 'easeOut' }}
-                            onClick={(e) => e.stopPropagation()}
-                            className="luxury-card relative flex flex-col w-full max-w-5xl max-h-[92vh] overflow-hidden rounded-2xl border border-zinc-200/90 dark:border-amber-400/30 dark:bg-[#080e21] shadow-2xl"
-                        >
-                            <div className="specular-top" />
-
-                            {/* Modal Header */}
-                            <div className="relative z-10 flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-zinc-200/80 dark:border-blue-400/15 bg-zinc-50/80 dark:bg-[#0c162f]/80">
-                                <div>
-                                    <h3 className="text-base sm:text-lg font-black text-zinc-900 dark:text-white leading-tight">
-                                        {selectedProject.title}
-                                    </h3>
-                                    <div className="flex flex-wrap gap-1 mt-1">
-                                        {selectedProject.tags?.map((t) => (
-                                            <span
-                                                key={t}
-                                                className="text-[9.5px] font-mono font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-300 border border-amber-500/20"
-                                            >
-                                                {t}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <button
-                                    type="button"
-                                    onClick={() => setSelectedProject(null)}
-                                    className="cursor-pointer size-8 rounded-full flex items-center justify-center border border-zinc-200 dark:border-blue-400/20 bg-white dark:bg-[#0c162f] text-zinc-600 dark:text-zinc-300 hover:text-amber-500 dark:hover:text-amber-400 transition-colors shadow-2xs"
-                                    title="Tutup (ESC)"
-                                >
-                                    <X size={16} />
-                                </button>
-                            </div>
-
-                            {/* Full-Screen Image Container (100% Uncropped View) */}
-                            <div className="relative z-10 flex-1 overflow-auto p-3 sm:p-5 flex items-center justify-center bg-zinc-100/50 dark:bg-[#050a18]">
-                                <img
-                                    src={getImageUrl(selectedProject.image)}
-                                    alt={selectedProject.title}
-                                    className="w-full h-auto max-h-[70vh] object-contain rounded-xl border border-zinc-200/80 dark:border-blue-400/20 shadow-xl"
-                                />
-                            </div>
-
-                            {/* Modal Footer Description */}
-                            <div className="relative z-10 flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-3 border-t border-zinc-200/80 dark:border-blue-400/15 bg-white dark:bg-[#0c162f]/90">
-                                <p className="text-xs text-zinc-600 dark:text-zinc-300 max-w-2xl leading-relaxed">
-                                    {selectedProject.description}
-                                </p>
-
-                                {selectedProject.link && (
-                                    <a
-                                        href={selectedProject.link}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="luxury-btn-primary flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-bold"
-                                    >
-                                        <span>Kunjungi Proyek</span>
-                                        <ExternalLink size={12} />
-                                    </a>
-                                )}
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            <ProjectPreviewModal
+                isOpen={Boolean(selectedProject)}
+                onClose={() => setSelectedProject(null)}
+                project={selectedProject}
+            />
         </section>
     );
 }
