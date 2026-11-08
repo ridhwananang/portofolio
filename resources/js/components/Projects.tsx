@@ -1,4 +1,4 @@
-import { FolderGit2, ArrowUpRight, CheckCircle2, Layers, ChevronDown, ChevronUp } from 'lucide-react';
+import { FolderGit2, ArrowUpRight, CheckCircle2, Layers, ChevronDown, ChevronUp, Cloud, ExternalLink } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 interface ProjectItem {
@@ -7,6 +7,7 @@ interface ProjectItem {
     tags: string[];
     mockup_type: string;
     image: string;
+    link?: string;
 }
 
 interface ProjectsProps {
@@ -46,43 +47,50 @@ export default function Projects({ projects, loading }: ProjectsProps) {
     return (
         <section id="karya" className="w-full">
             {/* Section Header */}
-            <div className="mb-11 flex items-center gap-3.5">
-                <div className="hidden sm:flex rounded-2xl border border-slate-200/50 bg-white p-2.5 text-violet-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-violet-400">
-                    <FolderGit2
-                        size={22}
-                        id="projects-title-icon"
-                        strokeWidth={2.2}
-                    />
+            <div className="mb-10 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                <div className="flex items-center gap-3.5">
+                    <div className="rounded-2xl border border-slate-200/80 bg-white p-2.5 text-violet-600 shadow-2xs dark:border-white/10 dark:bg-slate-900 dark:text-violet-400">
+                        <FolderGit2
+                            size={22}
+                            id="projects-title-icon"
+                            strokeWidth={2.2}
+                        />
+                    </div>
+                    <div>
+                        <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+                            Proyek{' '}
+                            <span className="bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500 bg-clip-text font-mono font-extrabold text-transparent italic">
+                                Unggulan
+                            </span>
+                        </h3>
+                        <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                            Studi kasus pengerjaan sistem aplikasi nyata berstandar produksi
+                        </p>
+                    </div>
                 </div>
-                <div>
-                    <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
-                        Proyek{' '}
-                        <span className="bg-gradient-to-r from-blue-500 to-violet-500 bg-clip-text font-mono font-extrabold text-transparent italic">
-                            Unggulan
-                        </span>
-                    </h3>
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                        Studi kasus pengerjaan proyek nyata berskala
-                        siap-produksi
-                    </p>
-                </div>
+
+                {!loading && safeProjects.length > 0 && (
+                    <div className="flex items-center gap-2 rounded-full border border-slate-200/80 bg-slate-100/80 px-3.5 py-1.5 text-xs font-mono font-bold text-slate-650 dark:border-white/10 dark:bg-slate-800/80 dark:text-slate-300 w-fit">
+                        <span>{safeProjects.length} Proyek Terdaftar</span>
+                    </div>
+                )}
             </div>
 
             {loading ? (
                 /* Skeleton Loader */
-                <div className="flex flex-wrap gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {[1, 2, 3].map((n) => (
                         <div
                             key={n}
-                            className="glass-card flex min-w-[250px] flex-1 animate-pulse flex-col items-stretch gap-6 rounded-[2rem] border border-slate-200/50 p-6 md:max-w-[calc(33.333%-16px)] dark:border-slate-800/40"
+                            className="glass-card flex animate-pulse flex-col items-stretch gap-5 rounded-[2.2rem] border border-slate-200/60 p-6 dark:border-slate-800/50"
                         >
-                            <div className="relative aspect-[2/1] w-full rounded-2xl bg-slate-200 dark:bg-slate-800"></div>
+                            <div className="aspect-[16/10] w-full rounded-2xl bg-slate-200 dark:bg-slate-800"></div>
                             <div className="flex flex-col gap-3">
                                 <div className="flex gap-2">
-                                    <div className="h-5 w-12 rounded bg-slate-100 dark:bg-slate-800"></div>
-                                    <div className="h-5 w-12 rounded bg-slate-100 dark:bg-slate-800"></div>
+                                    <div className="h-5 w-16 rounded bg-slate-100 dark:bg-slate-800"></div>
+                                    <div className="h-5 w-16 rounded bg-slate-100 dark:bg-slate-800"></div>
                                 </div>
-                                <div className="bg-slate-250 h-6 w-1/2 rounded dark:bg-slate-800"></div>
+                                <div className="h-6 w-3/4 rounded bg-slate-200 dark:bg-slate-800"></div>
                                 <div className="h-4 w-full rounded bg-slate-200 dark:bg-slate-800"></div>
                                 <div className="h-4 w-5/6 rounded bg-slate-200 dark:bg-slate-800"></div>
                             </div>
@@ -91,8 +99,8 @@ export default function Projects({ projects, loading }: ProjectsProps) {
                 </div>
             ) : (
                 <>
-                    {/* Main projects flex container (3 items per row on desktop) */}
-                    <div className="flex flex-wrap gap-6">
+                    {/* Projects Grid Container (1 col mobile, 2 col tablet, 3 col desktop) */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {visibleProjects.map((p, idx) => {
                             const isHovered = activeProject === idx;
 
@@ -101,42 +109,62 @@ export default function Projects({ projects, loading }: ProjectsProps) {
                                     key={p.title}
                                     onMouseEnter={() => setActiveProject(idx)}
                                     onMouseLeave={() => setActiveProject(null)}
-                                    className={`glass-card transform-gpu flex min-w-[280px] flex-1 flex-col items-stretch gap-5 rounded-[2rem] border p-6 select-none transition-all duration-300 hover:-translate-y-1.5 md:max-w-[calc(33.333%-16px)] ${
+                                    className={`glass-card transform-gpu flex flex-col justify-between overflow-hidden rounded-[2.2rem] border p-6 select-none transition-all duration-300 hover:-translate-y-1.5 ${
                                         isHovered
-                                            ? 'border-violet-500/50 bg-white/90 shadow-xl shadow-slate-200/50 dark:bg-slate-900/80 dark:shadow-none'
-                                            : 'border-slate-200/70 bg-white/75 dark:border-slate-800/70 dark:bg-slate-900/50'
+                                            ? 'border-violet-500/50 bg-white/95 shadow-xl shadow-slate-200/60 dark:bg-slate-900/85 dark:shadow-black/40'
+                                            : 'border-slate-200/80 bg-white/80 dark:border-white/10 dark:bg-slate-900/65'
                                     } group`}
                                 >
-                                    {/* Screen Mockup Sandbox Container (Fits full width, 16:9 / 2:1 aspect ratio) */}
-                                    <div className="relative aspect-[16/10] w-full flex-shrink-0 overflow-hidden rounded-2xl border border-slate-200/60 bg-slate-950 shadow-inner dark:border-slate-800">
-                                        <img
-                                            src={getImageUrl(p.image)}
-                                            alt={`${p.title} Screenshot`}
-                                            className="h-full w-full object-cover object-top transition-transform duration-500 ease-out group-hover:scale-105"
-                                        />
-                                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
-                                    </div>
+                                    <div>
+                                        {/* Realistic macOS Browser Window Mockup Frame */}
+                                        <div className="relative mb-5 overflow-hidden rounded-2xl border border-slate-200/90 bg-slate-900 shadow-sm dark:border-white/10">
+                                            {/* Browser Window Header Toolbar */}
+                                            <div className="flex items-center justify-between border-b border-slate-800/80 bg-slate-950/80 px-3.5 py-2">
+                                                {/* 3-dot Window Controls */}
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="h-2.5 w-2.5 rounded-full bg-[#FF5F56] opacity-80" />
+                                                    <span className="h-2.5 w-2.5 rounded-full bg-[#FFBD2E] opacity-80" />
+                                                    <span className="h-2.5 w-2.5 rounded-full bg-[#27C93F] opacity-80" />
+                                                </div>
 
-                                    {/* Content details Container */}
-                                    <div className="flex flex-1 flex-col justify-between py-1">
+                                                {/* Simulated URL bar */}
+                                                <div className="flex items-center justify-center rounded-md bg-slate-800/60 px-3 py-0.5 text-[10px] font-mono text-slate-400">
+                                                    <span>cloud://preview.app</span>
+                                                </div>
+
+                                                <div className="w-8" />
+                                            </div>
+
+                                            {/* Screenshot display */}
+                                            <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-950">
+                                                <img
+                                                    src={getImageUrl(p.image)}
+                                                    alt={`${p.title} Screenshot`}
+                                                    className="h-full w-full object-cover object-top transition-transform duration-500 ease-out group-hover:scale-105"
+                                                    loading="lazy"
+                                                />
+                                                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
+                                            </div>
+                                        </div>
+
                                         {/* Tech Badges Container */}
-                                        <div className="mb-3 flex flex-wrap gap-1.5">
+                                        <div className="mb-3.5 flex flex-wrap gap-1.5">
                                             {p.tags.map((tag) => (
                                                 <span
                                                     key={tag}
-                                                    className="rounded-lg border border-slate-200/60 bg-slate-100/70 px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-slate-600 dark:border-slate-800/80 dark:bg-slate-800/60 dark:text-slate-400"
+                                                    className="rounded-lg border border-slate-200/70 bg-slate-100/80 px-2.5 py-0.5 text-[10px] font-mono font-bold tracking-wider text-slate-650 dark:border-white/10 dark:bg-slate-800/70 dark:text-slate-300"
                                                 >
                                                     {tag}
                                                 </span>
                                             ))}
                                         </div>
 
-                                        {/* Name & Explanations */}
+                                        {/* Project Title & Description */}
                                         <div>
-                                            <h4 className="mb-2 flex items-center gap-1.5 text-lg font-extrabold tracking-tight text-slate-900 transition-colors group-hover:text-violet-600 dark:text-white dark:group-hover:text-violet-400">
+                                            <h4 className="mb-2 flex items-center justify-between text-lg font-black tracking-tight text-slate-900 transition-colors group-hover:text-violet-600 dark:text-white dark:group-hover:text-violet-400">
                                                 <span>{p.title}</span>
                                                 <ArrowUpRight
-                                                    size={15}
+                                                    size={16}
                                                     className={`text-slate-400 transition-all duration-300 ${
                                                         isHovered
                                                             ? 'translate-x-0.5 -translate-y-0.5 text-violet-500'
@@ -144,40 +172,48 @@ export default function Projects({ projects, loading }: ProjectsProps) {
                                                     }`}
                                                 />
                                             </h4>
-                                            <p className="text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                                            <p className="text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-350">
                                                 {p.description}
                                             </p>
                                         </div>
+                                    </div>
 
-                                        {/* Project Links / Integration Meta */}
-                                        <div className="mt-5 flex items-center gap-3 border-t border-slate-100/80 pt-3.5 text-xs dark:border-slate-800/70">
-                                            <span className="flex items-center gap-1.5 font-semibold text-slate-600 dark:text-slate-400">
-                                                <CheckCircle2
-                                                    size={13}
-                                                    className="text-emerald-500"
-                                                />
-                                                Clean Architecture
-                                            </span>
-                                            <span className="text-slate-300 dark:text-slate-700">•</span>
-                                            <span className="flex items-center gap-1.5 font-semibold text-slate-600 dark:text-slate-400">
-                                                <Layers
-                                                    size={13}
-                                                    strokeWidth={2.4}
-                                                    className="text-violet-500"
-                                                />
-                                                Inertia.js Ready
-                                            </span>
-                                        </div>
+                                    {/* Project Architectural Meta Footer */}
+                                    <div className="mt-5 flex items-center gap-3 border-t border-slate-100 pt-3.5 text-xs dark:border-slate-800/70">
+                                        <span className="flex items-center gap-1.5 font-semibold text-slate-600 dark:text-slate-400 text-[11px]">
+                                            <CheckCircle2
+                                                size={13}
+                                                className="text-emerald-500"
+                                            />
+                                            Clean Arch
+                                        </span>
+                                        <span className="text-slate-300 dark:text-slate-700">•</span>
+                                        <span className="flex items-center gap-1.5 font-semibold text-slate-600 dark:text-slate-400 text-[11px]">
+                                            <Cloud
+                                                size={13}
+                                                className="text-sky-500"
+                                            />
+                                            S3 Bucket
+                                        </span>
+                                        <span className="text-slate-300 dark:text-slate-700">•</span>
+                                        <span className="flex items-center gap-1.5 font-semibold text-slate-600 dark:text-slate-400 text-[11px]">
+                                            <Layers
+                                                size={13}
+                                                className="text-violet-500"
+                                            />
+                                            Inertia SPA
+                                        </span>
                                     </div>
                                 </div>
                             );
                         })}
                     </div>
 
-                    {/* Toggle Button */}
+                    {/* Expand/Collapse Button */}
                     {!loading && safeProjects.length > ITEMS_PER_PAGE && (
                         <div className="mt-10 flex justify-center w-full">
                             <button
+                                type="button"
                                 onClick={() => {
                                     if (isExpanded) {
                                         document.getElementById('karya')?.scrollIntoView({ behavior: 'smooth' });
@@ -186,10 +222,10 @@ export default function Projects({ projects, loading }: ProjectsProps) {
                                         setIsExpanded(true);
                                     }
                                 }}
-                                className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-violet-500 hover:text-violet-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400 dark:hover:border-violet-500 dark:hover:text-violet-400 cursor-pointer"
+                                className="flex cursor-pointer items-center gap-2 rounded-2xl border border-slate-200/80 bg-white/90 px-6 py-3 text-xs sm:text-sm font-bold text-slate-700 shadow-2xs transition-all hover:border-violet-500 hover:text-violet-600 active:scale-95 dark:border-white/10 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:border-violet-400 dark:hover:text-violet-400"
                             >
                                 <span>{isExpanded ? 'Tampilkan Lebih Sedikit' : 'Tampilkan Lebih Banyak'}</span>
-                                {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
                             </button>
                         </div>
                     )}
