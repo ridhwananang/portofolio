@@ -139,7 +139,8 @@ export default function Header({
                 </div>
 
                 {/* Desktop Minimalist Floating Nav Dock */}
-                <nav className="hidden items-center gap-0.5 rounded-xl border border-zinc-200/90 bg-white/80 p-1 shadow-2xs backdrop-blur-md md:flex dark:border-white/8 dark:bg-[#12141c]/80">
+                <nav className="luxury-card hidden items-center gap-0.5 rounded-xl p-1 shadow-md md:flex">
+                    <div className="specular-top" />
                     {navItems.map((item) => {
                         const Icon = item.icon;
                         const isActive = activeSection === item.id;
@@ -150,14 +151,14 @@ export default function Header({
                                 onClick={() => handleNavClick(item.id)}
                                 className={`relative z-10 flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150 ${
                                     isActive
-                                        ? 'text-zinc-950 dark:text-white font-semibold'
+                                        ? 'text-zinc-950 dark:text-white font-bold'
                                         : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
                                 }`}
                             >
                                 {isActive && (
                                     <motion.div
                                         layoutId="activeNavBackground"
-                                        className="absolute inset-0 -z-10 rounded-lg bg-zinc-100 shadow-2xs border border-zinc-200/80 dark:bg-zinc-800 dark:border-white/10"
+                                        className="absolute inset-0 -z-10 rounded-lg bg-zinc-100 shadow-2xs border border-zinc-200/80 dark:bg-white/10 dark:border-white/15"
                                         transition={{
                                             type: 'spring',
                                             stiffness: 450,
@@ -189,7 +190,7 @@ export default function Header({
                     {/* Theme Toggle Button */}
                     <button
                         onClick={toggleTheme}
-                        className="cursor-pointer rounded-lg border border-zinc-200/90 bg-white/80 p-2 text-zinc-700 shadow-2xs transition-all hover:bg-zinc-100 hover:text-zinc-900 dark:border-white/8 dark:bg-[#12141c]/80 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                        className="luxury-btn-secondary cursor-pointer rounded-xl p-2 text-zinc-700 dark:text-zinc-300"
                         aria-label="Toggle tema gelap/terang"
                     >
                         {isDarkMode ? (
@@ -202,7 +203,7 @@ export default function Header({
                     {/* Quick Contact Button */}
                     <button
                         onClick={onOpenContact}
-                        className="hidden cursor-pointer items-center gap-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-all active:scale-95 sm:inline-flex dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100"
+                        className="luxury-btn-primary hidden cursor-pointer items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold tracking-wide sm:inline-flex"
                     >
                         <Send size={12} />
                         <span>Hubungi</span>

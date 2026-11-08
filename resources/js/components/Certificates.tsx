@@ -1,4 +1,4 @@
-import { Award, ShieldCheck, Calendar, Eye, Clock, ChevronDown, ChevronUp, CheckCircle } from 'lucide-react';
+import { Award, ShieldCheck, Calendar, Eye, Clock, ChevronDown, ChevronUp, CheckCircle, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
 import CertificatePreviewModal from './CertificatePreviewModal';
@@ -53,9 +53,9 @@ export default function Certificates({ certificates, loading }: CertificatesProp
     return (
         <section id="sertifikat" className="w-full scroll-mt-28 border-t border-zinc-200/80 pt-8 dark:border-white/10">
             {/* Section Header */}
-            <div className="mb-6 flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+            <div className="mb-7 flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
                 <div>
-                    <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+                    <h3 className="text-xl sm:text-2xl font-black tracking-tight text-zinc-900 dark:text-white">
                         Sertifikasi & Lisensi
                     </h3>
                     <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
@@ -64,17 +64,17 @@ export default function Certificates({ certificates, loading }: CertificatesProp
                 </div>
 
                 {!loading && safeCertificates.length > 0 && (
-                    <div className="flex items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs font-mono text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 w-fit">
-                        <span className="flex items-center gap-1">
-                            <CheckCircle size={11} className="text-emerald-500" />
-                            {safeCertificates.length} Sertifikat
+                    <div className="flex items-center gap-2.5 rounded-full border border-zinc-200/90 dark:border-white/10 bg-white/80 dark:bg-white/[0.04] px-3.5 py-1 text-xs font-mono font-bold text-zinc-700 dark:text-zinc-300 shadow-2xs w-fit">
+                        <span className="flex items-center gap-1.5">
+                            <CheckCircle size={12} className="text-emerald-500" />
+                            {safeCertificates.length} Sertifikat Terverifikasi
                         </span>
                         {totalHours > 0 && (
                             <>
                                 <span>•</span>
-                                <span className="flex items-center gap-1">
-                                    <Clock size={11} className="text-violet-500" />
-                                    {totalHours} Jam
+                                <span className="flex items-center gap-1.5">
+                                    <Clock size={12} className="text-violet-500" />
+                                    {totalHours} Jam Belajar
                                 </span>
                             </>
                         )}
@@ -84,18 +84,18 @@ export default function Certificates({ certificates, loading }: CertificatesProp
 
             {loading ? (
                 /* Skeleton Loader */
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {[1, 2, 3].map((n) => (
                         <div
                             key={n}
-                            className="glass-card h-48 w-full animate-pulse rounded-xl border border-zinc-200 p-4 dark:border-zinc-800"
+                            className="luxury-card h-52 w-full animate-pulse rounded-xl p-5"
                         />
                     ))}
                 </div>
             ) : (
                 /* Main certificates grid */
                 <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {visibleCertificates.map((cert) => {
                             const isAchievement =
                                 cert.category.toLowerCase().includes('achievement') ||
@@ -106,44 +106,54 @@ export default function Certificates({ certificates, loading }: CertificatesProp
                                 <div
                                     key={cert.id}
                                     onClick={() => handlePreview(cert)}
-                                    className={`glass-card transform-gpu relative flex flex-col justify-between overflow-hidden rounded-xl border p-4 sm:p-5 shadow-2xs transition-all duration-200 hover:border-zinc-300 hover:shadow-xs cursor-pointer select-none ${
+                                    className={`luxury-card transform-gpu relative flex flex-col justify-between overflow-hidden rounded-xl p-5 sm:p-6 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl cursor-pointer select-none ${
                                         isAchievement
-                                            ? 'border-amber-400/80 bg-white dark:border-amber-500/40 dark:bg-[#0f1117]'
-                                            : 'border-zinc-200/90 bg-white dark:border-white/10 dark:bg-[#0f1117]'
+                                            ? 'border-amber-400/70 bg-gradient-to-b from-amber-50/30 via-white to-white dark:border-amber-500/40 dark:from-amber-950/20 dark:via-[#0c0f17] dark:to-[#0c0f17] shadow-[0_4px_24px_rgba(245,158,11,0.12)]'
+                                            : 'hover:border-zinc-300 dark:hover:border-white/20'
                                     } group`}
                                 >
-                                    <div className="space-y-3">
+                                    {/* Top Specular Rim Light */}
+                                    <div className="specular-top" />
+
+                                    <div className="space-y-3.5">
                                         {/* Certificate Static Thumbnail Preview */}
-                                        <div className="relative aspect-[1.414/1] w-full overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950">
+                                        <div className="relative aspect-[1.414/1] w-full overflow-hidden rounded-lg border border-zinc-200/90 bg-zinc-950 dark:border-white/10 shadow-sm">
                                             <img
                                                 src={cert.thumbnail_url || cert.file_url}
                                                 alt={`Thumbnail ${cert.title}`}
-                                                className="w-full h-full object-cover transition-transform duration-200 ease-out group-hover:scale-103"
+                                                className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                                                 loading="lazy"
                                             />
 
-                                            <div className="absolute inset-0 flex items-center justify-center bg-zinc-950/30 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                                                <span className="flex items-center gap-1 rounded bg-white px-2 py-1 text-[11px] font-semibold text-zinc-900 shadow-sm">
-                                                    <Eye size={11} />
-                                                    <span>Pratinjau</span>
+                                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 backdrop-blur-2xs transition-opacity duration-200 group-hover:opacity-100">
+                                                <span className="flex items-center gap-1.5 rounded-lg bg-white/95 px-3 py-1.5 text-xs font-bold text-zinc-900 shadow-md">
+                                                    <Eye size={12} />
+                                                    <span>Pratinjau Sertifikat</span>
                                                 </span>
                                             </div>
 
                                             {isAchievement && (
-                                                <div className="absolute top-2 left-2 rounded bg-amber-500 px-2 py-0.5 text-[9px] font-mono font-bold text-white shadow-xs">
-                                                    Kelulusan Utama
+                                                <div className="absolute top-2.5 left-2.5 flex items-center gap-1 rounded-md bg-amber-500 px-2 py-0.5 text-[9.5px] font-mono font-bold text-white shadow-md">
+                                                    <Sparkles size={10} />
+                                                    <span>Kelulusan Utama</span>
                                                 </div>
                                             )}
                                         </div>
 
                                         {/* Metadata Row */}
                                         <div className="flex items-center justify-between text-[10px] font-mono">
-                                            <span className="uppercase text-zinc-400 dark:text-zinc-500">
+                                            <span
+                                                className={`uppercase font-bold tracking-wider ${
+                                                    isAchievement
+                                                        ? 'text-amber-600 dark:text-amber-400'
+                                                        : 'text-zinc-400 dark:text-zinc-500'
+                                                }`}
+                                            >
                                                 {cert.category}
                                             </span>
                                             <div className="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400">
                                                 {cert.duration && (
-                                                    <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                                                    <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
                                                         {cert.duration}
                                                     </span>
                                                 )}
@@ -152,12 +162,24 @@ export default function Certificates({ certificates, loading }: CertificatesProp
                                             </div>
                                         </div>
 
-                                        {/* Title */}
+                                        {/* Title & Shield Stamp */}
                                         <div className="flex items-start gap-2.5">
-                                            <div className="mt-0.5 flex-shrink-0 text-zinc-400 dark:text-zinc-500">
-                                                <ShieldCheck size={16} />
+                                            <div
+                                                className={`mt-0.5 flex size-7 flex-shrink-0 items-center justify-center rounded-lg border shadow-xs ${
+                                                    isAchievement
+                                                        ? 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                                                        : 'border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.04] text-zinc-500 dark:text-zinc-400'
+                                                }`}
+                                            >
+                                                <ShieldCheck size={15} />
                                             </div>
-                                            <h4 className="text-xs sm:text-sm font-bold text-zinc-900 leading-snug transition-colors group-hover:text-violet-600 dark:text-zinc-100 dark:group-hover:text-violet-400">
+                                            <h4
+                                                className={`text-xs sm:text-sm font-bold leading-snug transition-colors ${
+                                                    isAchievement
+                                                        ? 'text-zinc-900 group-hover:text-amber-600 dark:text-white dark:group-hover:text-amber-400'
+                                                        : 'text-zinc-900 group-hover:text-violet-600 dark:text-white dark:group-hover:text-violet-400'
+                                                }`}
+                                            >
                                                 {cert.title}
                                             </h4>
                                         </div>
@@ -168,7 +190,7 @@ export default function Certificates({ certificates, loading }: CertificatesProp
                                                 {cert.skills.map((s) => (
                                                     <span
                                                         key={s}
-                                                        className="rounded border border-zinc-200/60 bg-zinc-50 px-1.5 py-0.2 text-[9px] font-mono text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400"
+                                                        className="rounded-md border border-zinc-200/70 dark:border-white/[0.06] bg-zinc-50 dark:bg-white/[0.03] px-2 py-0.5 text-[9px] font-mono font-medium text-zinc-600 dark:text-zinc-300 shadow-2xs"
                                                     >
                                                         {s}
                                                     </span>
@@ -178,18 +200,18 @@ export default function Certificates({ certificates, loading }: CertificatesProp
                                     </div>
 
                                     {/* Bottom Info / Issuer */}
-                                    <div className="mt-3.5 flex items-center justify-between border-t border-zinc-100 pt-2.5 text-[10px] font-mono text-zinc-500 dark:border-zinc-800/80 dark:text-zinc-400">
+                                    <div className="mt-4 flex items-center justify-between border-t border-zinc-200/70 dark:border-white/[0.07] pt-3 text-[10.5px] font-mono text-zinc-500 dark:text-zinc-400">
                                         <div className="truncate">
                                             {cert.credential_id ? (
                                                 <span>
                                                     ID: <span className="font-semibold text-zinc-700 dark:text-zinc-300">{cert.credential_id}</span>
                                                 </span>
                                             ) : (
-                                                <span>{cert.issuer}</span>
+                                                <span className="font-medium text-zinc-700 dark:text-zinc-300">{cert.issuer}</span>
                                             )}
                                         </div>
                                         <div className="flex items-center gap-1 font-semibold text-violet-600 dark:text-violet-400">
-                                            <Eye size={11} />
+                                            <Eye size={12} />
                                             <span>Lihat</span>
                                         </div>
                                     </div>
@@ -200,7 +222,7 @@ export default function Certificates({ certificates, loading }: CertificatesProp
 
                     {/* Expand/Collapse Button */}
                     {!loading && safeCertificates.length > ITEMS_PER_PAGE && (
-                        <div className="mt-6 flex justify-center w-full">
+                        <div className="mt-8 flex justify-center w-full">
                             <button
                                 type="button"
                                 onClick={() => {
@@ -211,7 +233,7 @@ export default function Certificates({ certificates, loading }: CertificatesProp
                                         setIsExpanded(true);
                                     }
                                 }}
-                                className="flex cursor-pointer items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-4 py-2 text-xs font-semibold text-zinc-700 shadow-2xs transition-all hover:bg-zinc-50 active:scale-98 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-850"
+                                className="luxury-btn-secondary flex cursor-pointer items-center gap-2 rounded-xl px-6 py-2.5 text-xs font-bold text-zinc-800 dark:text-zinc-200"
                             >
                                 <span>{isExpanded ? 'Tampilkan Lebih Sedikit' : 'Tampilkan Lebih Banyak'}</span>
                                 {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}

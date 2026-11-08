@@ -105,7 +105,7 @@ export default function Welcome({
     return (
         <div
             id="app-root"
-            className="relative min-h-screen overflow-x-hidden bg-[#fafafa] text-zinc-800 transition-colors duration-200 selection:bg-zinc-900 selection:text-white dark:bg-[#090b10] dark:text-zinc-100 dark:selection:bg-white dark:selection:text-zinc-900"
+            className="relative min-h-screen overflow-x-hidden bg-[#fafafa] text-zinc-900 transition-colors duration-200 selection:bg-violet-600 selection:text-white dark:bg-[#07090e] dark:text-zinc-100 dark:selection:bg-violet-500 dark:selection:text-white"
         >
             <Head>
                 <title>Ridhwan Anang Ma'ruf — Full Stack Software Engineer</title>
@@ -115,15 +115,17 @@ export default function Welcome({
                 />
             </Head>
 
-            {/* Subtle Architectural Dot Grid Pattern Background */}
-            <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(#e4e4e7_1px,transparent_1px)] [background-size:20px_20px] dark:bg-[radial-gradient(#181b26_1px,transparent_1px)] opacity-55"></div>
+            {/* Architectural Grid & Ambient Canvas */}
+            <div className="pointer-events-none fixed inset-0 z-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_75%_60%_at_50%_0%,#000_70%,transparent_100%)] opacity-70"></div>
+            <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(#80808015_1px,transparent_1px)] [background-size:24px_24px] opacity-40"></div>
 
             {/* Interactive Mouse follow highlight (Decoupled & GPU accelerated, 0 re-renders) */}
             <MouseAmbientAura />
 
-            {/* Subtle Lighting Accents (GPU accelerated) */}
-            <div className="pointer-events-none absolute top-0 right-0 z-0 h-[450px] w-[450px] rounded-full bg-gradient-to-l from-violet-500/8 via-indigo-500/4 to-transparent blur-3xl transform-gpu will-change-transform dark:from-violet-500/10 dark:via-indigo-500/5"></div>
-            <div className="pointer-events-none absolute top-28 left-0 z-0 h-[400px] w-[400px] rounded-full bg-gradient-to-r from-blue-500/8 via-emerald-500/4 to-transparent blur-3xl transform-gpu will-change-transform dark:from-blue-500/8 dark:via-emerald-500/4"></div>
+            {/* Luminous Ambient Light Fountains (Rich Multi-layer Depth) */}
+            <div className="pointer-events-none absolute -top-40 right-[-10%] z-0 h-[700px] w-[700px] rounded-full bg-gradient-to-bl from-violet-600/20 via-indigo-600/10 to-transparent blur-[120px] transform-gpu will-change-transform dark:from-violet-600/25 dark:via-indigo-600/15"></div>
+            <div className="pointer-events-none absolute top-40 left-[-10%] z-0 h-[650px] w-[650px] rounded-full bg-gradient-to-br from-blue-600/18 via-cyan-500/10 to-transparent blur-[120px] transform-gpu will-change-transform dark:from-blue-600/20 dark:via-cyan-600/12"></div>
+            <div className="pointer-events-none absolute top-[900px] left-[25%] z-0 h-[500px] w-[800px] rounded-full bg-gradient-to-r from-violet-900/15 via-indigo-900/10 to-transparent blur-[140px] transform-gpu will-change-transform dark:from-violet-900/20 dark:via-indigo-900/12"></div>
 
             {/* Main Header Navigation */}
             <motion.div
@@ -229,14 +231,15 @@ export default function Welcome({
                 </motion.div>
             </main>
 
-            {/* Aesthetic Minimal Footer */}
-            <footer className="content-auto mt-16 w-full border-t border-zinc-200/90 bg-white/90 py-12 backdrop-blur-md dark:border-white/10 dark:bg-[#0c0e14]/90">
+            {/* Aesthetic Luxury Footer */}
+            <footer className="content-auto mt-20 w-full border-t border-zinc-200/90 bg-white/90 py-14 backdrop-blur-xl dark:border-white/10 dark:bg-[#0c0f17]/90 relative overflow-hidden">
+                <div className="specular-top" />
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 gap-8 border-b border-zinc-200/80 pb-10 sm:grid-cols-2 md:grid-cols-4 dark:border-white/10">
                         {/* Brand / Name info */}
                         <div className="space-y-3">
-                            <div className="flex items-center gap-2">
-                                <span className="flex size-7 items-center justify-center rounded-lg bg-zinc-900 text-xs font-bold text-white dark:bg-white dark:text-zinc-950">
+                            <div className="flex items-center gap-2.5">
+                                <span className="flex size-8 items-center justify-center rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-xs font-black text-white shadow-md shadow-violet-500/20">
                                     R
                                 </span>
                                 <h4 className="text-sm font-bold tracking-tight text-zinc-900 dark:text-white">
@@ -246,7 +249,7 @@ export default function Welcome({
                             <p className="max-w-xs text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
                                 Full Stack Software Engineer yang berfokus membangun sistem backend Laravel yang andal dan antarmuka SPA React yang reaktif.
                             </p>
-                            <div className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-mono text-emerald-600 dark:text-emerald-400">
+                            <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-mono font-medium text-emerald-600 dark:text-emerald-400 shadow-2xs">
                                 <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
                                 <span>All Systems Operational</span>
                             </div>
@@ -344,13 +347,13 @@ export default function Welcome({
                                 <li className="text-zinc-500 dark:text-zinc-400">
                                     Tangerang Selatan, Indonesia
                                 </li>
-                                <li className="pt-1.5">
+                                <li className="pt-2">
                                     <button
                                         type="button"
                                         onClick={() => setIsContactOpen(true)}
-                                        className="cursor-pointer inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-white shadow-2xs transition-all hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 active:scale-98"
+                                        className="luxury-btn-primary cursor-pointer inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold tracking-wide"
                                     >
-                                        <Sparkles size={11} />
+                                        <Sparkles size={12} />
                                         <span>Buka Dialog Kontak</span>
                                     </button>
                                 </li>
