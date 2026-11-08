@@ -87,13 +87,14 @@ export default function Welcome({
                 const intersecting = entries.filter((e) => e.isIntersecting);
                 if (intersecting.length > 0) {
                     intersecting.sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-                    setActiveSection(intersecting[0].target.id);
+                    const bestId = intersecting[0].target.id;
+                    setActiveSection((prev) => (prev !== bestId ? bestId : prev));
                 }
             },
             {
                 root: null,
-                rootMargin: '-15% 0px -40% 0px',
-                threshold: [0, 0.25, 0.5, 0.75],
+                rootMargin: '-20% 0px -40% 0px',
+                threshold: [0.1, 0.5],
             }
         );
 
@@ -186,7 +187,7 @@ export default function Welcome({
                 {/* Section 2: Technical Stack Console (Full-Width Section) */}
                 <motion.div
                     id="tech-stack"
-                    className="content-auto scroll-mt-24 border-t border-zinc-200/80 pt-8 dark:border-blue-400/15"
+                    className="scroll-mt-24 border-t border-zinc-200/80 pt-8 dark:border-blue-400/15"
                     initial={{ y: 15, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{
@@ -204,7 +205,7 @@ export default function Welcome({
                 {/* Section 3: Project Cases List Wrapper */}
                 <motion.div
                     id="karya"
-                    className="content-auto scroll-mt-24 border-t border-zinc-200/80 pt-8 dark:border-blue-400/15"
+                    className="scroll-mt-24 border-t border-zinc-200/80 pt-8 dark:border-blue-400/15"
                     initial={{ y: 15, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{
@@ -219,7 +220,7 @@ export default function Welcome({
                 {/* Section 4: Certificates Grid Wrapper */}
                 <motion.div
                     id="sertifikat"
-                    className="content-auto scroll-mt-24 border-t border-zinc-200/80 pt-8 dark:border-blue-400/15"
+                    className="scroll-mt-24 border-t border-zinc-200/80 pt-8 dark:border-blue-400/15"
                     initial={{ y: 15, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{
@@ -233,7 +234,7 @@ export default function Welcome({
             </main>
 
             {/* Aesthetic Distinctive Luxury Footer (Midnight Deep Blue & Gold Vault) */}
-            <footer className="content-auto mt-20 w-full border-t-2 border-amber-500/40 bg-zinc-50/95 py-14 shadow-[0_-12px_40px_rgba(245,158,11,0.08)] dark:bg-gradient-to-b dark:from-[#050a18] dark:via-[#081226] dark:to-[#03060f] relative overflow-hidden">
+            <footer className="mt-20 w-full border-t-2 border-amber-500/40 bg-zinc-50/95 py-14 shadow-[0_-12px_40px_rgba(245,158,11,0.08)] dark:bg-gradient-to-b dark:from-[#050a18] dark:via-[#081226] dark:to-[#03060f] relative overflow-hidden">
                 <div className="specular-top" />
                 {/* Ambient Golden Crown Spotlight */}
                 <div className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 h-40 w-[600px] rounded-full bg-gradient-to-b from-amber-500/20 via-blue-500/08 to-transparent blur-3xl" />

@@ -2,10 +2,11 @@ import { useEffect, useRef } from 'react';
 
 /**
  * High-performance ambient aura following the cursor.
- * Uses direct DOM manipulation via requestAnimationFrame to avoid triggering React re-renders.
+ * Uses GPU transform translate3d to avoid layout thrashing and full-screen repaints.
  */
 export default function MouseAmbientAura() {
     const auraRef = useRef<HTMLDivElement>(null);
+    const pos = useRef({ x: -1000, y: -1000 });
     const rafId = useRef<number | null>(null);
 
     useEffect(() => {
@@ -15,11 +16,14 @@ export default function MouseAmbientAura() {
         }
 
         const handleMouseMove = (e: MouseEvent) => {
+            pos.current.x = e.clientX;
+            pos.current.y = e.clientY;
+
             if (rafId.current !== null) return;
 
             rafId.current = requestAnimationFrame(() => {
                 if (auraRef.current) {
-                    auraRef.current.style.background = `radial-gradient(700px at ${e.clientX}px ${e.clientY}px, rgba(59, 130, 246, 0.07), rgba(245, 158, 11, 0.035), transparent 70%)`;
+                    auraRef.current.style.transform = `translate3d(${pos.current.x - 300}px, ${pos.current.y - 300}px, 0)`;
                 }
                 rafId.current = null;
             });
@@ -38,7 +42,8 @@ export default function MouseAmbientAura() {
     return (
         <div
             ref={auraRef}
-            className="pointer-events-none fixed inset-0 z-0 hidden opacity-70 transition-opacity duration-300 md:block will-change-transform"
+            className="pointer-events-none fixed top-0 left-0 -z-10 size-[600px] rounded-full bg-[radial-gradient(circle,rgba(59,130,246,0.08)_0%,rgba(245,158,11,0.035)_40%,transparent_70%)] blur-2xl will-change-transform opacity-70 hidden md:block"
+            style={{ transform: 'translate3d(-1000px, -1000px, 0)' }}
             aria-hidden="true"
         />
     );

@@ -25,8 +25,7 @@ export default function Header({
     activeSection,
     setActiveSection,
 }: HeaderProps) {
-    const { resolvedAppearance, updateAppearance } = useAppearance();
-    const isDarkMode = resolvedAppearance === 'dark';
+    const { updateAppearance } = useAppearance();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const progressBarRef = useRef<HTMLDivElement>(null);
@@ -34,6 +33,13 @@ export default function Header({
 
     useEffect(() => {
         let rafId: number | null = null;
+        let cachedScrollHeight = 0;
+
+        const updateCachedDimensions = () => {
+            cachedScrollHeight = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+        };
+        updateCachedDimensions();
+        window.addEventListener('resize', updateCachedDimensions, { passive: true });
 
         const handleScroll = () => {
             if (rafId !== null) return;
@@ -47,11 +53,8 @@ export default function Header({
                     setIsScrolled(scrolled);
                 }
 
-                if (progressBarRef.current) {
-                    const totalScroll =
-                        document.documentElement.scrollHeight - window.innerHeight;
-                    const progress =
-                        totalScroll > 0 ? Math.min(scrollY / totalScroll, 1) : 0;
+                if (progressBarRef.current && cachedScrollHeight > 0) {
+                    const progress = Math.min(Math.max(scrollY / cachedScrollHeight, 0), 1);
                     progressBarRef.current.style.transform = `scaleX(${progress})`;
                 }
 
@@ -63,13 +66,15 @@ export default function Header({
 
         return () => {
             window.removeEventListener('scroll', handleScroll);
+            window.removeEventListener('resize', updateCachedDimensions);
             if (rafId !== null) cancelAnimationFrame(rafId);
         };
     }, []);
 
     const toggleTheme = () => {
-        const nextMode = isDarkMode ? 'light' : 'dark';
-        updateAppearance(nextMode);
+        if (typeof document === 'undefined') return;
+        const isCurrentDark = document.documentElement.classList.contains('dark');
+        updateAppearance(isCurrentDark ? 'light' : 'dark');
     };
 
     const navItems = [
@@ -183,17 +188,14 @@ export default function Header({
 
                 {/* Right Controls: Theme Toggle & Gold CTA Button */}
                 <div className="flex items-center gap-2.5">
-                    {/* Refined Circular Theme Toggle Button */}
+                    {/* Refined Circular Theme Toggle Button (Hydration-Safe CSS Toggle) */}
                     <button
                         onClick={toggleTheme}
                         className="cursor-pointer flex size-9 items-center justify-center rounded-full border border-zinc-200/80 bg-white/80 text-zinc-700 shadow-2xs backdrop-blur-md transition-all duration-200 hover:border-amber-400/50 hover:scale-105 active:scale-95 dark:border-blue-400/20 dark:bg-[#0c162f]/80 dark:text-amber-300 dark:hover:border-amber-400/40 dark:hover:shadow-[0_0_10px_rgba(245,158,11,0.25)]"
                         aria-label="Toggle tema gelap/terang"
                     >
-                        {isDarkMode ? (
-                            <Sun size={15} className="text-amber-400 transition-transform duration-300 hover:rotate-45" />
-                        ) : (
-                            <Moon size={15} className="text-zinc-700 transition-transform duration-300 hover:-rotate-12" />
-                        )}
+                        <Sun size={15} className="hidden text-amber-400 transition-transform duration-300 hover:rotate-45 dark:block" />
+                        <Moon size={15} className="block text-zinc-700 transition-transform duration-300 hover:-rotate-12 dark:hidden" />
                     </button>
 
                     {/* Champagne Gold Luxury Pill CTA */}
