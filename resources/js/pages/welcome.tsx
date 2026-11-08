@@ -105,7 +105,7 @@ export default function Welcome({
     return (
         <div
             id="app-root"
-            className="relative min-h-screen overflow-x-hidden bg-[#fafafa] text-zinc-900 transition-colors duration-200 selection:bg-violet-600 selection:text-white dark:bg-[#07090e] dark:text-zinc-100 dark:selection:bg-violet-500 dark:selection:text-white"
+            className="relative min-h-screen overflow-x-hidden bg-[#fafafa] text-zinc-900 transition-colors duration-200 selection:bg-violet-600 selection:text-white dark:bg-[#0e121b] dark:text-zinc-100 dark:selection:bg-violet-500 dark:selection:text-white"
         >
             <Head>
                 <title>Ridhwan Anang Ma'ruf — Full Stack Software Engineer</title>
@@ -233,7 +233,7 @@ export default function Welcome({
             </main>
 
             {/* Aesthetic Luxury Footer */}
-            <footer className="content-auto mt-20 w-full border-t border-zinc-200/90 bg-white/90 py-14 backdrop-blur-xl dark:border-white/10 dark:bg-[#0c0f17]/90 relative overflow-hidden">
+            <footer className="content-auto mt-20 w-full border-t border-zinc-200/90 bg-white/90 py-14 backdrop-blur-xl dark:border-white/10 dark:bg-[#111520]/90 relative overflow-hidden">
                 <div className="specular-top" />
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 gap-8 border-b border-zinc-200/80 pb-10 sm:grid-cols-2 md:grid-cols-4 dark:border-white/10">

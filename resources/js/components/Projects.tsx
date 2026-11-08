@@ -93,7 +93,7 @@ export default function Projects({ projects, loading }: ProjectsProps) {
                                         {/* Realistic Titanium Window Mockup Frame */}
                                         <div className="relative mb-3.5 overflow-hidden rounded-lg border border-zinc-200/90 dark:border-white/10 bg-black/80 shadow-sm">
                                             {/* Window Header Toolbar */}
-                                            <div className="flex items-center justify-between border-b border-zinc-200/80 dark:border-white/[0.07] bg-zinc-100/90 dark:bg-[#0c0e14] px-3 py-1.5 backdrop-blur-md">
+                                            <div className="flex items-center justify-between border-b border-zinc-200/80 dark:border-white/[0.07] bg-zinc-100/90 dark:bg-[#10141f] px-3 py-1.5 backdrop-blur-md">
                                                 <div className="flex items-center gap-1.5">
                                                     <span className="size-2 rounded-full bg-[#FF5F56]" />
                                                     <span className="size-2 rounded-full bg-[#FFBD2E]" />

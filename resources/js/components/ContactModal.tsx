@@ -145,7 +145,7 @@ export default function ContactModal({
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.96, opacity: 0, y: 12 }}
                 transition={{ duration: 0.2, ease: 'easeOut' }}
-                className="relative my-auto flex w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-zinc-200/90 bg-white shadow-2xl dark:border-white/10 dark:bg-[#0c0e14]"
+                className="relative my-auto flex w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-zinc-200/90 bg-white shadow-2xl dark:border-white/10 dark:bg-[#121622]"
             >
                 {/* Close Button */}
                 <button
@@ -159,7 +159,7 @@ export default function ContactModal({
                 {/* Main Two-Column Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-12 min-h-[540px]">
                     {/* Left Column: Direct Fast-Track Channels (5 cols) */}
-                    <div className="md:col-span-5 flex flex-col justify-between border-b md:border-b-0 md:border-r border-zinc-200/80 bg-zinc-50/80 p-5 sm:p-7 dark:border-zinc-800/80 dark:bg-[#0f1118]">
+                    <div className="md:col-span-5 flex flex-col justify-between border-b md:border-b-0 md:border-r border-zinc-200/80 bg-zinc-50/80 p-5 sm:p-7 dark:border-zinc-800/80 dark:bg-[#151a28]">
                         <div className="space-y-5">
                             {/* Availability Status Badge */}
                             <div className="inline-flex items-center gap-2 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-emerald-600 dark:text-emerald-400">

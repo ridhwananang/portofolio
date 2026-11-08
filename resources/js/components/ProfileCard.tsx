@@ -127,7 +127,7 @@ export default function ProfileCard({ onOpenContact, profile, loading }: Profile
                     {/* Precision Squircle Avatar */}
                     <div className="relative group/avatar mb-3">
                         <div className="relative p-[2px] rounded-xl bg-gradient-to-tr from-violet-500 via-indigo-500 to-cyan-400 shadow-sm transition-transform duration-300 group-hover/avatar:scale-102">
-                            <div className="size-20 overflow-hidden rounded-[10px] bg-[#0c0e14] border border-black/40">
+                            <div className="size-20 overflow-hidden rounded-[10px] bg-[#101420] border border-black/40">
                                 {profile.image ? (
                                     <img
                                         src={profile.image}
@@ -144,7 +144,7 @@ export default function ProfileCard({ onOpenContact, profile, loading }: Profile
 
                         {/* Verified Stamp Badge */}
                         <div
-                            className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-md bg-emerald-500 text-white border-2 border-white dark:border-[#0c0e14] shadow-xs"
+                            className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-md bg-emerald-500 text-white border-2 border-white dark:border-[#101420] shadow-xs"
                             title="Verified Software Engineer"
                         >
                             <CheckCircle2 size={11} className="text-white" />

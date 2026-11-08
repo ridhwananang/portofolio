@@ -102,7 +102,7 @@ export default function Header({
             id="main-header"
             className={`fixed top-0 left-0 z-45 w-full transition-all duration-200 ${
                 isScrolled
-                    ? 'border-b border-zinc-200/90 bg-white/90 py-2.5 shadow-2xs backdrop-blur-md dark:border-white/8 dark:bg-[#0c0e14]/90'
+                    ? 'border-b border-zinc-200/90 bg-white/90 py-2.5 shadow-2xs backdrop-blur-md dark:border-white/8 dark:bg-[#121622]/90'
                     : 'bg-transparent py-4'
             }`}
         >
@@ -244,7 +244,7 @@ export default function Header({
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -8 }}
                         transition={{ duration: 0.15, ease: 'easeOut' }}
-                        className="absolute top-full left-0 w-full border-b border-zinc-200 bg-white/95 px-4 py-4 shadow-xl backdrop-blur-xl md:hidden dark:border-white/10 dark:bg-[#0c0e14]/95"
+                        className="absolute top-full left-0 w-full border-b border-zinc-200 bg-white/95 px-4 py-4 shadow-xl backdrop-blur-xl md:hidden dark:border-white/10 dark:bg-[#121622]/95"
                     >
                         <div className="space-y-1">
                             {navItems.map((item) => {
