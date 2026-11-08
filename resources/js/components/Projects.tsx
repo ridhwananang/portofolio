@@ -1,5 +1,6 @@
-import { FolderGit2, ArrowUpRight, CheckCircle2, Layers, ChevronDown, ChevronUp, Cloud } from 'lucide-react';
+import { FolderGit2, ArrowUpRight, CheckCircle2, Layers, ChevronDown, ChevronUp, Cloud, Maximize2, X, ExternalLink } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface ProjectItem {
     title: string;
@@ -18,6 +19,7 @@ interface ProjectsProps {
 export default function Projects({ projects, loading }: ProjectsProps) {
     const ITEMS_PER_PAGE = 6;
     const [isExpanded, setIsExpanded] = useState(false);
+    const [selectedProject, setSelectedProject] = useState<ProjectItem | null>(null);
 
     const safeProjects = Array.isArray(projects) ? projects : [];
     const visibleProjects = isExpanded ? safeProjects : safeProjects.slice(0, ITEMS_PER_PAGE);
@@ -25,6 +27,15 @@ export default function Projects({ projects, loading }: ProjectsProps) {
     useEffect(() => {
         setIsExpanded(false);
     }, [safeProjects.length]);
+
+    // Close preview modal on ESC
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setSelectedProject(null);
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
     const getImageUrl = (imagePath: string) => {
         if (!imagePath) {
@@ -70,7 +81,7 @@ export default function Projects({ projects, loading }: ProjectsProps) {
                             key={n}
                             className="luxury-card flex animate-pulse flex-col gap-3 rounded-xl p-4"
                         >
-                            <div className="aspect-[16/10] w-full rounded-lg bg-zinc-200 dark:bg-zinc-800"></div>
+                            <div className="aspect-[2/1] w-full rounded-lg bg-zinc-200 dark:bg-zinc-800"></div>
                             <div className="h-4 w-3/4 rounded bg-zinc-200 dark:bg-zinc-800"></div>
                             <div className="h-3 w-full rounded bg-zinc-100 dark:bg-zinc-850"></div>
                         </div>
@@ -91,7 +102,11 @@ export default function Projects({ projects, loading }: ProjectsProps) {
 
                                     <div>
                                         {/* Realistic Titanium Window Mockup Frame */}
-                                        <div className="relative mb-3.5 overflow-hidden rounded-lg border border-zinc-200/90 bg-zinc-100 dark:border-blue-400/15 dark:bg-[#091126] shadow-sm">
+                                        <div
+                                            onClick={() => setSelectedProject(p)}
+                                            className="relative mb-3.5 overflow-hidden rounded-lg border border-zinc-200/90 bg-zinc-100 dark:border-blue-400/15 dark:bg-[#091126] shadow-sm cursor-pointer group/mockup"
+                                            title="Klik untuk melihat layar penuh"
+                                        >
                                             {/* Window Header Toolbar */}
                                             <div className="flex items-center justify-between border-b border-zinc-200/80 bg-zinc-100 px-3 py-1.5 dark:border-blue-400/15 dark:bg-[#091126]">
                                                 <div className="flex items-center gap-1.5">
@@ -105,30 +120,48 @@ export default function Projects({ projects, loading }: ProjectsProps) {
                                                     <span>cloud.production.app</span>
                                                 </div>
 
-                                                <div className="w-8" />
+                                                <div className="flex items-center gap-1 text-[8.5px] font-mono text-zinc-400 dark:text-zinc-500 group-hover/mockup:text-amber-500 transition-colors">
+                                                    <Maximize2 size={10} />
+                                                </div>
                                             </div>
 
-                                            {/* Window Canvas / Image */}
-                                            <div className="relative aspect-[16/10] w-full overflow-hidden bg-zinc-100 dark:bg-[#091126]">
+                                            {/* Window Canvas / Image (2:1 full view ratio matching 1890x945 resolution) */}
+                                            <div className="relative aspect-[2/1] w-full overflow-hidden bg-zinc-100 dark:bg-[#091126]">
                                                 <img
                                                     src={getImageUrl(p.image)}
                                                     alt={p.title}
-                                                    className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-103"
+                                                    className="h-full w-full object-cover object-top transition-transform duration-500 ease-out group-hover/mockup:scale-102"
                                                     loading="lazy"
                                                 />
-                                                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-60 dark:from-black/50" />
+                                                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-40 dark:from-black/40" />
+
+                                                {/* Hover Overlay: Buka Layar Penuh */}
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 backdrop-blur-2xs transition-opacity duration-200 group-hover/mockup:opacity-100">
+                                                    <span className="flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-[#080e21]/90 px-3 py-1.5 text-xs font-bold text-amber-300 shadow-xl">
+                                                        <Maximize2 size={12} className="text-amber-400" />
+                                                        <span>Lihat Layar Penuh</span>
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
 
                                         {/* Project Title & Action Arrow */}
                                         <div className="flex items-start justify-between gap-2">
-                                            <h4 className="text-sm font-bold text-zinc-900 group-hover:text-amber-500 dark:text-white dark:group-hover:text-amber-300 transition-colors leading-tight">
+                                            <h4
+                                                onClick={() => setSelectedProject(p)}
+                                                className="text-sm font-bold text-zinc-900 group-hover:text-amber-500 dark:text-white dark:group-hover:text-amber-300 transition-colors leading-tight cursor-pointer"
+                                            >
                                                 {p.title}
                                             </h4>
 
-                                            <div className="flex size-6 items-center justify-center rounded-md border border-zinc-200/80 dark:border-blue-400/15 bg-zinc-50 dark:bg-[#091126] text-zinc-500 dark:text-zinc-400 group-hover:border-amber-400/50 group-hover:text-amber-500 dark:group-hover:text-amber-300 transition-colors flex-shrink-0">
+                                            <button
+                                                type="button"
+                                                onClick={() => setSelectedProject(p)}
+                                                className="cursor-pointer flex size-6 items-center justify-center rounded-md border border-zinc-200/80 dark:border-blue-400/15 bg-zinc-50 dark:bg-[#091126] text-zinc-500 dark:text-zinc-400 group-hover:border-amber-400/50 group-hover:text-amber-500 dark:group-hover:text-amber-300 transition-colors flex-shrink-0"
+                                                title="Lihat Detail Proyek"
+                                            >
                                                 <ArrowUpRight size={13} />
-                                            </div>
+                                            </button>
                                         </div>
 
                                         {/* Project Description */}
@@ -183,6 +216,87 @@ export default function Projects({ projects, loading }: ProjectsProps) {
                     )}
                 </>
             )}
+
+            {/* High-Resolution Full-Screen Project Lightbox Modal */}
+            <AnimatePresence>
+                {selectedProject && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md"
+                        onClick={() => setSelectedProject(null)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0, y: 10 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.95, opacity: 0, y: 10 }}
+                            transition={{ duration: 0.25, ease: 'easeOut' }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="luxury-card relative flex flex-col w-full max-w-5xl max-h-[92vh] overflow-hidden rounded-2xl border border-zinc-200/90 dark:border-amber-400/30 dark:bg-[#080e21] shadow-2xl"
+                        >
+                            <div className="specular-top" />
+
+                            {/* Modal Header */}
+                            <div className="relative z-10 flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-zinc-200/80 dark:border-blue-400/15 bg-zinc-50/80 dark:bg-[#0c162f]/80">
+                                <div>
+                                    <h3 className="text-base sm:text-lg font-black text-zinc-900 dark:text-white leading-tight">
+                                        {selectedProject.title}
+                                    </h3>
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                        {selectedProject.tags?.map((t) => (
+                                            <span
+                                                key={t}
+                                                className="text-[9.5px] font-mono font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-300 border border-amber-500/20"
+                                            >
+                                                {t}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedProject(null)}
+                                    className="cursor-pointer size-8 rounded-full flex items-center justify-center border border-zinc-200 dark:border-blue-400/20 bg-white dark:bg-[#0c162f] text-zinc-600 dark:text-zinc-300 hover:text-amber-500 dark:hover:text-amber-400 transition-colors shadow-2xs"
+                                    title="Tutup (ESC)"
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
+
+                            {/* Full-Screen Image Container (100% Uncropped View) */}
+                            <div className="relative z-10 flex-1 overflow-auto p-3 sm:p-5 flex items-center justify-center bg-zinc-100/50 dark:bg-[#050a18]">
+                                <img
+                                    src={getImageUrl(selectedProject.image)}
+                                    alt={selectedProject.title}
+                                    className="w-full h-auto max-h-[70vh] object-contain rounded-xl border border-zinc-200/80 dark:border-blue-400/20 shadow-xl"
+                                />
+                            </div>
+
+                            {/* Modal Footer Description */}
+                            <div className="relative z-10 flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-3 border-t border-zinc-200/80 dark:border-blue-400/15 bg-white dark:bg-[#0c162f]/90">
+                                <p className="text-xs text-zinc-600 dark:text-zinc-300 max-w-2xl leading-relaxed">
+                                    {selectedProject.description}
+                                </p>
+
+                                {selectedProject.link && (
+                                    <a
+                                        href={selectedProject.link}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="luxury-btn-primary flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-bold"
+                                    >
+                                        <span>Kunjungi Proyek</span>
+                                        <ExternalLink size={12} />
+                                    </a>
+                                )}
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </section>
     );
 }
