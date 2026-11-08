@@ -135,86 +135,80 @@ export default function ContactModal({
     return (
         <div
             id="contact-modal"
-            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-3 sm:p-4 md:p-6 backdrop-blur-md overflow-y-auto"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/70 p-3 sm:p-4 md:p-6 backdrop-blur-md overflow-y-auto"
             onClick={(e) => {
                 if (e.target === e.currentTarget) onClose();
             }}
         >
             <motion.div
-                initial={{ scale: 0.96, opacity: 0, y: 15 }}
+                initial={{ scale: 0.96, opacity: 0, y: 12 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.96, opacity: 0, y: 15 }}
-                transition={{ type: 'spring', stiffness: 350, damping: 28 }}
-                className="relative my-auto flex w-full max-w-4xl flex-col overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] border border-slate-200/80 bg-white shadow-2xl dark:border-slate-800/80 dark:bg-slate-950"
+                exit={{ scale: 0.96, opacity: 0, y: 12 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className="relative my-auto flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-zinc-200/90 bg-white shadow-2xl dark:border-white/10 dark:bg-[#0c0e14]"
             >
-                {/* Close Button Floating */}
+                {/* Close Button */}
                 <button
                     onClick={onClose}
-                    className="absolute top-5 right-5 z-20 rounded-full border border-slate-200/60 bg-white/80 p-2 text-slate-500 shadow-xs backdrop-blur-md transition-all hover:bg-slate-100 hover:text-slate-800 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white cursor-pointer"
+                    className="absolute top-4 right-4 z-20 rounded-lg border border-zinc-200 bg-white/90 p-1.5 text-zinc-500 shadow-2xs transition-all hover:bg-zinc-100 hover:text-zinc-800 dark:border-zinc-800 dark:bg-zinc-900/90 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white cursor-pointer"
                     aria-label="Tutup modal"
                 >
-                    <X size={18} />
+                    <X size={16} />
                 </button>
 
                 {/* Main Two-Column Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-12 min-h-[580px]">
-                    {/* Left Column: Direct Fast-Track Channels & Trust Signals (5 cols) */}
-                    <div className="md:col-span-5 flex flex-col justify-between border-b md:border-b-0 md:border-r border-slate-200/70 bg-gradient-to-b from-slate-50 via-slate-50/80 to-slate-100/60 p-6 sm:p-8 dark:border-slate-800/80 dark:from-slate-900/60 dark:via-slate-900/40 dark:to-slate-950">
-                        <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-12 min-h-[540px]">
+                    {/* Left Column: Direct Fast-Track Channels (5 cols) */}
+                    <div className="md:col-span-5 flex flex-col justify-between border-b md:border-b-0 md:border-r border-zinc-200/80 bg-zinc-50/80 p-5 sm:p-7 dark:border-zinc-800/80 dark:bg-[#0f1118]">
+                        <div className="space-y-5">
                             {/* Availability Status Badge */}
-                            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-50/80 px-3 py-1 text-emerald-700 shadow-xs dark:border-emerald-500/20 dark:bg-emerald-950/40 dark:text-emerald-400">
-                                <span className="relative flex h-2 w-2">
-                                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
-                                </span>
-                                <span className="text-[11px] font-bold tracking-wider uppercase">
+                            <div className="inline-flex items-center gap-2 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-emerald-600 dark:text-emerald-400">
+                                <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                <span className="text-[10.5px] font-mono font-semibold tracking-wider uppercase">
                                     Tersedia untuk Kolaborasi
                                 </span>
                             </div>
 
                             {/* Title & Introduction */}
                             <div>
-                                <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
-                                    Mari Bekerja{' '}
-                                    <span className="bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent italic dark:from-violet-400 dark:to-indigo-400">
-                                        Sama
-                                    </span>
+                                <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
+                                    Mari Bekerja Sama
                                 </h3>
-                                <p className="mt-2 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-350">
+                                <p className="mt-1.5 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
                                     Punya ide proyek, kebutuhan sistem backend yang kokoh, atau ingin berdiskusi seputar peluang kerja sama?
                                 </p>
                             </div>
 
                             {/* Direct Communication Channels */}
-                            <div className="space-y-3 pt-2">
-                                <span className="text-[11px] font-extrabold tracking-wider text-slate-400 uppercase dark:text-slate-500">
+                            <div className="space-y-2.5 pt-1">
+                                <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
                                     Akses Instan & Langsung
                                 </span>
 
                                 {/* 1-Click Copy Email Pill */}
                                 <div
                                     onClick={handleCopyEmail}
-                                    className="group flex cursor-pointer items-center justify-between rounded-2xl border border-slate-200/80 bg-white/90 p-3.5 shadow-xs transition-all hover:border-violet-500/40 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/70 dark:hover:border-violet-500/40"
+                                    className="group flex cursor-pointer items-center justify-between rounded-xl border border-zinc-200/90 bg-white p-3 shadow-2xs transition-all hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900/80 dark:hover:border-zinc-700"
                                 >
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-violet-600 dark:bg-violet-950/60 dark:text-violet-400">
-                                            <Mail size={17} />
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="flex size-8 items-center justify-center rounded-lg bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                                            <Mail size={15} />
                                         </div>
                                         <div className="text-left">
-                                            <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500">Email Utama</p>
-                                            <p className="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
+                                            <p className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">Email Langsung</p>
+                                            <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
                                                 {profileEmail}
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="rounded-lg bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                    <div className="rounded px-2 py-0.5 text-[10px] font-mono text-zinc-500 bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-400">
                                         {copiedEmail ? (
                                             <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                                                <Check size={13} /> Tersalin!
+                                                <Check size={11} /> Tersalin!
                                             </span>
                                         ) : (
                                             <span className="flex items-center gap-1">
-                                                <Copy size={12} /> Salin
+                                                <Copy size={11} /> Salin
                                             </span>
                                         )}
                                     </div>
@@ -225,49 +219,49 @@ export default function ContactModal({
                                     href={`https://wa.me/6281280628236?text=${whatsappMessage}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="group flex items-center justify-between rounded-2xl border border-emerald-500/20 bg-emerald-50/50 p-3.5 shadow-xs transition-all hover:border-emerald-500/40 hover:bg-emerald-50 hover:shadow-md dark:border-emerald-500/20 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/30"
+                                    className="group flex items-center justify-between rounded-xl border border-emerald-500/20 bg-emerald-50/50 p-3 shadow-2xs transition-all hover:bg-emerald-50/80 dark:border-emerald-500/20 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/30"
                                 >
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-xs">
-                                            <MessageSquare size={17} />
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="flex size-8 items-center justify-center rounded-lg bg-emerald-500 text-white">
+                                            <MessageSquare size={15} />
                                         </div>
                                         <div className="text-left">
-                                            <p className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">WhatsApp Fast-Track</p>
-                                            <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                                            <p className="text-[10px] font-mono text-emerald-700 dark:text-emerald-400">WhatsApp Fast-Track</p>
+                                            <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
                                                 Diskusi Cepat & Respon Kilat
                                             </p>
                                         </div>
                                     </div>
-                                    <ArrowUpRight size={16} className="text-emerald-600 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 dark:text-emerald-400" />
+                                    <ArrowUpRight size={14} className="text-emerald-600 dark:text-emerald-400" />
                                 </a>
                             </div>
                         </div>
 
-                        {/* Trust Signals Footer in Left Panel */}
-                        <div className="mt-6 pt-5 border-t border-slate-200/60 dark:border-slate-800/60 space-y-2.5">
-                            <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-                                <Clock size={13} className="text-violet-500" />
+                        {/* Trust Signals Footer */}
+                        <div className="mt-5 pt-4 border-t border-zinc-200/70 dark:border-zinc-800/70 space-y-2">
+                            <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+                                <Clock size={12} className="text-zinc-400" />
                                 <span>Rata-rata respons: <strong>&lt; 4 jam</strong></span>
                             </div>
-                            <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-                                <MapPin size={13} className="text-violet-500" />
+                            <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+                                <MapPin size={12} className="text-zinc-400" />
                                 <span>Tangerang Selatan • WIB (UTC+7)</span>
                             </div>
-                            <div className="flex items-center gap-3 pt-2">
+                            <div className="flex items-center gap-3 pt-1 text-xs">
                                 <a
                                     href={linkedinUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-xs font-semibold text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-colors"
+                                    className="text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
                                 >
                                     LinkedIn ↗
                                 </a>
-                                <span className="text-slate-300 dark:text-slate-700">•</span>
+                                <span>•</span>
                                 <a
                                     href={githubUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-xs font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
+                                    className="text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
                                 >
                                     GitHub ↗
                                 </a>
@@ -275,92 +269,92 @@ export default function ContactModal({
                         </div>
                     </div>
 
-                    {/* Right Column: Smart Intent-Based Contact Form (7 cols) */}
-                    <div className="md:col-span-7 p-6 sm:p-8 flex flex-col justify-between">
+                    {/* Right Column: Contact Form (7 cols) */}
+                    <div className="md:col-span-7 p-5 sm:p-7 flex flex-col justify-between">
                         {isSubmitted ? (
-                            <div className="my-auto flex flex-col items-center justify-center py-10 text-center animate-fade-in">
-                                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600 shadow-inner dark:bg-emerald-950 dark:text-emerald-400">
-                                    <CheckCircle2 size={36} />
+                            <div className="my-auto flex flex-col items-center justify-center py-8 text-center">
+                                <div className="mb-3 flex size-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
+                                    <CheckCircle2 size={28} />
                                 </div>
-                                <h4 className="text-2xl font-black text-slate-900 dark:text-white">
+                                <h4 className="text-xl font-bold text-zinc-900 dark:text-white">
                                     Pesan Berhasil Terkirim!
                                 </h4>
-                                <p className="mt-2 max-w-md text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-350">
-                                    Pesan Anda telah tersimpan dengan aman di inbox prioritas Ridhwan. Anda akan menerima balasan melalui email dalam kurun waktu kurang dari 4 jam kerja.
+                                <p className="mt-1.5 max-w-sm text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+                                    Pesan Anda telah tersimpan dengan aman di inbox prioritas. Anda akan menerima balasan email dalam kurun waktu kurang dari 4 jam.
                                 </p>
 
-                                <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                                <div className="mt-5 flex items-center gap-2">
                                     <button
                                         onClick={() => setIsSubmitted(false)}
-                                        className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer transition-all"
+                                        className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 cursor-pointer"
                                     >
                                         Kirim Pesan Lain
                                     </button>
                                     <button
                                         onClick={onClose}
-                                        className="rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-violet-500/20 hover:shadow-violet-500/35 cursor-pointer transition-all"
+                                        className="rounded-lg bg-zinc-900 px-5 py-2 text-xs font-semibold text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-100 cursor-pointer"
                                     >
-                                        Selesai & Tutup
+                                        Tutup
                                     </button>
                                 </div>
                             </div>
                         ) : (
-                            <form onSubmit={handleFormSubmit} className="space-y-5">
+                            <form onSubmit={handleFormSubmit} className="space-y-4">
                                 {/* Intent Switcher Tabs */}
                                 <div>
-                                    <label className="mb-2 block text-xs font-extrabold tracking-wider text-slate-500 uppercase dark:text-slate-400">
-                                        Pilih Tujuan Pesan
+                                    <label className="mb-1.5 block text-[10.5px] font-mono uppercase tracking-wider text-zinc-500">
+                                        Pilih Kategori Pesan
                                     </label>
-                                    <div className="grid grid-cols-3 gap-1.5 rounded-2xl border border-slate-200/80 bg-slate-100/70 p-1 dark:border-slate-800 dark:bg-slate-900/60">
+                                    <div className="grid grid-cols-3 gap-1 rounded-lg border border-zinc-200/90 bg-zinc-100/80 p-0.5 dark:border-zinc-800 dark:bg-zinc-900/80">
                                         <button
                                             type="button"
                                             onClick={() => setIntent('project')}
-                                            className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold transition-all ${
+                                            className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-all ${
                                                 intent === 'project'
-                                                    ? 'bg-white text-violet-600 shadow-sm dark:bg-slate-800 dark:text-violet-400'
-                                                    : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                                                    ? 'bg-white text-zinc-950 font-bold shadow-2xs dark:bg-zinc-800 dark:text-white'
+                                                    : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
                                             }`}
                                         >
-                                            <Briefcase size={14} />
+                                            <Briefcase size={12} />
                                             <span>Proyek</span>
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setIntent('hiring')}
-                                            className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold transition-all ${
+                                            className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-all ${
                                                 intent === 'hiring'
-                                                    ? 'bg-white text-violet-600 shadow-sm dark:bg-slate-800 dark:text-violet-400'
-                                                    : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                                                    ? 'bg-white text-zinc-950 font-bold shadow-2xs dark:bg-zinc-800 dark:text-white'
+                                                    : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
                                             }`}
                                         >
-                                            <Building2 size={14} />
+                                            <Building2 size={12} />
                                             <span>Rekrutmen</span>
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setIntent('general')}
-                                            className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold transition-all ${
+                                            className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-all ${
                                                 intent === 'general'
-                                                    ? 'bg-white text-violet-600 shadow-sm dark:bg-slate-800 dark:text-violet-400'
-                                                    : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                                                    ? 'bg-white text-zinc-950 font-bold shadow-2xs dark:bg-zinc-800 dark:text-white'
+                                                    : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
                                             }`}
                                         >
-                                            <Sparkles size={14} />
+                                            <Sparkles size={12} />
                                             <span>Diskusi</span>
                                         </button>
                                     </div>
                                 </div>
 
                                 {errorMessage && (
-                                    <div className="rounded-xl border border-rose-200 bg-rose-50/80 p-3 text-xs font-semibold text-rose-600 dark:border-rose-900/40 dark:bg-rose-950/30 dark:text-rose-400">
+                                    <div className="rounded-lg border border-rose-200 bg-rose-50/80 p-2.5 text-xs font-medium text-rose-600 dark:border-rose-900/40 dark:bg-rose-950/30 dark:text-rose-400">
                                         {errorMessage}
                                     </div>
                                 )}
 
                                 {/* Row 1: Name and Email */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
-                                        <label className="mb-1 block text-xs font-bold text-slate-700 dark:text-slate-300">
+                                        <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300">
                                             Nama Lengkap <span className="text-rose-500">*</span>
                                         </label>
                                         <input
@@ -369,11 +363,11 @@ export default function ContactModal({
                                             value={formName}
                                             onChange={(e) => setFormName(e.target.value)}
                                             placeholder="John Doe"
-                                            className="w-full rounded-xl border border-slate-200/90 bg-slate-50/60 px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 transition-all focus:border-violet-500 focus:bg-white focus:ring-3 focus:ring-violet-500/15 focus:outline-none dark:border-slate-800 dark:bg-slate-900/60 dark:text-white dark:focus:border-violet-400 dark:focus:bg-slate-900"
+                                            className="w-full rounded-lg border border-zinc-200/90 bg-zinc-50/50 px-3 py-2 text-xs sm:text-sm text-zinc-900 transition-all focus:border-zinc-400 focus:bg-white focus:outline-none dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-white dark:focus:border-zinc-600"
                                         />
                                     </div>
                                     <div>
-                                        <label className="mb-1 block text-xs font-bold text-slate-700 dark:text-slate-300">
+                                        <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300">
                                             Alamat Email <span className="text-rose-500">*</span>
                                         </label>
                                         <input
@@ -382,19 +376,19 @@ export default function ContactModal({
                                             value={formEmail}
                                             onChange={(e) => setFormEmail(e.target.value)}
                                             placeholder="john@company.com"
-                                            className="w-full rounded-xl border border-slate-200/90 bg-slate-50/60 px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 transition-all focus:border-violet-500 focus:bg-white focus:ring-3 focus:ring-violet-500/15 focus:outline-none dark:border-slate-800 dark:bg-slate-900/60 dark:text-white dark:focus:border-violet-400 dark:focus:bg-slate-900"
+                                            className="w-full rounded-lg border border-zinc-200/90 bg-zinc-50/50 px-3 py-2 text-xs sm:text-sm text-zinc-900 transition-all focus:border-zinc-400 focus:bg-white focus:outline-none dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-white dark:focus:border-zinc-600"
                                         />
                                     </div>
                                 </div>
 
                                 {/* Dynamic Fields: Project Intent */}
                                 {intent === 'project' && (
-                                    <div className="space-y-3.5 animate-fade-in">
+                                    <div className="space-y-3">
                                         <div>
-                                            <label className="mb-1.5 block text-xs font-bold text-slate-700 dark:text-slate-300">
+                                            <label className="mb-1.5 block text-xs font-medium text-zinc-700 dark:text-zinc-300">
                                                 Estimasi Anggaran Proyek
                                             </label>
-                                            <div className="flex flex-wrap gap-2">
+                                            <div className="flex flex-wrap gap-1.5">
                                                 {[
                                                     '< Rp 5 Juta',
                                                     'Rp 5 - 15 Juta',
@@ -405,10 +399,10 @@ export default function ContactModal({
                                                         key={budget}
                                                         type="button"
                                                         onClick={() => setFormBudget(budget)}
-                                                        className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
+                                                        className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
                                                             formBudget === budget
-                                                                ? 'border-violet-500 bg-violet-50 text-violet-700 dark:border-violet-400 dark:bg-violet-950/60 dark:text-violet-300'
-                                                                : 'border-slate-200/80 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400'
+                                                                ? 'border-zinc-900 bg-zinc-900 text-white dark:border-white dark:bg-white dark:text-zinc-950'
+                                                                : 'border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400'
                                                         }`}
                                                     >
                                                         {budget}
@@ -418,13 +412,13 @@ export default function ContactModal({
                                         </div>
 
                                         <div>
-                                            <label className="mb-1 block text-xs font-bold text-slate-700 dark:text-slate-300">
-                                                Jenis Layanan yang Dibutuhkan
+                                            <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                                                Jenis Layanan
                                             </label>
                                             <select
                                                 value={formService}
                                                 onChange={(e) => setFormService(e.target.value)}
-                                                className="w-full rounded-xl border border-slate-200/90 bg-slate-50/60 px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 transition-all focus:border-violet-500 focus:bg-white focus:ring-3 focus:ring-violet-500/15 focus:outline-none dark:border-slate-800 dark:bg-slate-900/60 dark:text-white dark:focus:border-violet-400"
+                                                className="w-full rounded-lg border border-zinc-200/90 bg-zinc-50/50 px-3 py-2 text-xs sm:text-sm text-zinc-900 transition-all focus:border-zinc-400 focus:bg-white focus:outline-none dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-white dark:focus:border-zinc-600"
                                             >
                                                 <option value="Fullstack Web Application">Fullstack Web App (Laravel + React SPA)</option>
                                                 <option value="Backend REST API Engineering">Backend Architecture & RESTful API</option>
@@ -438,9 +432,9 @@ export default function ContactModal({
 
                                 {/* Dynamic Fields: Hiring Intent */}
                                 {intent === 'hiring' && (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 animate-fade-in">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         <div>
-                                            <label className="mb-1 block text-xs font-bold text-slate-700 dark:text-slate-300">
+                                            <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300">
                                                 Nama Perusahaan / Startup
                                             </label>
                                             <input
@@ -448,17 +442,17 @@ export default function ContactModal({
                                                 value={formCompany}
                                                 onChange={(e) => setFormCompany(e.target.value)}
                                                 placeholder="PT Teknologi Indonesia"
-                                                className="w-full rounded-xl border border-slate-200/90 bg-slate-50/60 px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 transition-all focus:border-violet-500 focus:bg-white focus:ring-3 focus:ring-violet-500/15 focus:outline-none dark:border-slate-800 dark:bg-slate-900/60 dark:text-white dark:focus:border-violet-400"
+                                                className="w-full rounded-lg border border-zinc-200/90 bg-zinc-50/50 px-3 py-2 text-xs sm:text-sm text-zinc-900 transition-all focus:border-zinc-400 focus:bg-white focus:outline-none dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-white dark:focus:border-zinc-600"
                                             />
                                         </div>
                                         <div>
-                                            <label className="mb-1 block text-xs font-bold text-slate-700 dark:text-slate-300">
-                                                Tipe Posisi / Kontrak
+                                            <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                                                Tipe Posisi
                                             </label>
                                             <select
                                                 value={formRole}
                                                 onChange={(e) => setFormRole(e.target.value)}
-                                                className="w-full rounded-xl border border-slate-200/90 bg-slate-50/60 px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 transition-all focus:border-violet-500 focus:bg-white focus:ring-3 focus:ring-violet-500/15 focus:outline-none dark:border-slate-800 dark:bg-slate-900/60 dark:text-white dark:focus:border-violet-400"
+                                                className="w-full rounded-lg border border-zinc-200/90 bg-zinc-50/50 px-3 py-2 text-xs sm:text-sm text-zinc-900 transition-all focus:border-zinc-400 focus:bg-white focus:outline-none dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-white dark:focus:border-zinc-600"
                                             >
                                                 <option value="Full-Time Remote">Full-Time Remote</option>
                                                 <option value="Full-Time Hybrid / Onsite">Full-Time Hybrid / Onsite</option>
@@ -471,8 +465,8 @@ export default function ContactModal({
 
                                 {/* Dynamic Fields: General Intent */}
                                 {intent === 'general' && (
-                                    <div className="animate-fade-in">
-                                        <label className="mb-1 block text-xs font-bold text-slate-700 dark:text-slate-300">
+                                    <div>
+                                        <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300">
                                             Subjek / Topik Bahasan
                                         </label>
                                         <input
@@ -480,15 +474,15 @@ export default function ContactModal({
                                             value={formSubject}
                                             onChange={(e) => setFormSubject(e.target.value)}
                                             placeholder="Pertanyaan seputar Laravel architecture atau kolaborasi..."
-                                            className="w-full rounded-xl border border-slate-200/90 bg-slate-50/60 px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 transition-all focus:border-violet-500 focus:bg-white focus:ring-3 focus:ring-violet-500/15 focus:outline-none dark:border-slate-800 dark:bg-slate-900/60 dark:text-white dark:focus:border-violet-400"
+                                            className="w-full rounded-lg border border-zinc-200/90 bg-zinc-50/50 px-3 py-2 text-xs sm:text-sm text-zinc-900 transition-all focus:border-zinc-400 focus:bg-white focus:outline-none dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-white dark:focus:border-zinc-600"
                                         />
                                     </div>
                                 )}
 
                                 {/* Message Textarea */}
                                 <div>
-                                    <label className="mb-1 block text-xs font-bold text-slate-700 dark:text-slate-300">
-                                        Isi Pesan / Penjelasan Kebutuhan <span className="text-rose-500">*</span>
+                                    <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                                        Isi Pesan <span className="text-rose-500">*</span>
                                     </label>
                                     <textarea
                                         required
@@ -497,12 +491,12 @@ export default function ContactModal({
                                         onChange={(e) => setFormMessage(e.target.value)}
                                         placeholder={
                                             intent === 'project'
-                                                ? 'Deskripsikan gambaran sistem yang ingin dibangun, fitur utama, dan target tanggal peluncuran...'
+                                                ? 'Deskripsikan kebutuhan sistem, fitur utama, dan target tanggal...'
                                                 : intent === 'hiring'
                                                 ? 'Sebutkan gambaran tim, teknologi yang digunakan, atau link job description...'
                                                 : 'Tuliskan pesan Anda secara jelas...'
                                         }
-                                        className="w-full resize-none rounded-xl border border-slate-200/90 bg-slate-50/60 px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 transition-all focus:border-violet-500 focus:bg-white focus:ring-3 focus:ring-violet-500/15 focus:outline-none dark:border-slate-800 dark:bg-slate-900/60 dark:text-white dark:focus:border-violet-400"
+                                        className="w-full resize-none rounded-lg border border-zinc-200/90 bg-zinc-50/50 px-3 py-2 text-xs sm:text-sm text-zinc-900 transition-all focus:border-zinc-400 focus:bg-white focus:outline-none dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-white dark:focus:border-zinc-600"
                                     />
                                 </div>
 
@@ -510,16 +504,16 @@ export default function ContactModal({
                                 <button
                                     type="submit"
                                     disabled={isSubmitting}
-                                    className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 py-3.5 text-xs sm:text-sm font-bold text-white shadow-lg shadow-violet-500/25 transition-all hover:shadow-violet-500/40 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+                                    className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-zinc-900 py-3 text-xs sm:text-sm font-semibold text-white transition-all hover:bg-zinc-800 active:scale-99 disabled:opacity-50 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-100 shadow-sm"
                                 >
                                     {isSubmitting ? (
                                         <>
-                                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white dark:border-zinc-950 border-t-transparent"></div>
                                             <span>Mengirimkan Pesan...</span>
                                         </>
                                     ) : (
                                         <>
-                                            <Send size={15} />
+                                            <Send size={14} />
                                             <span>
                                                 {intent === 'project'
                                                     ? 'Kirim Permintaan Diskusi Proyek'
