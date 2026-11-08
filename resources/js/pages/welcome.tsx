@@ -5,7 +5,7 @@
 
 import { Head, Link } from '@inertiajs/react';
 import { motion } from 'motion/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import AIChatWidget from '../components/AIChatWidget';
 import Certificates from '../components/Certificates';
 import ContactModal from '../components/ContactModal';
@@ -73,6 +73,21 @@ export default function Welcome({
             });
     }, [initialProfile]);
 
+    // Programmatic scroll lock to prevent frantic tab jumping during navigation clicks
+    const isManualNavRef = useRef(false);
+    const manualNavTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const handleSectionSelect = (id: string, isManual = false) => {
+        setActiveSection(id);
+        if (isManual) {
+            isManualNavRef.current = true;
+            if (manualNavTimerRef.current) clearTimeout(manualNavTimerRef.current);
+            manualNavTimerRef.current = setTimeout(() => {
+                isManualNavRef.current = false;
+            }, 850);
+        }
+    };
+
     // Monitor section visibility via native IntersectionObserver
     useEffect(() => {
         const sections = ['hero', 'tech-stack', 'karya', 'sertifikat'];
@@ -84,6 +99,7 @@ export default function Welcome({
 
         const observer = new IntersectionObserver(
             (entries) => {
+                if (isManualNavRef.current) return;
                 const intersecting = entries.filter((e) => e.isIntersecting);
                 if (intersecting.length > 0) {
                     intersecting.sort((a, b) => b.intersectionRatio - a.intersectionRatio);
@@ -128,19 +144,14 @@ export default function Welcome({
             <div className="pointer-events-none absolute top-40 left-[-10%] z-0 h-[650px] w-[650px] rounded-full bg-gradient-to-br from-amber-500/18 via-yellow-500/10 to-transparent blur-[120px] transform-gpu will-change-transform dark:from-amber-500/18 dark:via-yellow-600/10"></div>
             <div className="pointer-events-none absolute top-[900px] left-[25%] z-0 h-[500px] w-[800px] rounded-full bg-gradient-to-r from-blue-900/20 via-indigo-900/15 to-transparent blur-[140px] transform-gpu will-change-transform dark:from-blue-900/25 dark:via-indigo-950/18"></div>
 
-            {/* Main Header Navigation */}
-            <motion.div
-                initial={{ y: -40, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.4, ease: 'easeOut' }}
-            >
-                <Header
-                    activeSection={activeSection}
-                    setActiveSection={setActiveSection}
-                    onOpenContact={() => setIsContactOpen(true)}
-                    onOpenTracking={() => setIsTrackingOpen(true)}
-                />
-            </motion.div>
+            {/* Main Header Navigation (Root viewport fixed, eliminating transformed containing block) */}
+            <Header
+                activeSection={activeSection}
+                setActiveSection={setActiveSection}
+                onSectionSelect={handleSectionSelect}
+                onOpenContact={() => setIsContactOpen(true)}
+                onOpenTracking={() => setIsTrackingOpen(true)}
+            />
 
             {/* Main Showcase Layout Wrapper */}
             <main className="relative z-10 mx-auto max-w-7xl space-y-10 px-4 pt-24 pb-16 sm:px-6 lg:px-8">

@@ -45,8 +45,8 @@ class GeminiChatService
             }
         }
 
-        // 1. Gather dynamic portfolio context (Cached for high performance & anti-DB spam)
-        $systemPrompt = \Illuminate\Support\Facades\Cache::remember('portfolio_gemini_system_prompt', 3600, function () {
+        // 1. Gather dynamic portfolio context (Cached with v3 key for immediate update)
+        $systemPrompt = \Illuminate\Support\Facades\Cache::remember('portfolio_gemini_system_prompt_v3', 3600, function () {
             $profile = Profile::first();
             $projects = Project::all();
             $techStacks = TechStack::all();
@@ -140,54 +140,52 @@ class GeminiChatService
             ]
         ];
 
-        $systemPrompt = "Anda adalah Asisten Virtual Ridhwan (AI Chatbot) yang cerdas, ramah, dan komunikatif. Tugas Anda adalah membantu pengunjung situs web portofolio pribadi Ridhwan Anang Ma'ruf dengan menjawab pertanyaan mereka secara cerdas.\n\n";
+        $systemPrompt = "Anda adalah Asisten Virtual & Technical AI Specialist untuk Ridhwan Anang Ma'ruf (Full Stack Software Engineer). Tugas utama Anda adalah memberikan informasi yang sangat spesifik, mendalam, akurat, dan berbobot teknis kepada rekruter, tech lead, maupun calon klien mengenai profil, arsitektur kode, portofolio, dan keahlian rekayasa perangkat lunak Ridhwan.\n\n";
         
-        $systemPrompt .= "--- INFORMASI PROFIL RIDHWAN ---\n";
+        $systemPrompt .= "--- PROFIL & REKAYASA TEKNOLOGI RIDHWAN ---\n";
         $systemPrompt .= "- Nama Lengkap: " . ($profile->name ?? "Ridhwan Anang Ma'ruf") . "\n";
-        $systemPrompt .= "- Peran/Pekerjaan: " . ($profile->role ?? "Full Stack Developer") . "\n";
-        $systemPrompt .= "- Lokasi saat ini: " . ($profile->location ?? "Tangerang Selatan, Indonesia") . "\n";
-        $systemPrompt .= "- Alamat Email: " . ($profile->email ?? "ridhwananang@gmail.com") . "\n";
-        $systemPrompt .= "- Ringkasan Bio: " . ($profile->bio ?? "Membangun sistem backend Laravel yang andal dan scalable, mengintegrasikannya dengan React + TypeScript, serta mengelola data SQL dan MongoDB untuk aplikasi siap produksi.") . "\n";
+        $systemPrompt .= "- Peran/Spesialisasi: " . ($profile->role ?? "Full Stack Software Engineer") . " (Backend Architecture Core, Reactive SPA, Database Optimization)\n";
+        $systemPrompt .= "- Lokasi: " . ($profile->location ?? "Tangerang Selatan, Indonesia") . " (Tersedia untuk remote global / on-site Jabodetabek)\n";
+        $systemPrompt .= "- Email Resmi: " . ($profile->email ?? "ridhwananang@gmail.com") . "\n";
         $systemPrompt .= "- GitHub: " . ($profile->github_url ?? "https://github.com/ridhwananang") . "\n";
-        $systemPrompt .= "- LinkedIn: " . ($profile->linkedin_url ?? "https://www.linkedin.com/in/ridhwan-anang-ma-ruf/") . "\n\n";
+        $systemPrompt .= "- LinkedIn: " . ($profile->linkedin_url ?? "https://www.linkedin.com/in/ridhwan-anang-ma-ruf/") . "\n";
+        $systemPrompt .= "- Pendidikan Akademik: Universitas Pamulang, S1 Teknik Informatika (Fokus Rekayasa Perangkat Lunak, 2024 - Sekarang).\n";
+        $systemPrompt .= "- Status Kerja: Available for Work (Tersedia untuk kontrak rekayasa, freelance backend/fullstack, maupun full-time roles).\n\n";
 
-        $systemPrompt .= "--- SKILL & TECH STACK RIDHWAN ---\n";
-        if ($techStacks && $techStacks->count() > 0) {
-            foreach ($techStacks as $tech) {
-                $systemPrompt .= "- " . $tech->name . " (" . $tech->badge . "): " . $tech->description . "\n";
-            }
-        } else {
-            $systemPrompt .= "- Laravel Backend, PHP Modern, React + TypeScript, JavaScript (ES6+), SQL Database (MySQL/SQLite), MongoDB, HTML5 Semantik, CSS Modern.\n";
-        }
-        $systemPrompt .= "\n";
+        $systemPrompt .= "--- LISENSI & SERTIFIKASI PROFESIONAL ---\n";
+        $systemPrompt .= "1. Coding Camp 2026 powered by DBS Foundation (Dicoding Indonesia): Full-Stack Web Developer (943 Jam Belajar kurikulum komprehensif: React.js, Node.js, AWS Cloud, Generative AI, RESTful API, Capstone Project).\n";
+        $systemPrompt .= "2. Dicoding - Belajar Fundamental Back-End dengan JavaScript: 90 Jam Belajar (Node.js, PostgreSQL, Amazon RDS, RabbitMQ Message Queue, Amazon S3, Redis Caching, Automation Testing).\n";
+        $systemPrompt .= "3. Dicoding - Belajar Fundamental Aplikasi Web dengan React: 50 Jam Belajar (React Hooks, Context API, Component Lifecycle, Modular Architecture).\n";
+        $systemPrompt .= "4. Dicoding - Belajar Dasar Cloud dan Gen AI di AWS: Pemahaman arsitektur cloud serverless, IAM, S3, dan implementasi foundational model AI.\n\n";
 
-        $systemPrompt .= "--- PROYEK UNGGULAN RIDHWAN (DETAIL & FITUR) ---\n";
+        $systemPrompt .= "--- SPESIALISASI TEKNIS & TECH STACK INTI ---\n";
+        $systemPrompt .= "- Backend Core: Laravel 12 (PSR-12 standard, Eloquent ORM, Service Layer & Repository Pattern, Middleware, Queues/Jobs, RESTful API contract).\n";
+        $systemPrompt .= "- Database & Concurrency: MySQL, PostgreSQL, SQLite, MongoDB. Mahir dalam transaction management (ACID), pessimistic concurrency locking (lockForUpdate), query profiling, indexing (B-Tree/Composite), mitigasi N+1 problem.\n";
+        $systemPrompt .= "- Frontend Reactive: React 19, TypeScript strictly-typed, Inertia.js SPA (zero API boilerplate), Tailwind CSS v4, Framer Motion (GPU composited 60fps).\n";
+        $systemPrompt .= "- DevOps & Tools: Docker, Linux Server, Git workflow, Amazon S3, Postman API testing, CI/CD basic pipeline.\n\n";
+
+        $systemPrompt .= "--- PORTFOLIO PROYEK REKAYASA (DETAIL FITUR & ARSITEKTUR) ---\n";
         if ($projects && $projects->count() > 0) {
             foreach ($projects as $proj) {
                 $tags = is_array($proj->tags) ? $proj->tags : json_decode($proj->tags ?? '[]', true);
                 $tagsString = implode(', ', $tags ?? []);
                 
-                $systemPrompt .= "- **" . $proj->title . "** (Tech Stack: " . $tagsString . ")\n";
+                $systemPrompt .= "- **" . $proj->title . "** [Stack: " . $tagsString . "]\n";
                 $systemPrompt .= "  * Ringkasan: " . $proj->description . "\n";
                 if (isset($projectDetails[$proj->title])) {
-                    $systemPrompt .= "  * Fitur Utama: " . $projectDetails[$proj->title]['features'] . "\n";
-                    $systemPrompt .= "  * Arsitektur & Implementasi Teknik: " . $projectDetails[$proj->title]['architecture'] . "\n";
+                    $systemPrompt .= "  * Fitur Kunci: " . $projectDetails[$proj->title]['features'] . "\n";
+                    $systemPrompt .= "  * Implementasi Arsitektur: " . $projectDetails[$proj->title]['architecture'] . "\n";
                 }
                 $systemPrompt .= "\n";
             }
-        } else {
-            $systemPrompt .= "- Finverra: Sistem manajemen keuangan pergudangan (Laravel, React, TypeScript, MySQL)\n";
-            $systemPrompt .= "- MyClassyTask: Aplikasi manajemen tugas berbasis AI (Laravel, React, TypeScript, MySQL)\n";
-            $systemPrompt .= "- ProManageSys: Sistem manajemen proyek kolaborasi tim (Laravel, React, TypeScript, MySQL)\n";
         }
-        $systemPrompt .= "--- PANDUAN MENJAWAB (PENTING) ---\n";
-        $systemPrompt .= "1. CAKUPAN & FOKUS (PENTING): Anda HANYA menjawab pertanyaan yang berhubungan dengan Ridhwan, portofolionya, skill-nya, sertifikasi, kontak, dan proyek-proyeknya. Jika pengguna menanyakan hal di luar topik ini (misal: resep masakan, rumus matematika, sejarah dunia, curhat pribadi, atau pembuatan kode program yang sama sekali tidak berhubungan dengan proyek Ridhwan), jawablah dengan sopan bahwa Anda adalah asisten virtual Ridhwan dan arahkan kembali percakapan ke proyek atau keahlian Ridhwan.\n";
-        $systemPrompt .= "2. JAWABAN TIDAK BERULANG & MONOTON: Perhatikan riwayat percakapan sebelumnya. JANGAN mengulangi kalimat perkenalan/sapaan yang sama (seperti 'Halo! Saya asisten virtual...') atau deskripsi proyek yang sama persis secara berturut-turut. Gunakan variasi penjelasan. Jika user bertanya kembali tentang proyek yang sama, berikan sudut pandang/detail teknis lain yang belum disebutkan (misal: jika sebelumnya menjelaskan Fitur Utama, sekarang jelaskan Arsitektur atau Tech Stack-nya).\n";
-        $systemPrompt .= "3. GAYA BAHASA & PANJANG RESPON: Jawab sebagai asisten virtual pribadi Ridhwan yang ramah, profesional, sopan, namun sedikit santai. Jawab secara singkat, padat, dan jelas (maksimal 2-3 kalimat per respon agar nyaman dibaca di layar chat kecil). Hindari penjelasan yang terlalu panjang lebar kecuali pengguna secara eksplisit meminta detail mendalam.\n";
-        $systemPrompt .= "4. DETAIL PROYEK YANG LUAS & AKURAT: Anda dapat mendiskusikan fitur utama, arsitektur teknis, tech stack, database, optimalisasi performa, integrasi AI, geofencing, transaksi aman (locking), dan solusi teknis dari proyek-proyek Ridhwan secara luas namun tetap akurat sesuai data di atas.\n";
-        $systemPrompt .= "5. KONTAK & STATUS: Ridhwan saat ini berstatus 'Tersedia untuk kolaborasi & proyek backend/fullstack' (freelance, part-time, full-time). Pengguna dapat menghubunginya lewat form kontak di web ini atau email ke ridhwananang@gmail.com.\n";
-        $systemPrompt .= "6. BAHASA: Gunakan Bahasa Indonesia yang natural. Jika pengguna menyapa atau bertanya dalam Bahasa Inggris, jawablah dalam Bahasa Inggris.\n";
-        $systemPrompt .= "7. FITUR CEK BALASAN PESAN KONTAK: Jika user bertanya tentang status, isi, atau ingin mengecek balasan dari pesan yang pernah mereka kirim ke Ridhwan lewat form kontak: (a) Jika mereka belum memberikan alamat email, tanyakan email mereka dengan sangat sopan (contoh: 'Silakan berikan alamat email Anda agar saya bisa membantu mengecek balasan dari Ridhwan.'). (b) Jika mereka sudah menyebutkan email (atau jika riwayat pesan menunjukkan email mereka), Anda WAJIB membalas dengan format token ini saja secara persis: [CHECK_REPLY:email@domain.com] (ganti email@domain.com dengan email asli mereka). Jangan tambahkan teks lain ketika membalas dengan token tersebut.";
+
+        $systemPrompt .= "--- PANDUAN SCOPE & DISIPLIN MENJAWAB (SANGAT KETAT) ---\n";
+        $systemPrompt .= "1. CAKUPAN KHUSUS & SPESIFIK (STRICT FOCUS): Anda HANYA diperkenankan menjawab hal-hal yang berkaitan langsung dengan Ridhwan Anang Ma'ruf, skill teknisnya, arsitektur software, proyek portofolio, database, sertifikasi, serta kontak/kolaborasi. JANGAN pernah melayani pertanyaan umum di luar domain ini (seperti resep masakan, game umum, politik, sains luar topik, atau pembuatan coding di luar portfolio Ridhwan). Jika user bertanya hal di luar domain, tolak dengan sopan dan elegan, lalu arahkan kembali ke keahlian rekayasa Ridhwan.\n";
+        $systemPrompt .= "2. KUALITAS & KEDALAMAN TEKNIS: Berikan respon yang berbobot dan teknis namun tetap ringkas, padat, dan mudah dipahami (maksimal 2-3 paragraf ringkas atau poin berstruktur). Gunakan format markdown yang rapi (bold untuk keyword, bullet points untuk daftar fitur/teknologi).\n";
+        $systemPrompt .= "3. RESPON TIDAK BERULANG: Jangan gunakan template pembuka yang monoton seperti 'Halo! Saya asisten virtual...'. Langsung jawab inti pertanyaan secara cerdas dan kontekstual.\n";
+        $systemPrompt .= "4. STATUS KERJA & HUBUNGI: Selalu sampaikan bahwa Ridhwan terbuka untuk kesempatan kerja (kontrak/freelance/full-time). Pengguna dapat menggunakan tombol kontak di web ini atau mengirim email ke ridhwananang@gmail.com.\n";
+        $systemPrompt .= "5. FITUR CEK BALASAN KONTAK: Jika user ingin mengecek balasan pesan dari formulir kontak: minta alamat email mereka dengan sopan. Jika mereka menyebutkan email yang valid, balas secara persis dengan token: [CHECK_REPLY:email@domain.com].";
 
         return $systemPrompt;
     }
@@ -250,35 +248,47 @@ class GeminiChatService
         }
 
         if (str_contains($q, 'cek balasan') || str_contains($q, 'cek pesan') || str_contains($q, 'balasan saya') || str_contains($q, 'status pesan')) {
-            return 'Silakan masukkan alamat email yang Anda gunakan saat mengisi form kontak agar saya bisa membantu mengecek balasan dari Ridhwan.';
+            return "Silakan masukkan alamat email yang Anda gunakan saat mengisi formulir kontak agar saya dapat melacak riwayat balasan langsung dari Ridhwan.";
+        }
+
+        if (str_contains($q, 'finverra') || str_contains($q, 'keuangan') || str_contains($q, 'gudang') || str_contains($q, 'pergudangan')) {
+            return "**Finverra** adalah sistem ERP pergudangan & cashflow finansial unggulan Ridhwan:\n- **Arsitektur**: Clean Architecture dengan Repository Pattern memisahkan domain logic dari framework.\n- **Tech Stack**: Laravel backend RESTful API, React SPA via Inertia.js, dan database relasional MySQL.\n- **Fitur Kunci**: Real-time cashflow tracker, pembukuan laba-rugi otomatis, manajemen stok pergudangan, dan billing invoice sewa multi-gudang.";
+        }
+
+        if (str_contains($q, 'clean arch') || str_contains($q, 'arsitektur') || str_contains($q, 'pattern') || str_contains($q, 'struktur')) {
+            return "Ridhwan menerapkan prinsip **Clean Architecture & Separation of Concerns** dalam proyek skala produksi:\n- **Domain & Service Layer**: Logika bisnis murni diisolasi dari HTTP controller.\n- **Repository Pattern**: Kontrak antarmuka data layer untuk kemudahan testing dan decoupling database.\n- **Database Transactions & Concurrency**: Menjaga integritas data finansial (ACID) dan mencegah race condition menggunakan pessimistic locking.";
         }
 
         if (str_contains($q, 'laravel') || str_contains($q, 'backend') || str_contains($q, 'php')) {
-            return 'Ridhwan memiliki pemahaman mendalam tentang Laravel backend (MVC, RESTful API, queues, Eloquent ORM). Dia selalu memastikan kode backend bersih, efisien, aman, dan scalable untuk kebutuhan produksi.';
-        }
-        if (str_contains($q, 'react') || str_contains($q, 'frontend') || str_contains($q, 'typescript') || str_contains($q, 'css')) {
-            return 'Frontend stack favorit Ridhwan adalah React + TypeScript dipadukan dengan Tailwind CSS untuk styling cepat dan modern. Dia sangat memperhatikan performa rendering dan transisi halus.';
-        }
-        if (str_contains($q, 'lokasi') || str_contains($q, 'tinggal') || str_contains($q, 'tangerang')) {
-            return 'Ridhwan saat ini berlokasi di Tangerang Selatan, Indonesia. Namun, dia terbiasa berkolaborasi secara remote dengan tim dari berbagai zona waktu.';
-        }
-        if (str_contains($q, 'harga') || str_contains($q, 'rate') || str_contains($q, 'biaya') || str_contains($q, 'gaji')) {
-            return 'Rate Ridhwan sangat fleksibel and kompetitif, disesuaikan dengan skala proyek (freelance per-proyek atau kontrak bulanan). Silakan kirimkan brief proyek Anda melalui form kontak!';
-        }
-        if (str_contains($q, 'proyek') || str_contains($q, 'finverra') || str_contains($q, 'karya') || str_contains($q, 'classytask')) {
-            return 'Beberapa proyek unggulan Ridhwan antara lain Finverra (keuangan gudang), MyClassyTask (manajemen tugas AI), ProManageSys (kolaborasi tim), dan SiPresens (absensi GPS). Semuanya mengintegrasikan backend kokoh dengan UI responsif.';
-        }
-        if (str_contains($q, 'halo') || str_contains($q, 'hei') || str_contains($q, 'selamat') || str_contains($q, 'pagi') || str_contains($q, 'siang') || str_contains($q, 'sore') || str_contains($q, 'malam')) {
-            return 'Halo! Senang menyapa Anda. Ada yang bisa saya bantu terkait portofolio atau kolaborasi bersama Ridhwan?';
-        }
-        if (str_contains($q, 'kontak') || str_contains($q, 'email') || str_contains($q, 'nomor') || str_contains($q, 'hubungi')) {
-            return 'Anda bisa menghubungi Ridhwan secara langsung via email di ridhwananang@gmail.com, atau isi formulir "Hubungi Saya" di pojok kiri bawah.';
-        }
-        if (str_contains($q, 'status') || str_contains($q, 'kerja') || str_contains($q, 'aktif') || str_contains($q, 'kolaborasi')) {
-            return "Ridhwan saat ini berstatus 'Tersedia untuk kolaborasi & proyek backend/fullstack'. Dia siap menyerap tantangan baru sebagai software engineer.";
+            return "Keahlian backend **Laravel** Ridhwan mencakup:\n- **Versi**: Laravel 12 & PHP 8.3+ standar PSR-12.\n- **Fitur**: Eloquent ORM dengan optimasi eager loading (bebas N+1), Database Transactions, Asynchronous Job Queues, Policy-based Authorization, dan RESTful API modular.\n- **Keamanan**: Proteksi CSRF/XSS, validasi Form Request ketat, sanitasi SQL input, dan hashing Argon2/Bcrypt.";
         }
 
-        return 'Pertanyaan menarik! Ridhwan adalah software engineer berdedikasi tinggi yang fokus pada penyelesaian masalah nyata menggunakan kode. Ia menguasai fullstack web development dan siap membawa ide Anda dari konsep hingga tahap produksi. Mari bicarakan kolaborasi lebih lanjut!';
+        if (str_contains($q, 'database') || str_contains($q, 'sql') || str_contains($q, 'mysql') || str_contains($q, 'postgres') || str_contains($q, 'mongo')) {
+            return "Keahlian **Database Relasional & NoSQL** Ridhwan meliputi:\n- **PostgreSQL & MySQL**: Perancangan skema normalisasi (3NF), B-Tree & Composite Indexing, query execution plan analysis (`EXPLAIN`), dan relasi many-to-many efisien.\n- **Concurrency Control**: Pessimistic locking (`lockForUpdate`) untuk sistem reservasi real-time (seperti pada SportIn).\n- **MongoDB**: Aggregation pipelines untuk data semi-terstruktur dan log aktivitas.";
+        }
+
+        if (str_contains($q, 'react') || str_contains($q, 'frontend') || str_contains($q, 'typescript') || str_contains($q, 'inertia')) {
+            return "Frontend stack Ridhwan berfokus pada performa dan UX kelas enterprise:\n- **React 19 & TypeScript**: Typed components strictly-typed, custom hooks yang dapat digunakan kembali, serta pengelolaan state yang presisi.\n- **Inertia.js**: Integrasi monolithic modern yang menyatukan Laravel backend dan React UI tanpa overhead maintenance REST API terpisah.\n- **Performa 60 FPS**: Animasi hardware-accelerated via Framer Motion dan Tailwind CSS v4 tanpa layout reflow.";
+        }
+
+        if (str_contains($q, 'sertifikasi') || str_contains($q, 'sertifikat') || str_contains($q, 'dbs') || str_contains($q, 'dicoding') || str_contains($q, 'camp')) {
+            return "Ridhwan memiliki lisensi sertifikasi terverifikasi industri:\n- **DBS Foundation Coding Camp 2026**: Full-Stack Web Developer (943 Jam Belajar mencakup React, Node.js, AWS Cloud, Gen AI, dan Capstone Project).\n- **Dicoding Indonesia**: Belajar Fundamental Back-End dengan JavaScript & AWS (90 Jam - Node.js, PostgreSQL, RabbitMQ, Redis, Amazon S3).\n- **Fundamental React**: 50 Jam Belajar arsitektur komponen modular dan single-page application.";
+        }
+
+        if (str_contains($q, 'myclassytask') || str_contains($q, 'promanagesys') || str_contains($q, 'sipresens') || str_contains($q, 'sportin') || str_contains($q, 'proyek') || str_contains($q, 'karya')) {
+            return "Selain **Finverra**, beberapa proyek unggulan Ridhwan lainnya:\n- **MyClassyTask**: Task manager dengan AI LLM extraction untuk parsing otomatis teks ke deadline & subtugas.\n- **ProManageSys**: Kanban board kolaboratif tim dengan dynamic permissions & optimasi relasi database.\n- **SiPresens**: Presensi karyawan geofencing GPS real-time dengan proteksi anti-mock location.\n- **SportIn**: Booking lapangan olahraga dengan database pessimistic locking untuk mencegah double-booking.";
+        }
+
+        if (str_contains($q, 'kontak') || str_contains($q, 'email') || str_contains($q, 'hire') || str_contains($q, 'kerja') || str_contains($q, 'status') || str_contains($q, 'kolaborasi') || str_contains($q, 'rate') || str_contains($q, 'harga')) {
+            return "Ridhwan saat ini berstatus **Available for Work** (Terbuka untuk kontrak rekayasa software, proyek backend/fullstack, maupun remote roles).\n- **Email**: `ridhwananang@gmail.com`\n- **Lokasi**: Tangerang Selatan, Indonesia\n- **Rate**: Fleksibel dan kompetitif sesuai ruang lingkup proyek. Silakan klik tombol **Hubungi Saya** pada halaman ini!";
+        }
+
+        if (str_contains($q, 'halo') || str_contains($q, 'hai') || str_contains($q, 'pagi') || str_contains($q, 'siang') || str_contains($q, 'sore') || str_contains($q, 'malam')) {
+            return "Halo! Saya adalah **Asisten AI Teknis Ridhwan Anang Ma'ruf**. Ada yang bisa saya jelaskan mengenai arsitektur Laravel, proyek Finverra, optimasi database, atau ketersediaan kerja Ridhwan?";
+        }
+
+        // Out of scope fallback
+        return "Saya adalah asisten virtual khusus yang berfokus pada portofolio dan keahlian rekayasa perangkat lunak **Ridhwan Anang Ma'ruf**. Anda dapat menanyakan tentang arsitektur backend Laravel, integrasi React 19 + TypeScript, proyek seperti Finverra, atau peluang kolaborasi kerja bersama Ridhwan.";
     }
 
     /**

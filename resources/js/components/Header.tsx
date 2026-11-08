@@ -18,12 +18,14 @@ interface HeaderProps {
     onOpenTracking?: () => void;
     activeSection: string;
     setActiveSection: (section: string) => void;
+    onSectionSelect?: (section: string, isManual?: boolean) => void;
 }
 
 export default function Header({
     onOpenContact,
     activeSection,
     setActiveSection,
+    onSectionSelect,
 }: HeaderProps) {
     const { updateAppearance } = useAppearance();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -85,7 +87,11 @@ export default function Header({
     ];
 
     const handleNavClick = (id: string) => {
-        setActiveSection(id);
+        if (onSectionSelect) {
+            onSectionSelect(id, true);
+        } else {
+            setActiveSection(id);
+        }
         setIsMobileMenuOpen(false);
         const element = document.getElementById(id);
 
@@ -102,12 +108,15 @@ export default function Header({
     };
 
     return (
-        <header
+        <motion.header
             id="main-header"
-            className={`fixed top-0 left-0 z-45 w-full transition-all duration-300 ${
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            className={`fixed top-0 left-0 z-45 w-full transition-[background-color,border-color,box-shadow,backdrop-filter] duration-300 ease-out ${
                 isScrolled
-                    ? 'border-b border-zinc-200/80 bg-white/85 py-2.5 shadow-[0_4px_30px_rgba(0,0,0,0.15)] backdrop-blur-xl dark:border-blue-400/15 dark:bg-[#080e21]/85'
-                    : 'bg-transparent py-4 sm:py-5'
+                    ? 'border-b border-zinc-200/80 bg-white/85 py-3 shadow-[0_4px_30px_rgba(0,0,0,0.12)] backdrop-blur-xl dark:border-blue-400/15 dark:bg-[#080e21]/85'
+                    : 'border-b border-transparent bg-transparent py-3 sm:py-3.5 shadow-none'
             }`}
         >
             {/* Top Scroll Progress Indicator (Sapphire to Champagne Gold) */}
@@ -166,11 +175,12 @@ export default function Header({
                                 {isActive && (
                                     <motion.div
                                         layoutId="activeNavBackground"
-                                        className="absolute inset-0 -z-10 rounded-full bg-gradient-to-r from-amber-500/20 via-yellow-400/15 to-amber-500/20 border border-amber-500/40 dark:border-amber-400/50 shadow-[0_0_12px_rgba(245,158,11,0.25)]"
+                                        className="absolute inset-0 -z-10 rounded-full bg-gradient-to-r from-amber-500/20 via-yellow-400/15 to-amber-500/20 border border-amber-500/40 dark:border-amber-400/50 shadow-[0_0_12px_rgba(245,158,11,0.22)]"
                                         transition={{
                                             type: 'spring',
-                                            stiffness: 450,
-                                            damping: 35,
+                                            stiffness: 380,
+                                            damping: 32,
+                                            mass: 0.8,
                                         }}
                                     />
                                 )}
@@ -290,6 +300,6 @@ export default function Header({
                     </motion.div>
                 )}
             </AnimatePresence>
-        </header>
+        </motion.header>
     );
 }

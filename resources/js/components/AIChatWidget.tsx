@@ -4,8 +4,13 @@ import {
     User,
     Sparkles,
     SendHorizontal,
-    MessageSquare,
     ChevronDown,
+    RotateCcw,
+    Copy,
+    Check,
+    MessageSquare,
+    CheckCircle2,
+    ArrowRight,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useEffect, useRef } from 'react';
@@ -16,31 +21,56 @@ interface ChatMessage {
     time: string;
 }
 
+const CURATED_SUGGESTIONS = [
+    {
+        label: '🏛️ Arsitektur Finverra (Clean Arch)',
+        query: 'Jelaskan arsitektur Clean Architecture & Repository Pattern pada proyek Finverra.',
+    },
+    {
+        label: '⚡ Optimasi Database & Relasi SQL',
+        query: 'Bagaimana pendekatan Ridhwan dalam optimasi query MySQL/PostgreSQL, indexing, dan locking?',
+    },
+    {
+        label: '⚛️ Integrasi React 19 & TypeScript',
+        query: 'Bagaimana Ridhwan mengintegrasikan React 19, TypeScript, dan Inertia.js untuk antarmuka responsif?',
+    },
+    {
+        label: '📜 Lisensi DBS Camp & Dicoding',
+        query: 'Apa saja lisensi dan sertifikasi keahlian yang dimiliki Ridhwan dari DBS Foundation & Dicoding?',
+    },
+    {
+        label: '💼 Ketersediaan Kontrak / Status Kerja',
+        query: 'Apakah Ridhwan saat ini tersedia untuk kontrak kerja atau kolaborasi? Bagaimana cara menghubunginya?',
+    },
+];
+
 export default function AIChatWidget() {
     const [isOpen, setIsOpen] = useState(false);
     const [chatInput, setChatInput] = useState('');
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [isTyping, setIsTyping] = useState(false);
     const [showTooltip, setShowTooltip] = useState(false);
+    const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
     const chatEndRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
 
-    // Initialize with a premium, engaging welcome message
+    // Initial technical welcome greeting
+    const createInitialMessage = (): ChatMessage => ({
+        sender: 'bot',
+        text: "Halo! Saya adalah **Asisten AI Rekayasa Software Ridhwan Anang Ma'ruf**. ✨\n\nSaya dibekali pemahaman spesifik mengenai arsitektur backend **Laravel 12**, integrasi **React 19 + TypeScript**, optimasi database relasional, serta proyek-proyek unggulan seperti **Finverra**, **MyClassyTask**, dan **SportIn**.\n\nSilakan pilih topik di bawah atau ketik pertanyaan teknis Anda!",
+        time: new Date().toLocaleTimeString('id-ID', {
+            hour: '2-digit',
+            minute: '2-digit',
+        }),
+    });
+
     useEffect(() => {
-        setMessages([
-            {
-                sender: 'bot',
-                text: 'Halo! Saya adalah **Asisten Virtual Ridhwan**. ✨\n\nAda yang bisa saya bantu hari ini? Anda bisa bertanya mengenai keahlian Laravel/React saya, proyek unggulan, atau mendiskusikan peluang kolaborasi.',
-                time: new Date().toLocaleTimeString('id-ID', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                }),
-            },
-        ]);
+        setMessages([createInitialMessage()]);
 
-        // Show tooltip after a short delay
         const timer = setTimeout(() => {
             setShowTooltip(true);
-        }, 3000);
+        }, 2800);
 
         return () => clearTimeout(timer);
     }, []);
@@ -52,14 +82,29 @@ export default function AIChatWidget() {
         }
     }, [messages, isTyping]);
 
+    // Focus input on open
+    useEffect(() => {
+        if (isOpen) {
+            setShowTooltip(false);
+            setTimeout(() => {
+                inputRef.current?.focus();
+            }, 300);
+        }
+    }, [isOpen]);
+
     // Autocheck reply in background if email exists in localStorage when chat is opened
     useEffect(() => {
         if (!isOpen) return;
 
-        const email = localStorage.getItem('user_contact_email');
+        let email: string | null = null;
+        try {
+            email = localStorage.getItem('user_contact_email');
+        } catch {
+            // Safe guard against restricted localStorage
+        }
+
         if (!email) return;
 
-        // Perform background check for Ridhwan's replies
         setIsTyping(true);
         fetch('/api/chat', {
             method: 'POST',
@@ -78,7 +123,6 @@ export default function AIChatWidget() {
             .then((data) => {
                 if (data.reply) {
                     setMessages((prev) => {
-                        // Avoid adding duplicate replies in the same session
                         if (prev.some((m) => m.sender === 'ridhwan' && m.text === data.reply)) {
                             return prev;
                         }
@@ -100,18 +144,28 @@ export default function AIChatWidget() {
             .finally(() => setIsTyping(false));
     }, [isOpen]);
 
+    const handleResetChat = () => {
+        setMessages([createInitialMessage()]);
+        setIsTyping(false);
+        setChatInput('');
+        inputRef.current?.focus();
+    };
+
+    const handleCopyMessage = (text: string, index: number) => {
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(text);
+            setCopiedIndex(index);
+            setTimeout(() => setCopiedIndex(null), 2000);
+        }
+    };
+
     const handleSendMessage = async (customText?: string) => {
         const textToSend = (customText || chatInput).trim();
-
-        if (!textToSend) {
-return;
-}
+        if (!textToSend || isTyping) return;
 
         if (!customText) {
             setChatInput('');
         }
-
-        // Hide tooltip once user interacts
         setShowTooltip(false);
 
         const newUserMessage: ChatMessage = {
@@ -128,12 +182,18 @@ return;
         setIsTyping(true);
 
         try {
-            // Check if there is an active direct message thread with Ridhwan
+            // Direct message thread with Ridhwan check
             const hasDirectThread = messages.some((m) => m.sender === 'ridhwan');
-            const contactEmail = localStorage.getItem('user_contact_email');
+            let contactEmail: string | null = null;
+            let contactName: string | null = null;
+            try {
+                contactEmail = localStorage.getItem('user_contact_email');
+                contactName = localStorage.getItem('user_contact_name');
+            } catch {
+                // Ignore localStorage errors
+            }
 
             if (hasDirectThread && contactEmail) {
-                // Forward directly to contact message database instead of Gemini Chat
                 const response = await fetch('/api/contact', {
                     method: 'POST',
                     headers: {
@@ -141,22 +201,20 @@ return;
                         Accept: 'application/json',
                     },
                     body: JSON.stringify({
-                        name: localStorage.getItem('user_contact_name') || 'Pengunjung Chat',
+                        name: contactName || 'Pengunjung Chat',
                         email: contactEmail,
                         subject: 'Pesan Lanjutan Chat',
                         message: textToSend,
                     }),
                 });
 
-                if (!response.ok) {
-                    throw new Error('API Error');
-                }
+                if (!response.ok) throw new Error('API Error');
 
                 setMessages((prev) => [
                     ...prev,
                     {
                         sender: 'bot',
-                        text: 'Pesan Anda telah terkirim langsung ke Ridhwan. Ridhwan akan membalas segera melalui email atau di sini.',
+                        text: 'Pesan Anda telah diteruskan langsung ke sistem kontak Ridhwan. Ridhwan akan membalas segera melalui email atau di sesi ini.',
                         time: new Date().toLocaleTimeString('id-ID', {
                             hour: '2-digit',
                             minute: '2-digit',
@@ -180,9 +238,7 @@ return;
                 }),
             });
 
-            if (!response.ok) {
-                throw new Error('API Error');
-            }
+            if (!response.ok) throw new Error('API Error');
 
             const data = await response.json();
             const newMsgs: ChatMessage[] = [];
@@ -216,7 +272,7 @@ return;
                     ...prev,
                     {
                         sender: 'bot',
-                        text: 'Maaf, saya sedang kesulitan memproses respon saat ini.',
+                        text: 'Saya sedang memproses informasi teknis Ridhwan. Anda juga dapat mengirimkan pertanyaan langsung ke email **ridhwananang@gmail.com**.',
                         time: new Date().toLocaleTimeString('id-ID', {
                             hour: '2-digit',
                             minute: '2-digit',
@@ -230,7 +286,7 @@ return;
                 ...prev,
                 {
                     sender: 'bot',
-                    text: 'Koneksi ke asisten sedang terganggu. Ridhwan sangat ahli dalam Laravel dan React! Anda juga dapat menghubunginya langsung lewat email: ridhwananang@gmail.com.',
+                    text: 'Koneksi asisten sedang sibuk. Namun, Anda dapat melihat arsitektur **Laravel 12**, **React 19**, dan **Clean Architecture** pada proyek-proyek Ridhwan di halaman portofolio ini, atau hubungi via **ridhwananang@gmail.com**.',
                     time: new Date().toLocaleTimeString('id-ID', {
                         hour: '2-digit',
                         minute: '2-digit',
@@ -242,60 +298,66 @@ return;
         }
     };
 
-    // Helper to render markdown-like bold text and bulleted lists in messages
+    // Render formatted markdown with champagne gold highlights and code chips
     const renderMessageText = (text: string) => {
         const lines = text.split('\n');
 
         return lines.map((line, i) => {
-            let renderedLine = line;
-
-            // Check if it's a list item
-            const isBullet =
-                line.trim().startsWith('- ') || line.trim().startsWith('* ');
-
-            if (isBullet) {
-                renderedLine = line.replace(/^[\s-*]+/, ''); // remove bullet symbol
+            const trimmed = line.trim();
+            if (!trimmed) {
+                return <div key={i} className="h-1.5" />;
             }
 
-            // Parse bold text
-            const parts = renderedLine.split(/(\*\*.*?\*\*)/g);
-            const content = parts.map((part, j) => {
-                if (part.startsWith('**') && part.endsWith('**')) {
+            const isBullet = trimmed.startsWith('- ') || trimmed.startsWith('* ');
+            const contentLine = isBullet ? trimmed.replace(/^[-*]\s+/, '') : line;
+
+            // Split by inline code first (`code`), then bold (**text**)
+            const parts = contentLine.split(/(`[^`]+`|\*\*[^*]+\*\*)/g);
+
+            const renderedContent = parts.map((part, j) => {
+                if (part.startsWith('`') && part.endsWith('`') && part.length > 2) {
+                    return (
+                        <code
+                            key={j}
+                            className="rounded bg-amber-500/10 px-1 py-0.5 font-mono text-[11px] font-semibold text-amber-700 dark:text-amber-300 border border-amber-500/20"
+                        >
+                            {part.slice(1, -1)}
+                        </code>
+                    );
+                }
+                if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
                     return (
                         <strong
                             key={j}
-                            className="font-extrabold text-slate-900 dark:text-white"
+                            className="font-bold text-amber-800 dark:text-amber-300"
                         >
                             {part.slice(2, -2)}
                         </strong>
                     );
                 }
-
                 return part;
             });
 
             if (isBullet) {
                 return (
-                    <li
-                        key={i}
-                        className="dark:text-slate-350 ml-4 list-disc pl-1 text-slate-700"
-                    >
-                        {content}
+                    <li key={i} className="ml-2 flex items-start gap-1.5 text-xs py-0.5">
+                        <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-amber-500 dark:bg-amber-400" />
+                        <span className="flex-1 leading-relaxed">{renderedContent}</span>
                     </li>
                 );
             }
 
             return (
-                <p key={i} className="mb-1.5 last:mb-0">
-                    {content}
+                <p key={i} className="mb-1 text-xs leading-relaxed last:mb-0">
+                    {renderedContent}
                 </p>
             );
         });
     };
 
     return (
-        <div className="fixed right-4 bottom-4 z-50 flex flex-col items-end font-sans sm:right-6 sm:bottom-6">
-            {/* Custom Webkit Scrollbar Styling */}
+        <div className="fixed right-3 bottom-3 z-50 flex flex-col items-end font-sans sm:right-6 sm:bottom-6">
+            {/* Custom Webkit Scrollbar Styling for Chat Box */}
             <style>{`
                 .chat-scroll-container::-webkit-scrollbar {
                     width: 4px;
@@ -304,22 +366,29 @@ return;
                     background: transparent;
                 }
                 .chat-scroll-container::-webkit-scrollbar-thumb {
-                    background: rgba(156, 163, 175, 0.2);
+                    background: rgba(245, 158, 11, 0.25);
                     border-radius: 99px;
                 }
                 .chat-scroll-container::-webkit-scrollbar-thumb:hover {
-                    background: rgba(156, 163, 175, 0.4);
+                    background: rgba(245, 158, 11, 0.5);
+                }
+                .chips-scroll-container::-webkit-scrollbar {
+                    display: none;
+                }
+                .chips-scroll-container {
+                    -ms-overflow-style: none;
+                    scrollbar-width: none;
                 }
                 @keyframes float-avatar {
                     0%, 100% { transform: translateY(0px); }
-                    50% { transform: translateY(-6px); }
+                    50% { transform: translateY(-7px); }
                 }
                 .animate-float-avatar {
-                    animation: float-avatar 4s ease-in-out infinite;
+                    animation: float-avatar 4.5s ease-in-out infinite;
                 }
             `}</style>
 
-            {/* Tooltip Popup */}
+            {/* Tooltip Popup (Luxury Capsule Preview) */}
             <AnimatePresence>
                 {showTooltip && !isOpen && (
                     <motion.div
@@ -330,99 +399,119 @@ return;
                             setIsOpen(true);
                             setShowTooltip(false);
                         }}
-                        className="absolute right-0 bottom-[152px] mb-2.5 cursor-pointer rounded-2xl border border-violet-100 bg-white/95 px-4 py-3 text-xs font-bold whitespace-nowrap text-slate-700 shadow-xl backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-950/95 dark:text-slate-200"
+                        className="absolute right-0 bottom-[148px] mb-2 cursor-pointer select-none rounded-2xl border border-amber-500/30 bg-white/95 px-4 py-2.5 text-xs font-bold whitespace-nowrap text-zinc-800 shadow-[0_10px_30px_rgba(0,0,0,0.15)] backdrop-blur-xl dark:border-blue-400/25 dark:bg-[#0c162f]/95 dark:text-zinc-100 dark:shadow-[0_10px_35px_rgba(0,0,0,0.4)]"
                     >
                         <div className="flex items-center gap-2">
-                            <span className="flex h-2 w-2 animate-ping rounded-full bg-violet-600"></span>
-                            Tanya Asisten Ridhwan
+                            <span className="relative flex size-2">
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"></span>
+                                <span className="relative inline-flex size-2 rounded-full bg-amber-500"></span>
+                            </span>
+                            <span className="tracking-tight">Tanya Asisten AI Ridhwan</span>
+                            <Sparkles size={11} className="text-amber-500 dark:text-amber-400" />
                         </div>
                         {/* Tooltip triangle */}
-                        <div className="absolute right-6 bottom-[-6px] h-3 w-3 rotate-45 border-r border-b border-violet-100 bg-white dark:border-slate-800 dark:bg-slate-950"></div>
+                        <div className="absolute right-6 bottom-[-6px] h-3 w-3 rotate-45 border-r border-b border-amber-500/30 bg-white dark:border-blue-400/25 dark:bg-[#0c162f]"></div>
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            {/* Chat Dialog Panel */}
+            {/* Chat Dialog Panel (Ultra-Luxury Royal Deep Blue & Champagne Gold Vault) */}
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
                         initial={{
                             opacity: 0,
-                            scale: 0.9,
-                            y: 40,
+                            scale: 0.92,
+                            y: 35,
                             originX: 0.95,
                             originY: 0.95,
                         }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.9, y: 40 }}
+                        exit={{ opacity: 0, scale: 0.92, y: 35 }}
                         transition={{
                             type: 'spring',
-                            stiffness: 350,
-                            damping: 26,
+                            stiffness: 380,
+                            damping: 28,
                         }}
-                        className="shadow-3xl relative mb-4.5 flex h-[560px] max-h-[78vh] w-[390px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-[2.2rem] border border-slate-200/60 bg-white/95 backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-950/95"
+                        className="relative mb-3 flex h-[590px] max-h-[82vh] w-[calc(100vw-24px)] sm:w-[410px] flex-col overflow-hidden rounded-[1.75rem] border border-amber-500/25 bg-white/95 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.25)] backdrop-blur-2xl dark:border-blue-400/20 dark:bg-[#080e21]/95 dark:shadow-[0_25px_70px_-15px_rgba(0,0,0,0.65)]"
                     >
-                        {/* Premium Glowing Background Mesh */}
-                        <div className="pointer-events-none absolute -top-20 -right-20 z-0 h-48 w-48 rounded-full bg-violet-500/10 blur-3xl dark:bg-violet-500/15"></div>
-                        <div className="pointer-events-none absolute -bottom-20 -left-20 z-0 h-48 w-48 rounded-full bg-blue-500/10 blur-3xl dark:bg-blue-500/10"></div>
+                        {/* Top Champagne Gold Specular Hairline */}
+                        <div className="pointer-events-none absolute top-0 left-0 right-0 z-20 h-[1.5px] bg-gradient-to-r from-transparent via-amber-400/60 to-transparent" />
 
-                        {/* Premium Header */}
-                        <div className="relative z-10 flex items-center justify-between border-b border-slate-100/60 bg-white/40 px-6 py-4.5 backdrop-blur-md dark:border-slate-900/60 dark:bg-slate-950/40">
+                        {/* Ambient Deep Blue/Gold Background Glows */}
+                        <div className="pointer-events-none absolute -top-16 -right-16 z-0 size-48 rounded-full bg-amber-500/10 blur-3xl dark:bg-amber-500/12"></div>
+                        <div className="pointer-events-none absolute -bottom-16 -left-16 z-0 size-48 rounded-full bg-blue-600/10 blur-3xl dark:bg-blue-600/15"></div>
+
+                        {/* Header: Royal Blue Glass Capsule */}
+                        <div className="relative z-10 flex items-center justify-between border-b border-zinc-200/80 bg-zinc-50/80 px-5 py-3.5 backdrop-blur-xl dark:border-blue-400/15 dark:bg-[#0c162f]/85">
                             <div className="flex items-center gap-3">
-                                {/* Glowing Avatar */}
-                                <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl border border-violet-100/55 bg-white shadow-md dark:border-slate-800 dark:bg-slate-900">
+                                {/* Glowing Monogram Avatar */}
+                                <div className="relative flex size-9.5 items-center justify-center overflow-hidden rounded-xl border border-amber-500/30 bg-gradient-to-br from-amber-500/20 to-blue-600/20 shadow-sm dark:border-amber-400/30 dark:bg-[#091024]">
                                     <img
                                         src="/images/ai_avatar_header.webp"
-                                        alt="Ridhwan Character"
+                                        alt="Asisten Ridhwan"
                                         className="h-full w-full object-cover"
                                     />
-                                    <span className="absolute -right-0.5 -bottom-0.5 flex h-3 w-3 items-center justify-center rounded-full border-2 border-white bg-emerald-500 dark:border-slate-950">
-                                        <span className="h-1.5 w-1.5 animate-ping rounded-full bg-white opacity-75"></span>
-                                    </span>
+                                    <span className="absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full border-2 border-white bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.9)] dark:border-[#080e21]" />
                                 </div>
                                 <div>
-                                    <h4 className="flex items-center gap-1 text-sm font-extrabold tracking-tight text-slate-900 dark:text-white">
-                                        Asisten Virtual
+                                    <div className="flex items-center gap-1.5">
+                                        <h4 className="text-xs font-black tracking-tight text-zinc-900 dark:text-zinc-100">
+                                            Asisten AI Ridhwan
+                                        </h4>
                                         <Sparkles
-                                            size={12}
-                                            className="fill-violet-500/30 text-violet-500"
+                                            size={11}
+                                            className="text-amber-500 fill-amber-500/30 dark:text-amber-400"
                                         />
-                                    </h4>
-                                    <p className="text-[9px] font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
-                                        Online • Powered by Gemini
+                                    </div>
+                                    <p className="text-[9px] font-mono font-semibold tracking-wider text-amber-700/80 uppercase dark:text-amber-300/80">
+                                        Full Stack Engineering Specialist
                                     </p>
                                 </div>
                             </div>
-                            <button
-                                onClick={() => setIsOpen(false)}
-                                className="border-slate-150/40 rounded-full border bg-slate-50/50 p-2 text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-700 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-white"
-                                aria-label="Tutup obrolan"
-                            >
-                                <ChevronDown size={14} strokeWidth={2.5} />
-                            </button>
+
+                            {/* Header Actions: Reset Chat & Close */}
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onClick={handleResetChat}
+                                    title="Mulai percakapan baru"
+                                    className="cursor-pointer flex size-7 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-200/60 hover:text-amber-600 dark:text-zinc-400 dark:hover:bg-blue-400/10 dark:hover:text-amber-300"
+                                    aria-label="Reset chat"
+                                >
+                                    <RotateCcw size={13} />
+                                </button>
+                                <button
+                                    onClick={() => setIsOpen(false)}
+                                    title="Tutup percakapan"
+                                    className="cursor-pointer flex size-7 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-200/60 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-blue-400/10 dark:hover:text-zinc-100"
+                                    aria-label="Tutup obrolan"
+                                >
+                                    <ChevronDown size={16} />
+                                </button>
+                            </div>
                         </div>
 
                         {/* Chat Messages List */}
-                        <div className="chat-scroll-container relative z-10 flex-1 space-y-4 overflow-y-auto px-5 py-5">
+                        <div className="chat-scroll-container relative z-10 flex-1 space-y-3.5 overflow-y-auto px-4 py-4">
                             {messages.map((m, idx) => (
                                 <motion.div
-                                    initial={{ opacity: 0, y: 12, scale: 0.96 }}
+                                    initial={{ opacity: 0, y: 10, scale: 0.98 }}
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                     transition={{
                                         type: 'spring',
-                                        stiffness: 400,
+                                        stiffness: 420,
                                         damping: 30,
                                     }}
                                     key={idx}
-                                    className={`flex max-w-[85%] items-end gap-2.5 ${
+                                    className={`group relative flex max-w-[88%] items-end gap-2 ${
                                         m.sender === 'user'
                                             ? 'ml-auto flex-row-reverse'
                                             : 'mr-auto'
                                     }`}
                                 >
-                                    {/* Icon */}
+                                    {/* Sender Icon */}
                                     {m.sender === 'ridhwan' ? (
-                                        <div className="h-7.5 w-7.5 shrink-0 overflow-hidden rounded-xl border border-violet-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                                        <div className="size-7 shrink-0 overflow-hidden rounded-lg border border-amber-500/40 bg-[#091024] shadow-xs">
                                             <img
                                                 src="/images/me.webp"
                                                 alt="Ridhwan Anang"
@@ -431,10 +520,10 @@ return;
                                         </div>
                                     ) : (
                                         <div
-                                            className={`flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-xl border shadow-sm ${
+                                            className={`flex size-7 shrink-0 items-center justify-center rounded-lg border shadow-xs ${
                                                 m.sender === 'user'
-                                                    ? 'dark:text-slate-350 border-slate-200/50 bg-slate-50 text-slate-600 dark:border-slate-800 dark:bg-slate-900'
-                                                    : 'border-violet-100/50 bg-violet-50/60 text-violet-600 dark:border-violet-900/30 dark:bg-violet-950/20 dark:text-violet-400'
+                                                    ? 'border-blue-400/30 bg-[#0c162f] text-amber-300'
+                                                    : 'border-amber-500/25 bg-amber-500/10 text-amber-600 dark:border-amber-400/20 dark:text-amber-400'
                                             }`}
                                         >
                                             {m.sender === 'user' ? (
@@ -444,85 +533,127 @@ return;
                                             )}
                                         </div>
                                     )}
-                                    {/* Bubble */}
+
+                                    {/* Message Bubble */}
                                     <div
-                                        className={`rounded-2xl border px-4 py-2.5 text-xs leading-relaxed ${
+                                        className={`relative rounded-2xl border px-3.5 py-2.5 text-xs shadow-xs ${
                                             m.sender === 'ridhwan'
-                                                ? 'rounded-bl-none border-violet-200/60 bg-violet-50/45 text-slate-800 shadow-sm dark:border-violet-900/40 dark:bg-violet-950/25 dark:text-slate-100'
+                                                ? 'rounded-bl-none border-amber-500/40 bg-amber-500/10 text-zinc-900 dark:bg-amber-500/12 dark:text-amber-100 shadow-[0_2px_12px_rgba(245,158,11,0.12)]'
                                                 : m.sender === 'user'
-                                                    ? 'via-slate-800 dark:from-violet-600 dark:to-indigo-600 rounded-br-none border-slate-950 bg-gradient-to-tr from-slate-900 to-slate-900 text-white shadow-md shadow-slate-950/5 dark:border-indigo-600 dark:via-indigo-600 dark:shadow-indigo-500/10'
-                                                    : 'rounded-bl-none border-slate-100/40 bg-slate-50/70 text-slate-800 shadow-sm dark:border-slate-900/40 dark:bg-slate-900/55 dark:text-slate-100'
+                                                    ? 'rounded-br-none border-blue-400/30 bg-gradient-to-tr from-[#0a1538] via-[#0f2152] to-[#162d6d] text-white shadow-md'
+                                                    : 'rounded-bl-none border-zinc-200/90 bg-white/95 text-zinc-800 dark:border-blue-400/20 dark:bg-[#0c162f]/90 dark:text-zinc-100'
                                         }`}
                                     >
                                         {m.sender === 'ridhwan' && (
-                                            <div className="mb-1.5 flex items-center gap-1 text-[10px] font-bold text-violet-600 dark:text-violet-400 animate-fade-in">
-                                                <span className="h-1.5 w-1.5 rounded-full bg-violet-500"></span>
-                                                Ridhwan Anang • Developer
+                                            <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                                                <CheckCircle2 size={11} className="text-amber-500" />
+                                                <span>Balasan Langsung dari Ridhwan</span>
                                             </div>
                                         )}
-                                        <div className="prose prose-sm dark:prose-invert whitespace-pre-line">
+
+                                        <div className="whitespace-pre-line">
                                             {renderMessageText(m.text)}
                                         </div>
-                                        <span className="mt-1 block text-right text-[8px] font-semibold opacity-40">
-                                            {m.time}
-                                        </span>
+
+                                        <div className="mt-1 flex items-center justify-between gap-3 text-[8.5px] opacity-60">
+                                            {m.sender !== 'user' ? (
+                                                <button
+                                                    onClick={() => handleCopyMessage(m.text, idx)}
+                                                    className="cursor-pointer inline-flex items-center gap-1 font-mono transition-opacity hover:opacity-100"
+                                                    title="Salin teks"
+                                                >
+                                                    {copiedIndex === idx ? (
+                                                        <>
+                                                            <Check size={9} className="text-emerald-500" />
+                                                            <span className="text-emerald-500 font-bold">Tersalin</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Copy size={9} />
+                                                            <span>Salin</span>
+                                                        </>
+                                                    )}
+                                                </button>
+                                            ) : (
+                                                <span />
+                                            )}
+                                            <span className="font-mono">{m.time}</span>
+                                        </div>
                                     </div>
                                 </motion.div>
                             ))}
 
                             {/* Typing Indicator */}
                             {isTyping && (
-                                <div className="mr-auto flex max-w-[85%] items-end gap-2.5">
-                                    <div className="dark:bg-violet-950/20 flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-xl border border-violet-100/50 bg-violet-50/60 text-violet-600 shadow-sm dark:border-violet-900/30 dark:text-violet-400">
+                                <motion.div
+                                    initial={{ opacity: 0, y: 8 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="mr-auto flex max-w-[85%] items-end gap-2"
+                                >
+                                    <div className="flex size-7 shrink-0 items-center justify-center rounded-lg border border-amber-500/25 bg-amber-500/10 text-amber-600 shadow-xs dark:border-amber-400/20 dark:text-amber-400">
                                         <Bot size={13} />
                                     </div>
-                                    <div className="flex items-center justify-center rounded-2xl rounded-bl-none border border-slate-100/50 bg-slate-50/70 px-4 py-3 shadow-sm dark:border-slate-900/40 dark:bg-slate-900/55">
-                                        <div className="flex gap-1.5">
-                                            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-violet-500/70 dark:bg-violet-400"></span>
-                                            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-violet-500/70 delay-150 dark:bg-violet-400"></span>
-                                            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-violet-500/70 delay-300 dark:bg-violet-400"></span>
+                                    <div className="flex items-center justify-center rounded-2xl rounded-bl-none border border-zinc-200/80 bg-white/95 px-3.5 py-2.5 shadow-xs dark:border-blue-400/20 dark:bg-[#0c162f]/90">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="size-1.5 animate-bounce rounded-full bg-amber-500"></span>
+                                            <span className="size-1.5 animate-bounce rounded-full bg-amber-500 delay-150"></span>
+                                            <span className="size-1.5 animate-bounce rounded-full bg-amber-500 delay-300"></span>
                                         </div>
                                     </div>
-                                </div>
+                                </motion.div>
                             )}
                             <div ref={chatEndRef} />
                         </div>
 
-                        {/* Footer Input Box Container */}
-                        <div className="relative z-10 border-t border-slate-100/60 bg-white p-4.5 dark:border-slate-900/60 dark:bg-slate-950">
-                            <div className="border-slate-200/40 dark:border-slate-800 flex items-center gap-2 rounded-2xl border bg-slate-50/60 p-1 dark:bg-slate-900/50">
+                        {/* Curated Suggestion Chips (Specific Engineering Topics) */}
+                        <div className="relative z-10 border-t border-zinc-200/60 bg-zinc-50/60 px-3 py-2 backdrop-blur-md dark:border-blue-400/10 dark:bg-[#0a1226]/80">
+                            <div className="chips-scroll-container flex items-center gap-1.5 overflow-x-auto py-0.5">
+                                {CURATED_SUGGESTIONS.map((sug, i) => (
+                                    <button
+                                        key={i}
+                                        onClick={() => handleSendMessage(sug.query)}
+                                        className="cursor-pointer shrink-0 rounded-full border border-amber-500/25 bg-white/90 px-2.5 py-1 text-[10.5px] font-medium text-zinc-700 shadow-2xs transition-all hover:border-amber-400/50 hover:bg-amber-500/10 hover:text-amber-700 active:scale-95 dark:border-blue-400/20 dark:bg-[#0c162f]/80 dark:text-zinc-300 dark:hover:border-amber-400/40 dark:hover:text-amber-300"
+                                    >
+                                        <span>{sug.label}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Input Capsule Dock */}
+                        <div className="relative z-10 border-t border-zinc-200/80 bg-white p-3 dark:border-blue-400/15 dark:bg-[#080e21]">
+                            <div className="flex items-center gap-2 rounded-xl border border-zinc-200/90 bg-zinc-50/90 p-1.5 transition-all focus-within:border-amber-500/60 focus-within:ring-2 focus-within:ring-amber-500/20 dark:border-blue-400/20 dark:bg-[#0c162f]/70">
                                 <input
+                                    ref={inputRef}
                                     type="text"
                                     value={chatInput}
-                                    onChange={(e) =>
-                                        setChatInput(e.target.value)
-                                    }
+                                    onChange={(e) => setChatInput(e.target.value)}
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter') {
                                             handleSendMessage();
                                         }
                                     }}
-                                    placeholder="Tanyakan keahlian Ridhwan..."
-                                    className="dark:text-slate-100 flex-1 bg-transparent px-3 py-2 text-xs text-slate-900 placeholder-slate-400 outline-none focus:outline-none dark:placeholder-slate-500"
+                                    placeholder="Tanya arsitektur, proyek, atau keahlian..."
+                                    className="flex-1 bg-transparent px-2.5 py-1 text-xs text-zinc-900 placeholder-zinc-400 outline-none focus:outline-none dark:text-zinc-100 dark:placeholder-zinc-500"
                                 />
                                 <button
                                     onClick={() => handleSendMessage()}
-                                    className="shadow-violet-600/10 flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl border-none bg-violet-600 text-white shadow-md transition-all hover:scale-105 hover:bg-violet-700 active:scale-95"
+                                    disabled={!chatInput.trim() || isTyping}
+                                    className="luxury-btn-primary flex size-7.5 cursor-pointer items-center justify-center rounded-lg text-zinc-950 shadow-xs transition-transform hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                                    aria-label="Kirim pesan"
                                 >
-                                    <SendHorizontal
-                                        size={14}
-                                        strokeWidth={2.5}
-                                    />
+                                    <SendHorizontal size={13} strokeWidth={2.5} />
                                 </button>
                             </div>
-                            <div className="mt-2.5 flex items-center justify-between text-[8px] font-bold text-slate-400 dark:text-slate-500">
-                                <span className="flex items-center gap-1">
-                                    <MessageSquare size={10} />
-                                    Respons instan dari Asisten AI
+
+                            <div className="mt-2 flex items-center justify-between text-[8px] font-medium text-zinc-500 dark:text-zinc-400">
+                                <span className="flex items-center gap-1 font-mono">
+                                    <MessageSquare size={9} className="text-amber-500" />
+                                    <span>Gemini 2.5 Flash • Context Real-Time</span>
                                 </span>
-                                <span className="flex items-center gap-1">
-                                    Tekan Enter
-                                    <span className="dark:bg-slate-800 flex h-3 w-4 items-center justify-center rounded border border-slate-200 bg-slate-100 text-[8px] dark:border-slate-800">
+                                <span className="flex items-center gap-1 font-mono">
+                                    <span>Enter</span>
+                                    <span className="rounded border border-zinc-300 bg-zinc-100 px-1 py-0.2 text-[7.5px] dark:border-zinc-700 dark:bg-zinc-800">
                                         ↵
                                     </span>
                                 </span>
@@ -532,35 +663,30 @@ return;
                 )}
             </AnimatePresence>
 
-            {/* Floating Action Button (FAB) / Interactive Character Trigger */}
+            {/* Floating Action Button / Interactive Character Trigger */}
             <AnimatePresence mode="wait">
                 {!isOpen ? (
                     <motion.button
                         key="character-trigger"
-                        initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                        initial={{ opacity: 0, scale: 0.8, y: 15 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.8, y: 20 }}
+                        exit={{ opacity: 0, scale: 0.8, y: 15 }}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setIsOpen(true)}
-                        className="animate-float-avatar group relative right-2 mb-2 flex cursor-pointer items-end justify-center border-none bg-transparent p-0 outline-none select-none focus:outline-none"
+                        className="animate-float-avatar group relative right-1 mb-1 flex cursor-pointer items-end justify-center border-none bg-transparent p-0 outline-none select-none focus:outline-none"
                         style={{ height: '144px', width: '67px' }}
-                        aria-label="Tanya Asisten AI"
+                        aria-label="Tanya Asisten AI Ridhwan"
                     >
-                        {/* A very subtle ambient shadow under the character's feet */}
-                        <span className="absolute bottom-1 left-1/2 -z-10 h-1.5 w-10 -translate-x-1/2 rounded-full bg-black/10 blur-[2px] transition-transform duration-300 group-hover:scale-110 dark:bg-black/25"></span>
+                        {/* Luminous Gold Amber Shadow underneath character's feet */}
+                        <span className="absolute bottom-1 left-1/2 -z-10 h-2 w-11 -translate-x-1/2 rounded-full bg-amber-500/20 blur-[3px] transition-transform duration-300 group-hover:scale-125 dark:bg-amber-400/25"></span>
 
                         <img
                             src="/images/ai_avatar.webp"
-                            alt="Ridhwan Character Assistant"
-                            className="h-full w-full object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)] filter dark:drop-shadow-[0_8px_16px_rgba(0,0,0,0.35)]"
+                            alt="Karakter AI Ridhwan Anang"
+                            className="h-full w-full object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.18)] filter dark:drop-shadow-[0_8px_20px_rgba(245,158,11,0.25)]"
                             draggable="false"
                         />
-
-                        {/* Green online badge near the character's head/shoulder */}
-                        {/* <span className="absolute top-2 right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full border-2 border-white bg-emerald-500 dark:border-slate-950 shadow-md">
-                            <span className="h-1.5 w-1.5 animate-ping rounded-full bg-white opacity-75"></span>
-                        </span> */}
                     </motion.button>
                 ) : (
                     <motion.button
@@ -571,10 +697,10 @@ return;
                         whileHover={{ scale: 1.08 }}
                         whileTap={{ scale: 0.92 }}
                         onClick={() => setIsOpen(false)}
-                        className="mr-2 mb-2 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-lg transition-all hover:bg-slate-50 hover:text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
+                        className="cursor-pointer mr-1 mb-1 flex size-11 items-center justify-center rounded-full border border-amber-500/30 bg-white text-zinc-700 shadow-xl transition-all hover:border-amber-400 hover:text-amber-600 dark:border-blue-400/30 dark:bg-[#0c162f] dark:text-zinc-200 dark:hover:border-amber-400 dark:hover:text-amber-300"
                         aria-label="Tutup obrolan"
                     >
-                        <X size={20} strokeWidth={2.5} />
+                        <X size={18} strokeWidth={2.5} />
                     </motion.button>
                 )}
             </AnimatePresence>
