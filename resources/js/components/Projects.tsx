@@ -56,7 +56,7 @@ export default function Projects({ projects, loading }: ProjectsProps) {
                 </div>
 
                 {!loading && safeProjects.length > 0 && (
-                    <div className="flex items-center gap-1.5 rounded-full border border-zinc-200/80 bg-zinc-50 px-3 py-1 text-xs font-mono font-bold text-zinc-700 dark:border-white/10 dark:bg-white/[0.04] dark:text-zinc-300 shadow-2xs w-fit">
+                    <div className="flex items-center gap-1.5 rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1 text-xs font-mono font-bold text-amber-700 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-300 shadow-2xs w-fit">
                         <span>{safeProjects.length} Proyek Terdaftar</span>
                     </div>
                 )}
@@ -91,17 +91,17 @@ export default function Projects({ projects, loading }: ProjectsProps) {
 
                                     <div>
                                         {/* Realistic Titanium Window Mockup Frame */}
-                                        <div className="relative mb-3.5 overflow-hidden rounded-lg border border-zinc-200/90 dark:border-white/10 bg-black/80 shadow-sm">
+                                        <div className="relative mb-3.5 overflow-hidden rounded-lg border border-zinc-200/90 dark:border-blue-400/15 bg-black/80 shadow-sm">
                                             {/* Window Header Toolbar */}
-                                            <div className="flex items-center justify-between border-b border-zinc-200/80 dark:border-white/[0.07] bg-zinc-100/90 dark:bg-[#10141f] px-3 py-1.5 backdrop-blur-md">
+                                            <div className="flex items-center justify-between border-b border-zinc-200/80 dark:border-blue-400/15 bg-zinc-100/90 dark:bg-[#091126] px-3 py-1.5 backdrop-blur-md">
                                                 <div className="flex items-center gap-1.5">
                                                     <span className="size-2 rounded-full bg-[#FF5F56]" />
                                                     <span className="size-2 rounded-full bg-[#FFBD2E]" />
                                                     <span className="size-2 rounded-full bg-[#27C93F]" />
                                                 </div>
 
-                                                <div className="flex items-center gap-1 rounded border border-zinc-200/80 dark:border-white/[0.06] bg-white/60 dark:bg-white/[0.04] px-2 py-0.5 text-[8.5px] font-mono text-zinc-500 dark:text-zinc-400">
-                                                    <Cloud size={9} />
+                                                <div className="flex items-center gap-1 rounded border border-zinc-200/80 dark:border-blue-400/15 bg-white/60 dark:bg-[#0c162f]/80 px-2 py-0.5 text-[8.5px] font-mono text-zinc-500 dark:text-amber-300/85">
+                                                    <Cloud size={9} className="text-amber-400" />
                                                     <span>cloud.production.app</span>
                                                 </div>
 
@@ -122,11 +122,11 @@ export default function Projects({ projects, loading }: ProjectsProps) {
 
                                         {/* Project Title & Action Arrow */}
                                         <div className="flex items-start justify-between gap-2">
-                                            <h4 className="text-sm font-bold text-zinc-900 group-hover:text-violet-600 dark:text-white dark:group-hover:text-violet-400 transition-colors leading-tight">
+                                            <h4 className="text-sm font-bold text-zinc-900 group-hover:text-amber-500 dark:text-white dark:group-hover:text-amber-300 transition-colors leading-tight">
                                                 {p.title}
                                             </h4>
 
-                                            <div className="flex size-6 items-center justify-center rounded-md border border-zinc-200/80 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.04] text-zinc-500 dark:text-zinc-400 group-hover:border-violet-500/50 group-hover:text-violet-600 dark:group-hover:text-violet-300 transition-colors flex-shrink-0">
+                                            <div className="flex size-6 items-center justify-center rounded-md border border-zinc-200/80 dark:border-blue-400/15 bg-zinc-50 dark:bg-[#091126] text-zinc-500 dark:text-zinc-400 group-hover:border-amber-400/50 group-hover:text-amber-500 dark:group-hover:text-amber-300 transition-colors flex-shrink-0">
                                                 <ArrowUpRight size={13} />
                                             </div>
                                         </div>
@@ -139,18 +139,18 @@ export default function Projects({ projects, loading }: ProjectsProps) {
 
                                     {/* Tech Tags */}
                                     {p.tags && p.tags.length > 0 && (
-                                        <div className="mt-3.5 flex flex-wrap gap-1 pt-2.5 border-t border-zinc-200/70 dark:border-white/[0.06]">
+                                        <div className="mt-3.5 flex flex-wrap gap-1 pt-2.5 border-t border-zinc-200/70 dark:border-blue-400/15">
                                             {p.tags.slice(0, 3).map((tag, tagIndex) => (
                                                 <span
                                                     key={tagIndex}
-                                                    className="inline-flex items-center gap-1 rounded-md border border-zinc-200/70 bg-zinc-50/80 px-1.5 py-0.5 text-[9px] font-mono font-medium text-zinc-600 dark:border-white/[0.06] dark:bg-white/[0.025] dark:text-zinc-300"
+                                                    className="inline-flex items-center gap-1 rounded-md border border-zinc-200/70 bg-zinc-50/80 px-1.5 py-0.5 text-[9px] font-mono font-medium text-zinc-600 dark:border-blue-400/15 dark:bg-[#0c162f]/80 dark:text-blue-200/90"
                                                 >
-                                                    <span className="size-1 rounded-full bg-emerald-500" />
+                                                    <span className="size-1 rounded-full bg-emerald-500 shadow-[0_0_4px_rgba(16,185,129,0.8)]" />
                                                     {tag}
                                                 </span>
                                             ))}
                                             {p.tags.length > 3 && (
-                                                <span className="rounded-md border border-zinc-200/70 bg-zinc-50/80 px-1.5 py-0.5 text-[9px] font-mono font-medium text-zinc-400 dark:border-white/[0.06] dark:bg-white/[0.025] dark:text-zinc-500">
+                                                <span className="rounded-md border border-zinc-200/70 bg-zinc-50/80 px-1.5 py-0.5 text-[9px] font-mono font-medium text-zinc-400 dark:border-blue-400/15 dark:bg-[#0c162f]/80 dark:text-zinc-400">
                                                     +{p.tags.length - 3}
                                                 </span>
                                             )}

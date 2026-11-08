@@ -95,8 +95,8 @@ export default function TechStack({
                 </div>
 
                 {!loading && safeTechStacks.length > 0 && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200/80 bg-zinc-50 px-3 py-1 text-[11px] font-mono font-bold text-zinc-700 dark:border-white/10 dark:bg-white/[0.04] dark:text-zinc-300 shadow-2xs w-fit">
-                        <Sparkles size={11} className="text-violet-500 dark:text-violet-400" />
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-mono font-bold text-amber-700 dark:border-amber-400/25 dark:bg-amber-400/10 dark:text-amber-300 shadow-2xs w-fit">
+                        <Sparkles size={11} className="text-amber-500 dark:text-amber-400" />
                         <span>{safeTechStacks.length} Core Tools</span>
                     </span>
                 )}
@@ -165,17 +165,17 @@ export default function TechStack({
                                             <div>
                                                 {/* Card Header Dock */}
                                                 <div className="flex items-center justify-between mb-3">
-                                                    <div className="flex size-9 items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-50 dark:border-white/10 dark:bg-white/[0.04] shadow-xs">
+                                                    <div className="flex size-9 items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-50 dark:border-blue-400/15 dark:bg-[#091126] shadow-xs">
                                                         {renderIcon(t.icon_name)}
                                                     </div>
 
-                                                    <span className="rounded-md border border-zinc-200/80 bg-zinc-50 px-2 py-0.5 text-[9.5px] font-mono font-bold tracking-wider text-zinc-500 uppercase dark:border-white/[0.07] dark:bg-white/[0.03] dark:text-zinc-400">
+                                                    <span className="rounded-md border border-zinc-200/80 bg-zinc-50 px-2 py-0.5 text-[9.5px] font-mono font-bold tracking-wider text-zinc-500 uppercase dark:border-blue-400/15 dark:bg-[#091126] dark:text-amber-300/80">
                                                         {t.badge}
                                                     </span>
                                                 </div>
 
                                                 {/* Tech Name */}
-                                                <h4 className="text-sm font-bold text-zinc-900 transition-colors group-hover:text-violet-600 dark:text-white dark:group-hover:text-violet-400 leading-tight">
+                                                <h4 className="text-sm font-bold text-zinc-900 transition-colors group-hover:text-amber-500 dark:text-white dark:group-hover:text-amber-300 leading-tight">
                                                     {t.name}
                                                 </h4>
 
@@ -187,11 +187,11 @@ export default function TechStack({
 
                                             {/* Capability Micro-Chips */}
                                             {matchedHighlights.length > 0 && (
-                                                <div className="mt-3.5 flex flex-wrap gap-1 pt-2.5 border-t border-zinc-200/70 dark:border-white/[0.06]">
+                                                <div className="mt-3.5 flex flex-wrap gap-1 pt-2.5 border-t border-zinc-200/70 dark:border-blue-400/15">
                                                     {matchedHighlights.slice(0, 3).map((highlight) => (
                                                         <span
                                                             key={highlight}
-                                                            className="rounded-md border border-zinc-200/70 bg-zinc-50/80 px-1.5 py-0.5 text-[9px] font-mono font-medium text-zinc-600 dark:border-white/[0.06] dark:bg-white/[0.025] dark:text-zinc-300"
+                                                            className="rounded-md border border-zinc-200/70 bg-zinc-50/80 px-1.5 py-0.5 text-[9px] font-mono font-medium text-zinc-600 dark:border-blue-400/15 dark:bg-[#0c162f]/80 dark:text-blue-200/90"
                                                         >
                                                             {highlight}
                                                         </span>

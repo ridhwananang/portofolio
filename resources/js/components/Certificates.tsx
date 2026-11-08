@@ -64,7 +64,7 @@ export default function Certificates({ certificates, loading }: CertificatesProp
                 </div>
 
                 {!loading && safeCertificates.length > 0 && (
-                    <div className="flex items-center gap-2 rounded-full border border-zinc-200/80 bg-zinc-50 px-3 py-1 text-xs font-mono font-bold text-zinc-700 dark:border-white/10 dark:bg-white/[0.04] dark:text-zinc-300 shadow-2xs w-fit">
+                    <div className="flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-mono font-bold text-amber-700 dark:border-amber-400/25 dark:bg-amber-400/10 dark:text-amber-300 shadow-2xs w-fit">
                         <span className="flex items-center gap-1.5">
                             <CheckCircle size={12} className="text-emerald-500" />
                             {safeCertificates.length} Sertifikat Resmi
@@ -73,7 +73,7 @@ export default function Certificates({ certificates, loading }: CertificatesProp
                             <>
                                 <span>•</span>
                                 <span className="flex items-center gap-1.5">
-                                    <Clock size={12} className="text-violet-500" />
+                                    <Clock size={12} className="text-amber-500" />
                                     {totalHours} Jam Belajar
                                 </span>
                             </>
@@ -217,7 +217,7 @@ export default function Certificates({ certificates, loading }: CertificatesProp
                                     className={`luxury-card luxury-card-interactive transform-gpu relative flex flex-col justify-between overflow-hidden rounded-xl p-4 sm:p-4.5 transition-all duration-300 cursor-pointer select-none ${
                                         isAchievement
                                             ? 'border-amber-500/30 shadow-[0_4px_20px_rgba(245,158,11,0.08)]'
-                                            : ''
+                                            : 'dark:border-blue-400/15'
                                     } group`}
                                 >
                                     {/* Specular Rim */}
@@ -225,7 +225,7 @@ export default function Certificates({ certificates, loading }: CertificatesProp
 
                                     <div>
                                         {/* Thumbnail Preview */}
-                                        <div className="relative mb-3 aspect-[1.414/1] w-full overflow-hidden rounded-lg border border-zinc-200/90 dark:border-white/10 bg-zinc-950 shadow-xs">
+                                        <div className="relative mb-3 aspect-[1.414/1] w-full overflow-hidden rounded-lg border border-zinc-200/90 dark:border-blue-400/20 bg-zinc-950 shadow-xs">
                                             <img
                                                 src={cert.thumbnail_url || cert.file_url}
                                                 alt={cert.title}

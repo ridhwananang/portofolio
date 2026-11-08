@@ -105,7 +105,7 @@ export default function Welcome({
     return (
         <div
             id="app-root"
-            className="relative min-h-screen overflow-x-hidden bg-[#fafafa] text-zinc-900 transition-colors duration-200 selection:bg-violet-600 selection:text-white dark:bg-[#0e121b] dark:text-zinc-100 dark:selection:bg-violet-500 dark:selection:text-white"
+            className="relative min-h-screen overflow-x-hidden bg-[#fafafa] text-zinc-900 transition-colors duration-200 selection:bg-amber-400 selection:text-zinc-950 dark:bg-[#080e21] dark:text-zinc-100 dark:selection:bg-amber-400 dark:selection:text-zinc-950"
         >
             <Head>
                 <title>Ridhwan Anang Ma'ruf — Full Stack Software Engineer</title>
@@ -116,16 +116,16 @@ export default function Welcome({
             </Head>
 
             {/* Architectural Grid & Ambient Canvas */}
-            <div className="pointer-events-none fixed inset-0 z-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_75%_60%_at_50%_0%,#000_70%,transparent_100%)] opacity-70"></div>
-            <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(#80808015_1px,transparent_1px)] [background-size:24px_24px] opacity-40"></div>
+            <div className="pointer-events-none fixed inset-0 z-0 bg-[linear-gradient(to_right,#38bdf80f_1px,transparent_1px),linear-gradient(to_bottom,#38bdf80f_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_75%_60%_at_50%_0%,#000_70%,transparent_100%)] opacity-70"></div>
+            <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(#fbbf2412_1px,transparent_1px)] [background-size:24px_24px] opacity-40"></div>
 
             {/* Interactive Mouse follow highlight (Decoupled & GPU accelerated, 0 re-renders) */}
             <MouseAmbientAura />
 
-            {/* Luminous Ambient Light Fountains (Rich Multi-layer Depth) */}
-            <div className="pointer-events-none absolute -top-40 right-[-10%] z-0 h-[700px] w-[700px] rounded-full bg-gradient-to-bl from-violet-600/20 via-indigo-600/10 to-transparent blur-[120px] transform-gpu will-change-transform dark:from-violet-600/25 dark:via-indigo-600/15"></div>
-            <div className="pointer-events-none absolute top-40 left-[-10%] z-0 h-[650px] w-[650px] rounded-full bg-gradient-to-br from-blue-600/18 via-cyan-500/10 to-transparent blur-[120px] transform-gpu will-change-transform dark:from-blue-600/20 dark:via-cyan-600/12"></div>
-            <div className="pointer-events-none absolute top-[900px] left-[25%] z-0 h-[500px] w-[800px] rounded-full bg-gradient-to-r from-violet-900/15 via-indigo-900/10 to-transparent blur-[140px] transform-gpu will-change-transform dark:from-violet-900/20 dark:via-indigo-900/12"></div>
+            {/* Luminous Ambient Light Fountains (Deep Blue & Champagne Gold) */}
+            <div className="pointer-events-none absolute -top-40 right-[-10%] z-0 h-[700px] w-[700px] rounded-full bg-gradient-to-bl from-blue-600/25 via-indigo-700/15 to-transparent blur-[120px] transform-gpu will-change-transform dark:from-blue-600/30 dark:via-blue-800/18"></div>
+            <div className="pointer-events-none absolute top-40 left-[-10%] z-0 h-[650px] w-[650px] rounded-full bg-gradient-to-br from-amber-500/18 via-yellow-500/10 to-transparent blur-[120px] transform-gpu will-change-transform dark:from-amber-500/18 dark:via-yellow-600/10"></div>
+            <div className="pointer-events-none absolute top-[900px] left-[25%] z-0 h-[500px] w-[800px] rounded-full bg-gradient-to-r from-blue-900/20 via-indigo-900/15 to-transparent blur-[140px] transform-gpu will-change-transform dark:from-blue-900/25 dark:via-indigo-950/18"></div>
 
             {/* Main Header Navigation */}
             <motion.div
@@ -186,7 +186,7 @@ export default function Welcome({
                 {/* Section 2: Technical Stack Console (Full-Width Section) */}
                 <motion.div
                     id="tech-stack"
-                    className="content-auto scroll-mt-24 border-t border-zinc-200/80 pt-8 dark:border-white/[0.07]"
+                    className="content-auto scroll-mt-24 border-t border-zinc-200/80 pt-8 dark:border-blue-400/15"
                     initial={{ y: 15, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{
@@ -204,7 +204,7 @@ export default function Welcome({
                 {/* Section 3: Project Cases List Wrapper */}
                 <motion.div
                     id="karya"
-                    className="content-auto scroll-mt-24 border-t border-zinc-200/80 pt-8 dark:border-white/[0.07]"
+                    className="content-auto scroll-mt-24 border-t border-zinc-200/80 pt-8 dark:border-blue-400/15"
                     initial={{ y: 15, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{
@@ -219,7 +219,7 @@ export default function Welcome({
                 {/* Section 4: Certificates Grid Wrapper */}
                 <motion.div
                     id="sertifikat"
-                    className="content-auto scroll-mt-24 border-t border-zinc-200/80 pt-8 dark:border-white/[0.07]"
+                    className="content-auto scroll-mt-24 border-t border-zinc-200/80 pt-8 dark:border-blue-400/15"
                     initial={{ y: 15, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{
@@ -232,15 +232,18 @@ export default function Welcome({
                 </motion.div>
             </main>
 
-            {/* Aesthetic Luxury Footer */}
-            <footer className="content-auto mt-20 w-full border-t border-zinc-200/90 bg-white/90 py-14 backdrop-blur-xl dark:border-white/10 dark:bg-[#111520]/90 relative overflow-hidden">
+            {/* Aesthetic Distinctive Luxury Footer (Midnight Deep Blue & Gold Vault) */}
+            <footer className="content-auto mt-20 w-full border-t-2 border-amber-500/40 bg-zinc-50/95 py-14 shadow-[0_-12px_40px_rgba(245,158,11,0.08)] dark:bg-gradient-to-b dark:from-[#050a18] dark:via-[#081226] dark:to-[#03060f] relative overflow-hidden">
                 <div className="specular-top" />
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-1 gap-8 border-b border-zinc-200/80 pb-10 sm:grid-cols-2 md:grid-cols-4 dark:border-white/10">
+                {/* Ambient Golden Crown Spotlight */}
+                <div className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 h-40 w-[600px] rounded-full bg-gradient-to-b from-amber-500/20 via-blue-500/08 to-transparent blur-3xl" />
+
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
+                    <div className="grid grid-cols-1 gap-8 border-b border-zinc-200/80 pb-10 sm:grid-cols-2 md:grid-cols-4 dark:border-blue-400/15">
                         {/* Brand / Name info */}
                         <div className="space-y-3">
                             <div className="flex items-center gap-2.5">
-                                <span className="flex size-8 items-center justify-center rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-xs font-black text-white shadow-md shadow-violet-500/20">
+                                <span className="flex size-8 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-400 via-yellow-500 to-amber-600 text-xs font-black text-zinc-950 shadow-md shadow-amber-500/25">
                                     R
                                 </span>
                                 <h4 className="text-sm font-bold tracking-tight text-zinc-900 dark:text-white">
@@ -258,14 +261,14 @@ export default function Welcome({
 
                         {/* Navigation Links */}
                         <div className="space-y-2.5">
-                            <h5 className="text-[10.5px] font-mono uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+                            <h5 className="text-[10.5px] font-mono uppercase tracking-wider text-amber-500/90 dark:text-amber-400/90 font-bold">
                                 Navigasi
                             </h5>
                             <ul className="space-y-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400">
                                 <li>
                                     <a
                                         href="#hero"
-                                        className="transition-colors hover:text-zinc-950 dark:hover:text-white"
+                                        className="transition-colors hover:text-amber-600 dark:hover:text-amber-300"
                                     >
                                         Profil & Ringkasan
                                     </a>
@@ -273,7 +276,7 @@ export default function Welcome({
                                 <li>
                                     <a
                                         href="#tech-stack"
-                                        className="transition-colors hover:text-zinc-950 dark:hover:text-white"
+                                        className="transition-colors hover:text-amber-600 dark:hover:text-amber-300"
                                     >
                                         Tech Stack
                                     </a>
@@ -281,7 +284,7 @@ export default function Welcome({
                                 <li>
                                     <a
                                         href="#karya"
-                                        className="transition-colors hover:text-zinc-950 dark:hover:text-white"
+                                        className="transition-colors hover:text-amber-600 dark:hover:text-amber-300"
                                     >
                                         Proyek Unggulan
                                     </a>
@@ -289,7 +292,7 @@ export default function Welcome({
                                 <li>
                                     <a
                                         href="#sertifikat"
-                                        className="transition-colors hover:text-zinc-950 dark:hover:text-white"
+                                        className="transition-colors hover:text-amber-600 dark:hover:text-amber-300"
                                     >
                                         Sertifikasi & Lisensi
                                     </a>
@@ -299,14 +302,14 @@ export default function Welcome({
 
                         {/* Legal & Compliance */}
                         <div className="space-y-2.5">
-                            <h5 className="text-[10.5px] font-mono uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+                            <h5 className="text-[10.5px] font-mono uppercase tracking-wider text-amber-500/90 dark:text-amber-400/90 font-bold">
                                 Kebijakan & Dokumen
                             </h5>
                             <ul className="space-y-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400">
                                 <li>
                                     <Link
                                         href="/terms-and-conditions"
-                                        className="transition-colors hover:text-zinc-950 dark:hover:text-white"
+                                        className="transition-colors hover:text-amber-600 dark:hover:text-amber-300"
                                     >
                                         Syarat & Ketentuan (T&C)
                                     </Link>
@@ -314,7 +317,7 @@ export default function Welcome({
                                 <li>
                                     <Link
                                         href="/privacy-policy"
-                                        className="transition-colors hover:text-zinc-950 dark:hover:text-white"
+                                        className="transition-colors hover:text-amber-600 dark:hover:text-amber-300"
                                     >
                                         Kebijakan Privasi
                                     </Link>
@@ -323,7 +326,7 @@ export default function Welcome({
                                     <a
                                         href="/images/Profile.pdf"
                                         download="Ridhwan_Anang_Maruf_Resume.pdf"
-                                        className="transition-colors hover:text-zinc-950 dark:hover:text-white"
+                                        className="transition-colors hover:text-amber-600 dark:hover:text-amber-300"
                                     >
                                         Curriculum Vitae (PDF)
                                     </a>
@@ -333,14 +336,14 @@ export default function Welcome({
 
                         {/* Contacts / Quick links */}
                         <div className="space-y-2.5">
-                            <h5 className="text-[10.5px] font-mono uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+                            <h5 className="text-[10.5px] font-mono uppercase tracking-wider text-amber-500/90 dark:text-amber-400/90 font-bold">
                                 Kontak
                             </h5>
                             <ul className="space-y-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400">
                                 <li>
                                     <a
                                         href="mailto:ridhwananang@gmail.com"
-                                        className="transition-colors hover:text-zinc-950 dark:hover:text-white"
+                                        className="transition-colors hover:text-amber-600 dark:hover:text-amber-300 font-mono"
                                     >
                                         ridhwananang@gmail.com
                                     </a>
@@ -352,7 +355,7 @@ export default function Welcome({
                                     <button
                                         type="button"
                                         onClick={() => setIsContactOpen(true)}
-                                        className="luxury-btn-primary cursor-pointer inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold tracking-wide"
+                                        className="luxury-btn-primary cursor-pointer inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-black tracking-wide"
                                     >
                                         <Sparkles size={12} />
                                         <span>Buka Dialog Kontak</span>
@@ -372,7 +375,7 @@ export default function Welcome({
                                 href="https://github.com/ridhwananang"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="transition-colors hover:text-zinc-900 dark:hover:text-white"
+                                className="transition-colors hover:text-amber-600 dark:hover:text-amber-300"
                             >
                                 GitHub
                             </a>
@@ -380,7 +383,7 @@ export default function Welcome({
                                 href="https://www.linkedin.com/in/ridhwan-anang-ma-ruf/"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="transition-colors hover:text-[#0A66C2]"
+                                className="transition-colors hover:text-[#0A66C2] dark:hover:text-sky-400"
                             >
                                 LinkedIn
                             </a>
@@ -388,7 +391,7 @@ export default function Welcome({
                                 href="https://www.dicoding.com/users/riedmarf12/academies"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="transition-colors hover:text-violet-600 dark:hover:text-violet-400"
+                                className="transition-colors hover:text-amber-600 dark:hover:text-amber-400"
                             >
                                 Dicoding
                             </a>

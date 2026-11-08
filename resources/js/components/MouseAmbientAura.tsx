@@ -19,7 +19,7 @@ export default function MouseAmbientAura() {
 
             rafId.current = requestAnimationFrame(() => {
                 if (auraRef.current) {
-                    auraRef.current.style.background = `radial-gradient(700px at ${e.clientX}px ${e.clientY}px, rgba(139, 92, 246, 0.05), rgba(59, 130, 246, 0.03), transparent 70%)`;
+                    auraRef.current.style.background = `radial-gradient(700px at ${e.clientX}px ${e.clientY}px, rgba(59, 130, 246, 0.07), rgba(245, 158, 11, 0.035), transparent 70%)`;
                 }
                 rafId.current = null;
             });

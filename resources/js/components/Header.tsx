@@ -102,14 +102,14 @@ export default function Header({
             id="main-header"
             className={`fixed top-0 left-0 z-45 w-full transition-all duration-200 ${
                 isScrolled
-                    ? 'border-b border-zinc-200/90 bg-white/90 py-2.5 shadow-2xs backdrop-blur-md dark:border-white/8 dark:bg-[#121622]/90'
+                    ? 'border-b border-zinc-200/90 bg-white/90 py-2.5 shadow-2xs backdrop-blur-md dark:border-blue-400/15 dark:bg-[#080e21]/90'
                     : 'bg-transparent py-4'
             }`}
         >
-            {/* Top Scroll Progress Indicator */}
+            {/* Top Scroll Progress Indicator (Sapphire to Gold) */}
             <div
                 ref={progressBarRef}
-                className="absolute top-0 left-0 h-[2px] w-full origin-left bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-500 z-50 pointer-events-none will-change-transform"
+                className="absolute top-0 left-0 h-[2px] w-full origin-left bg-gradient-to-r from-blue-600 via-sky-400 to-amber-400 z-50 pointer-events-none will-change-transform"
                 style={{ transform: 'scaleX(0)' }}
             />
 
@@ -123,23 +123,23 @@ export default function Header({
                         <img
                             src="/images/anang-logo.png"
                             alt="Ridhwan Anang Logo"
-                            className="size-8 object-contain rounded-lg border border-zinc-200 dark:border-white/10 transition-transform duration-200 group-hover:scale-105"
+                            className="size-8 object-contain rounded-lg border border-zinc-200 dark:border-blue-400/20 transition-transform duration-200 group-hover:scale-105"
                         />
-                        <span className="absolute -bottom-0.5 -right-0.5 size-2 rounded-full bg-emerald-500 border border-white dark:border-zinc-950" />
+                        <span className="absolute -bottom-0.5 -right-0.5 size-2 rounded-full bg-emerald-500 border border-white dark:border-zinc-950 shadow-[0_0_6px_rgba(16,185,129,0.8)]" />
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-100 transition-colors group-hover:text-violet-600 dark:group-hover:text-violet-400">
+                        <span className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-100 transition-colors group-hover:text-amber-500 dark:group-hover:text-amber-400">
                             Ridhwan Anang
                         </span>
-                        <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200/80 dark:border-zinc-700/60">
+                        <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-amber-500/10 dark:bg-amber-400/10 text-amber-600 dark:text-amber-300 border border-amber-500/20 dark:border-amber-400/20">
                             v2.5
                         </span>
                     </div>
                 </div>
 
                 {/* Desktop Minimalist Floating Nav Dock */}
-                <nav className="luxury-card hidden items-center gap-0.5 rounded-lg p-1 shadow-md md:flex">
+                <nav className="luxury-card hidden items-center gap-0.5 rounded-lg p-1 shadow-md md:flex dark:border-blue-400/15">
                     <div className="specular-top" />
                     {navItems.map((item) => {
                         const Icon = item.icon;
@@ -151,14 +151,14 @@ export default function Header({
                                 onClick={() => handleNavClick(item.id)}
                                 className={`relative z-10 flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-150 ${
                                     isActive
-                                        ? 'text-zinc-950 dark:text-white font-bold'
-                                        : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
+                                        ? 'text-amber-600 dark:text-amber-300 font-bold'
+                                        : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-amber-200'
                                 }`}
                             >
                                 {isActive && (
                                     <motion.div
                                         layoutId="activeNavBackground"
-                                        className="absolute inset-0 -z-10 rounded-md bg-zinc-100 shadow-2xs border border-zinc-200/80 dark:bg-white/10 dark:border-white/15"
+                                        className="absolute inset-0 -z-10 rounded-md bg-amber-500/10 shadow-2xs border border-amber-500/20 dark:bg-amber-400/15 dark:border-amber-400/30"
                                         transition={{
                                             type: 'spring',
                                             stiffness: 450,
@@ -166,19 +166,19 @@ export default function Header({
                                         }}
                                     />
                                 )}
-                                <Icon size={13} className={isActive ? 'text-violet-600 dark:text-violet-400' : 'opacity-70'} />
+                                <Icon size={13} className={isActive ? 'text-amber-500 dark:text-amber-400' : 'opacity-70'} />
                                 <span>{item.label}</span>
                             </button>
                         );
                     })}
 
-                    <div className="h-4 w-[1px] bg-zinc-200 dark:bg-zinc-800 mx-1" />
+                    <div className="h-4 w-[1px] bg-zinc-200 dark:bg-blue-400/20 mx-1" />
 
                     <a
                         href="https://www.dicoding.com/users/riedmarf12/academies"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex cursor-pointer items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+                        className="flex cursor-pointer items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:text-amber-600 dark:text-zinc-400 dark:hover:text-amber-300"
                     >
                         <span>Dicoding</span>
                         <ExternalLink size={10} className="opacity-60" />
@@ -244,7 +244,7 @@ export default function Header({
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -8 }}
                         transition={{ duration: 0.15, ease: 'easeOut' }}
-                        className="absolute top-full left-0 w-full border-b border-zinc-200 bg-white/95 px-4 py-4 shadow-xl backdrop-blur-xl md:hidden dark:border-white/10 dark:bg-[#121622]/95"
+                        className="absolute top-full left-0 w-full border-b border-zinc-200 bg-white/95 px-4 py-4 shadow-xl backdrop-blur-xl md:hidden dark:border-blue-400/15 dark:bg-[#080e21]/95"
                     >
                         <div className="space-y-1">
                             {navItems.map((item) => {
@@ -257,12 +257,12 @@ export default function Header({
                                         onClick={() => handleNavClick(item.id)}
                                         className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-xs font-medium transition-all ${
                                             isActive
-                                                ? 'bg-zinc-100 text-zinc-950 font-bold dark:bg-zinc-800 dark:text-white'
-                                                : 'text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-850'
+                                                ? 'bg-amber-500/10 text-amber-600 font-bold dark:bg-amber-400/15 dark:text-amber-300'
+                                                : 'text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-white/[0.04]'
                                         }`}
                                     >
                                         <div className="flex items-center gap-2.5">
-                                            <Icon size={14} className={isActive ? 'text-violet-600 dark:text-violet-400' : 'text-zinc-400'} />
+                                            <Icon size={14} className={isActive ? 'text-amber-500 dark:text-amber-400' : 'text-zinc-400'} />
                                             <span>{item.label}</span>
                                         </div>
                                         <ChevronRight size={14} className="text-zinc-400" />

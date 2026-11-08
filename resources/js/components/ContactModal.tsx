@@ -145,12 +145,12 @@ export default function ContactModal({
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.96, opacity: 0, y: 12 }}
                 transition={{ duration: 0.2, ease: 'easeOut' }}
-                className="relative my-auto flex w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-zinc-200/90 bg-white shadow-2xl dark:border-white/10 dark:bg-[#121622]"
+                className="relative my-auto flex w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-zinc-200/90 bg-white shadow-2xl dark:border-amber-500/30 dark:bg-[#0c152a]"
             >
                 {/* Close Button */}
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 z-20 rounded-lg border border-zinc-200 bg-white/90 p-1.5 text-zinc-500 shadow-2xs transition-all hover:bg-zinc-100 hover:text-zinc-800 dark:border-zinc-800 dark:bg-zinc-900/90 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white cursor-pointer"
+                    className="absolute top-4 right-4 z-20 rounded-lg border border-zinc-200 bg-white/90 p-1.5 text-zinc-500 shadow-2xs transition-all hover:bg-zinc-100 hover:text-zinc-800 dark:border-blue-400/20 dark:bg-[#0f1b38] dark:text-zinc-300 dark:hover:text-amber-400 cursor-pointer"
                     aria-label="Tutup modal"
                 >
                     <X size={16} />
@@ -159,11 +159,11 @@ export default function ContactModal({
                 {/* Main Two-Column Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-12 min-h-[540px]">
                     {/* Left Column: Direct Fast-Track Channels (5 cols) */}
-                    <div className="md:col-span-5 flex flex-col justify-between border-b md:border-b-0 md:border-r border-zinc-200/80 bg-zinc-50/80 p-5 sm:p-7 dark:border-zinc-800/80 dark:bg-[#151a28]">
+                    <div className="md:col-span-5 flex flex-col justify-between border-b md:border-b-0 md:border-r border-zinc-200/80 bg-zinc-50/80 p-5 sm:p-7 dark:border-blue-400/15 dark:bg-[#080e22]">
                         <div className="space-y-5">
                             {/* Availability Status Badge */}
-                            <div className="inline-flex items-center gap-2 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-emerald-600 dark:text-emerald-400">
-                                <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            <div className="inline-flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-amber-600 dark:text-amber-300">
+                                <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_6px_rgba(16,185,129,0.8)]" />
                                 <span className="text-[10.5px] font-mono font-semibold tracking-wider uppercase">
                                     Tersedia untuk Kolaborasi
                                 </span>
@@ -181,27 +181,27 @@ export default function ContactModal({
 
                             {/* Direct Communication Channels */}
                             <div className="space-y-2.5 pt-1">
-                                <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+                                <span className="text-[10px] font-mono uppercase tracking-wider text-amber-500/80 dark:text-amber-400/80 font-bold">
                                     Akses Instan & Langsung
                                 </span>
 
                                 {/* 1-Click Copy Email Pill */}
                                 <div
                                     onClick={handleCopyEmail}
-                                    className="group flex cursor-pointer items-center justify-between rounded-xl border border-zinc-200/90 bg-white p-3 shadow-2xs transition-all hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900/80 dark:hover:border-zinc-700"
+                                    className="group flex cursor-pointer items-center justify-between rounded-lg border border-zinc-200/90 bg-white p-3 shadow-2xs transition-all hover:border-amber-400 dark:border-blue-400/15 dark:bg-[#0c162f] dark:hover:border-amber-400/40"
                                 >
                                     <div className="flex items-center gap-2.5">
-                                        <div className="flex size-8 items-center justify-center rounded-lg bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                                        <div className="flex size-8 items-center justify-center rounded-lg bg-zinc-100 text-zinc-700 dark:bg-[#091126] dark:text-amber-400">
                                             <Mail size={15} />
                                         </div>
                                         <div className="text-left">
-                                            <p className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">Email Langsung</p>
-                                            <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+                                            <p className="text-[10px] font-mono text-zinc-400 dark:text-zinc-400">Email Langsung</p>
+                                            <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 font-mono">
                                                 {profileEmail}
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="rounded px-2 py-0.5 text-[10px] font-mono text-zinc-500 bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-400">
+                                    <div className="rounded px-2 py-0.5 text-[10px] font-mono text-zinc-500 bg-zinc-100 dark:bg-[#091126] dark:text-amber-300">
                                         {copiedEmail ? (
                                             <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
                                                 <Check size={11} /> Tersalin!
@@ -311,8 +311,8 @@ export default function ContactModal({
                                             onClick={() => setIntent('project')}
                                             className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-all ${
                                                 intent === 'project'
-                                                    ? 'bg-white text-zinc-950 font-bold shadow-2xs dark:bg-zinc-800 dark:text-white'
-                                                    : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
+                                                    ? 'bg-amber-500/15 text-amber-600 font-bold shadow-2xs dark:bg-amber-400/20 dark:text-amber-300 dark:border dark:border-amber-400/30'
+                                                    : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-amber-200'
                                             }`}
                                         >
                                             <Briefcase size={12} />
@@ -323,8 +323,8 @@ export default function ContactModal({
                                             onClick={() => setIntent('hiring')}
                                             className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-all ${
                                                 intent === 'hiring'
-                                                    ? 'bg-white text-zinc-950 font-bold shadow-2xs dark:bg-zinc-800 dark:text-white'
-                                                    : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
+                                                    ? 'bg-amber-500/15 text-amber-600 font-bold shadow-2xs dark:bg-amber-400/20 dark:text-amber-300 dark:border dark:border-amber-400/30'
+                                                    : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-amber-200'
                                             }`}
                                         >
                                             <Building2 size={12} />
@@ -335,8 +335,8 @@ export default function ContactModal({
                                             onClick={() => setIntent('general')}
                                             className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-all ${
                                                 intent === 'general'
-                                                    ? 'bg-white text-zinc-950 font-bold shadow-2xs dark:bg-zinc-800 dark:text-white'
-                                                    : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
+                                                    ? 'bg-amber-500/15 text-amber-600 font-bold shadow-2xs dark:bg-amber-400/20 dark:text-amber-300 dark:border dark:border-amber-400/30'
+                                                    : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-amber-200'
                                             }`}
                                         >
                                             <Sparkles size={12} />
@@ -504,7 +504,7 @@ export default function ContactModal({
                                 <button
                                     type="submit"
                                     disabled={isSubmitting}
-                                    className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-zinc-900 py-3 text-xs sm:text-sm font-semibold text-white transition-all hover:bg-zinc-800 active:scale-99 disabled:opacity-50 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-100 shadow-sm"
+                                    className="luxury-btn-primary flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg py-2.5 text-xs sm:text-sm font-black active:scale-99 disabled:opacity-50"
                                 >
                                     {isSubmitting ? (
                                         <>
