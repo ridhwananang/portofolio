@@ -28,8 +28,13 @@ class GeminiChatService
         }
 
         if ($lastUserMessage) {
-            $q = strtolower($lastUserMessage);
+            $q = strtolower(trim($lastUserMessage));
             
+            // Fast intercept for simple short greetings (instant 5ms response, no external API latency)
+            if (preg_match('/^(hi|hai|halo|hello|hey|hei|pagi|siang|sore|malam|selamat pagi|selamat siang|selamat sore|selamat malam)[!\.\s]*$/i', $q)) {
+                return "Halo! Saya adalah **Asisten AI Teknis Ridhwan Anang Ma'ruf**. Ada yang bisa saya jelaskan mengenai arsitektur Laravel, proyek Finverra, optimasi database, atau peluang kolaborasi kerja bersama Ridhwan?";
+            }
+
             // Check if user explicitly queries checking replies with an email
             if (preg_match('/([\w\.\-]+@[\w\.\-]+\.\w+)/', $q, $matches)) {
                 $email = trim($matches[1]);
@@ -69,7 +74,7 @@ class GeminiChatService
         $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
 
         try {
-            $response = Http::timeout(12)->post($url, [
+            $response = Http::timeout(6)->post($url, [
                 'contents' => $contents,
                 'systemInstruction' => [
                     'parts' => [
@@ -288,7 +293,7 @@ class GeminiChatService
             return "Ridhwan saat ini berstatus **Available for Work** (Terbuka untuk kontrak rekayasa software, proyek backend/fullstack, maupun remote roles).\n- **Email**: `ridhwananang@gmail.com`\n- **Lokasi**: Tangerang Selatan, Indonesia\n- **Rate**: Fleksibel dan kompetitif sesuai ruang lingkup proyek. Silakan klik tombol **Hubungi Saya** pada halaman ini!";
         }
 
-        if (str_contains($q, 'halo') || str_contains($q, 'hai') || str_contains($q, 'pagi') || str_contains($q, 'siang') || str_contains($q, 'sore') || str_contains($q, 'malam')) {
+        if (str_contains($q, 'halo') || str_contains($q, 'hai') || str_contains($q, 'hi') || str_contains($q, 'hello') || str_contains($q, 'hey') || str_contains($q, 'pagi') || str_contains($q, 'siang') || str_contains($q, 'sore') || str_contains($q, 'malam')) {
             return "Halo! Saya adalah **Asisten AI Teknis Ridhwan Anang Ma'ruf**. Ada yang bisa saya jelaskan mengenai arsitektur Laravel, proyek Finverra, optimasi database, atau ketersediaan kerja Ridhwan?";
         }
 

@@ -4,13 +4,11 @@ import {
     User,
     Sparkles,
     SendHorizontal,
-    ChevronDown,
     RotateCcw,
     Copy,
     Check,
     MessageSquare,
     CheckCircle2,
-    ArrowRight,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useEffect, useRef } from 'react';
@@ -52,7 +50,7 @@ export default function AIChatWidget() {
     const [showTooltip, setShowTooltip] = useState(false);
     const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
-    const chatEndRef = useRef<HTMLDivElement>(null);
+    const messagesContainerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const isSendingRef = useRef(false);
 
@@ -76,11 +74,12 @@ export default function AIChatWidget() {
         return () => clearTimeout(timer);
     }, []);
 
-    // Scroll to bottom on new messages
+    // Internal container scroll ONLY — never scrolls outer window/page on Enter
     useEffect(() => {
-        if (chatEndRef.current) {
-            requestAnimationFrame(() => {
-                chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        if (messagesContainerRef.current) {
+            messagesContainerRef.current.scrollTo({
+                top: messagesContainerRef.current.scrollHeight,
+                behavior: 'smooth',
             });
         }
     }, [messages, isTyping]);
@@ -323,7 +322,7 @@ export default function AIChatWidget() {
     };
 
     return (
-        <div className="fixed right-3 bottom-3 z-50 flex flex-col items-end font-sans sm:right-6 sm:bottom-6">
+        <div className="fixed right-3 bottom-3 z-50 font-sans sm:right-6 sm:bottom-6">
             {/* Custom Webkit Scrollbar Styling for Chat Box */}
             <style>{`
                 .chat-scroll-container::-webkit-scrollbar {
@@ -382,25 +381,26 @@ export default function AIChatWidget() {
                 )}
             </AnimatePresence>
 
-            {/* Chat Dialog Panel (Ultra-Luxury Royal Deep Blue & Champagne Gold Vault) */}
-            <AnimatePresence>
-                {isOpen && (
+            {/* Interactive Mode: Mutually exclusive between Chat Dialog and Avatar FAB (Zero Gaps, Zero Redundant Floating Buttons) */}
+            <AnimatePresence mode="wait">
+                {isOpen ? (
                     <motion.div
+                        key="chat-dialog"
                         initial={{
                             opacity: 0,
-                            scale: 0.92,
-                            y: 35,
+                            scale: 0.95,
+                            y: 20,
                             originX: 0.95,
                             originY: 0.95,
                         }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.92, y: 35 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
                         transition={{
                             type: 'spring',
                             stiffness: 380,
                             damping: 28,
                         }}
-                        className="relative mb-3 flex h-[590px] max-h-[82vh] w-[calc(100vw-24px)] sm:w-[410px] flex-col overflow-hidden rounded-[1.75rem] border border-amber-500/25 bg-white/95 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.25)] backdrop-blur-2xl dark:border-blue-400/20 dark:bg-[#080e21]/95 dark:shadow-[0_25px_70px_-15px_rgba(0,0,0,0.65)]"
+                        className="relative flex h-[570px] max-h-[calc(100vh-24px)] w-[calc(100vw-24px)] sm:w-[410px] flex-col overflow-hidden rounded-[1.75rem] border border-amber-500/25 bg-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.25)] backdrop-blur-2xl dark:border-blue-400/20 dark:bg-[#080e21] dark:shadow-[0_25px_70px_-15px_rgba(0,0,0,0.65)]"
                     >
                         {/* Top Champagne Gold Specular Hairline */}
                         <div className="pointer-events-none absolute top-0 left-0 right-0 z-20 h-[1.5px] bg-gradient-to-r from-transparent via-amber-400/60 to-transparent" />
@@ -437,7 +437,7 @@ export default function AIChatWidget() {
                                 </div>
                             </div>
 
-                            {/* Header Actions: Reset Chat & Close */}
+                            {/* Header Actions: Reset Chat & Close Button */}
                             <div className="flex items-center gap-1">
                                 <button
                                     onClick={handleResetChat}
@@ -453,13 +453,16 @@ export default function AIChatWidget() {
                                     className="cursor-pointer flex size-7 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-200/60 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-blue-400/10 dark:hover:text-zinc-100"
                                     aria-label="Tutup obrolan"
                                 >
-                                    <ChevronDown size={16} />
+                                    <X size={15} strokeWidth={2.5} />
                                 </button>
                             </div>
                         </div>
 
-                        {/* Chat Messages List */}
-                        <div className="chat-scroll-container relative z-10 flex-1 space-y-3.5 overflow-y-auto px-4 py-4">
+                        {/* Chat Messages List (Container Scrolled Independently, Zero Window Shift) */}
+                        <div
+                            ref={messagesContainerRef}
+                            className="chat-scroll-container relative z-10 flex-1 space-y-3.5 overflow-y-auto px-4 py-4"
+                        >
                             {messages.map((m, idx) => (
                                 <motion.div
                                     initial={{ opacity: 0, y: 10, scale: 0.98 }}
@@ -518,7 +521,7 @@ export default function AIChatWidget() {
                                             </div>
                                         )}
 
-                                        <div className="whitespace-pre-line">
+                                        <div className="space-y-1">
                                             {renderMessageText(m.text)}
                                         </div>
 
@@ -569,7 +572,6 @@ export default function AIChatWidget() {
                                     </div>
                                 </motion.div>
                             )}
-                            <div ref={chatEndRef} />
                         </div>
 
                         {/* Curated Suggestion Chips (Specific Engineering Topics) */}
@@ -601,15 +603,9 @@ export default function AIChatWidget() {
                                     type="text"
                                     value={chatInput}
                                     onChange={(e) => setChatInput(e.target.value)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter' && !e.shiftKey) {
-                                            if (e.nativeEvent.isComposing) return;
-                                            e.preventDefault();
-                                            handleSendMessage();
-                                        }
-                                    }}
-                                    placeholder="Tanya arsitektur, proyek, atau keahlian..."
-                                    className="flex-1 bg-transparent px-2.5 py-1 text-xs text-zinc-900 placeholder-zinc-400 outline-none focus:outline-none dark:text-zinc-100 dark:placeholder-zinc-500"
+                                    placeholder={isTyping ? "Asisten sedang menjawab..." : "Tanya arsitektur, proyek, atau keahlian..."}
+                                    disabled={isTyping}
+                                    className="flex-1 bg-transparent px-2.5 py-1 text-xs text-zinc-900 placeholder-zinc-400 outline-none focus:outline-none dark:text-zinc-100 dark:placeholder-zinc-500 disabled:opacity-60"
                                 />
                                 <button
                                     type="submit"
@@ -635,12 +631,8 @@ export default function AIChatWidget() {
                             </div>
                         </div>
                     </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* Floating Action Button / Interactive Character Trigger */}
-            <AnimatePresence mode="wait">
-                {!isOpen ? (
+                ) : (
+                    /* Floating Action Button (Only rendered when Chat Dialog is CLOSED) */
                     <motion.button
                         key="character-trigger"
                         initial={{ opacity: 0, scale: 0.8, y: 15 }}
@@ -649,7 +641,7 @@ export default function AIChatWidget() {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setIsOpen(true)}
-                        className="animate-float-avatar group relative right-1 mb-1 flex cursor-pointer items-end justify-center border-none bg-transparent p-0 outline-none select-none focus:outline-none"
+                        className="animate-float-avatar group relative flex cursor-pointer items-end justify-center border-none bg-transparent p-0 outline-none select-none focus:outline-none"
                         style={{ height: '144px', width: '67px' }}
                         aria-label="Tanya Asisten AI Ridhwan"
                     >
@@ -662,20 +654,6 @@ export default function AIChatWidget() {
                             className="h-full w-full object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.18)] filter dark:drop-shadow-[0_8px_20px_rgba(245,158,11,0.25)]"
                             draggable="false"
                         />
-                    </motion.button>
-                ) : (
-                    <motion.button
-                        key="close-trigger"
-                        initial={{ opacity: 0, scale: 0.8, rotate: -90 }}
-                        animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                        exit={{ opacity: 0, scale: 0.8, rotate: 90 }}
-                        whileHover={{ scale: 1.08 }}
-                        whileTap={{ scale: 0.92 }}
-                        onClick={() => setIsOpen(false)}
-                        className="cursor-pointer mr-1 mb-1 flex size-11 items-center justify-center rounded-full border border-amber-500/30 bg-white text-zinc-700 shadow-xl transition-all hover:border-amber-400 hover:text-amber-600 dark:border-blue-400/30 dark:bg-[#0c162f] dark:text-zinc-200 dark:hover:border-amber-400 dark:hover:text-amber-300"
-                        aria-label="Tutup obrolan"
-                    >
-                        <X size={18} strokeWidth={2.5} />
                     </motion.button>
                 )}
             </AnimatePresence>
