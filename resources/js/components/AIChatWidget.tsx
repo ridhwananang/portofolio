@@ -54,6 +54,7 @@ export default function AIChatWidget() {
 
     const chatEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const isSendingRef = useRef(false);
 
     // Initial technical welcome greeting
     const createInitialMessage = (): ChatMessage => ({
@@ -78,7 +79,9 @@ export default function AIChatWidget() {
     // Scroll to bottom on new messages
     useEffect(() => {
         if (chatEndRef.current) {
-            chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+            requestAnimationFrame(() => {
+                chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            });
         }
     }, [messages, isTyping]);
 
@@ -88,11 +91,12 @@ export default function AIChatWidget() {
             setShowTooltip(false);
             setTimeout(() => {
                 inputRef.current?.focus();
-            }, 300);
+            }, 250);
         }
     }, [isOpen]);
 
-    // Autocheck reply in background if email exists in localStorage when chat is opened
+    // Autocheck reply silently in background if email exists in localStorage when chat is opened
+    // NOTE: Does NOT set isTyping = true so user can immediately type and press Enter without lock!
     useEffect(() => {
         if (!isOpen) return;
 
@@ -105,7 +109,6 @@ export default function AIChatWidget() {
 
         if (!email) return;
 
-        setIsTyping(true);
         fetch('/api/chat', {
             method: 'POST',
             headers: {
@@ -140,12 +143,12 @@ export default function AIChatWidget() {
                     });
                 }
             })
-            .catch((err) => console.error('Silent background reply check failed:', err))
-            .finally(() => setIsTyping(false));
+            .catch((err) => console.error('Silent background reply check failed:', err));
     }, [isOpen]);
 
     const handleResetChat = () => {
         setMessages([createInitialMessage()]);
+        isSendingRef.current = false;
         setIsTyping(false);
         setChatInput('');
         inputRef.current?.focus();
@@ -161,8 +164,10 @@ export default function AIChatWidget() {
 
     const handleSendMessage = async (customText?: string) => {
         const textToSend = (customText || chatInput).trim();
-        if (!textToSend || isTyping) return;
+        // Strict guard against double-submits, empty text, or concurrent requests
+        if (!textToSend || isSendingRef.current || isTyping) return;
 
+        isSendingRef.current = true;
         if (!customText) {
             setChatInput('');
         }
@@ -182,48 +187,6 @@ export default function AIChatWidget() {
         setIsTyping(true);
 
         try {
-            // Direct message thread with Ridhwan check
-            const hasDirectThread = messages.some((m) => m.sender === 'ridhwan');
-            let contactEmail: string | null = null;
-            let contactName: string | null = null;
-            try {
-                contactEmail = localStorage.getItem('user_contact_email');
-                contactName = localStorage.getItem('user_contact_name');
-            } catch {
-                // Ignore localStorage errors
-            }
-
-            if (hasDirectThread && contactEmail) {
-                const response = await fetch('/api/contact', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Accept: 'application/json',
-                    },
-                    body: JSON.stringify({
-                        name: contactName || 'Pengunjung Chat',
-                        email: contactEmail,
-                        subject: 'Pesan Lanjutan Chat',
-                        message: textToSend,
-                    }),
-                });
-
-                if (!response.ok) throw new Error('API Error');
-
-                setMessages((prev) => [
-                    ...prev,
-                    {
-                        sender: 'bot',
-                        text: 'Pesan Anda telah diteruskan langsung ke sistem kontak Ridhwan. Ridhwan akan membalas segera melalui email atau di sesi ini.',
-                        time: new Date().toLocaleTimeString('id-ID', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                        }),
-                    },
-                ]);
-                return;
-            }
-
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: {
@@ -272,7 +235,7 @@ export default function AIChatWidget() {
                     ...prev,
                     {
                         sender: 'bot',
-                        text: 'Saya sedang memproses informasi teknis Ridhwan. Anda juga dapat mengirimkan pertanyaan langsung ke email **ridhwananang@gmail.com**.',
+                        text: 'Saya siap mendiskusikan arsitektur teknis atau proyek Ridhwan. Silakan ajukan pertanyaan lain atau hubungi langsung via **ridhwananang@gmail.com**.',
                         time: new Date().toLocaleTimeString('id-ID', {
                             hour: '2-digit',
                             minute: '2-digit',
@@ -294,7 +257,11 @@ export default function AIChatWidget() {
                 },
             ]);
         } finally {
+            isSendingRef.current = false;
             setIsTyping(false);
+            setTimeout(() => {
+                inputRef.current?.focus();
+            }, 60);
         }
     };
 
@@ -622,14 +589,22 @@ export default function AIChatWidget() {
 
                         {/* Input Capsule Dock */}
                         <div className="relative z-10 border-t border-zinc-200/80 bg-white p-3 dark:border-blue-400/15 dark:bg-[#080e21]">
-                            <div className="flex items-center gap-2 rounded-xl border border-zinc-200/90 bg-zinc-50/90 p-1.5 transition-all focus-within:border-amber-500/60 focus-within:ring-2 focus-within:ring-amber-500/20 dark:border-blue-400/20 dark:bg-[#0c162f]/70">
+                            <form
+                                onSubmit={(e) => {
+                                    e.preventDefault();
+                                    handleSendMessage();
+                                }}
+                                className="flex items-center gap-2 rounded-xl border border-zinc-200/90 bg-zinc-50/90 p-1.5 transition-all focus-within:border-amber-500/60 focus-within:ring-2 focus-within:ring-amber-500/20 dark:border-blue-400/20 dark:bg-[#0c162f]/70"
+                            >
                                 <input
                                     ref={inputRef}
                                     type="text"
                                     value={chatInput}
                                     onChange={(e) => setChatInput(e.target.value)}
                                     onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
+                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                            if (e.nativeEvent.isComposing) return;
+                                            e.preventDefault();
                                             handleSendMessage();
                                         }
                                     }}
@@ -637,22 +612,22 @@ export default function AIChatWidget() {
                                     className="flex-1 bg-transparent px-2.5 py-1 text-xs text-zinc-900 placeholder-zinc-400 outline-none focus:outline-none dark:text-zinc-100 dark:placeholder-zinc-500"
                                 />
                                 <button
-                                    onClick={() => handleSendMessage()}
+                                    type="submit"
                                     disabled={!chatInput.trim() || isTyping}
                                     className="luxury-btn-primary flex size-7.5 cursor-pointer items-center justify-center rounded-lg text-zinc-950 shadow-xs transition-transform hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
                                     aria-label="Kirim pesan"
                                 >
                                     <SendHorizontal size={13} strokeWidth={2.5} />
                                 </button>
-                            </div>
+                            </form>
 
                             <div className="mt-2 flex items-center justify-between text-[8px] font-medium text-zinc-500 dark:text-zinc-400">
                                 <span className="flex items-center gap-1 font-mono">
                                     <MessageSquare size={9} className="text-amber-500" />
-                                    <span>Gemini 2.5 Flash • Context Real-Time</span>
+                                    <span>Gemini 2.5 Flash • Respon Cepat</span>
                                 </span>
                                 <span className="flex items-center gap-1 font-mono">
-                                    <span>Enter</span>
+                                    <span>Tekan Enter</span>
                                     <span className="rounded border border-zinc-300 bg-zinc-100 px-1 py-0.2 text-[7.5px] dark:border-zinc-700 dark:bg-zinc-800">
                                         ↵
                                     </span>

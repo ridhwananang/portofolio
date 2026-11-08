@@ -69,11 +69,16 @@ class GeminiChatService
         $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
 
         try {
-            $response = Http::timeout(10)->post($url, [
+            $response = Http::timeout(12)->post($url, [
                 'contents' => $contents,
                 'systemInstruction' => [
                     'parts' => [
                         ['text' => $systemPrompt]
+                    ]
+                ],
+                'generationConfig' => [
+                    'thinkingConfig' => [
+                        'thinkingBudget' => 0
                     ]
                 ]
             ]);
