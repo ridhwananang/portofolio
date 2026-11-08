@@ -12,15 +12,17 @@ import {
     ArrowUpRight,
     Clock,
     MapPin,
-    Bot,
+    AlertCircle,
+    ChevronDown,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import React, { useState } from 'react';
 
 interface ContactModalProps {
     isOpen: boolean;
     onClose: () => void;
     profileEmail?: string;
+    whatsappNumber?: string;
     linkedinUrl?: string;
     githubUrl?: string;
 }
@@ -31,6 +33,7 @@ export default function ContactModal({
     isOpen,
     onClose,
     profileEmail = 'ridhwananang@gmail.com',
+    whatsappNumber = '081298502177',
     linkedinUrl = 'https://www.linkedin.com/in/ridhwan-anang-ma-ruf/',
     githubUrl = 'https://github.com/ridhwananang',
 }: ContactModalProps) {
@@ -51,6 +54,15 @@ export default function ContactModal({
     if (!isOpen) {
         return null;
     }
+
+    const cleanWa = (whatsappNumber || '081298502177').replace(/\D/g, '');
+    const normalizedWa = cleanWa.startsWith('0')
+        ? '62' + cleanWa.slice(1)
+        : cleanWa.startsWith('62')
+        ? cleanWa
+        : '62' + cleanWa;
+
+    const displayPhone = '+62 812-9850-2177';
 
     const handleCopyEmail = () => {
         navigator.clipboard.writeText(profileEmail);
@@ -135,79 +147,89 @@ export default function ContactModal({
     return (
         <div
             id="contact-modal"
-            className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/70 p-3 sm:p-4 md:p-6 backdrop-blur-md overflow-y-auto"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/80 p-3 sm:p-4 md:p-6 backdrop-blur-md overflow-y-auto"
             onClick={(e) => {
                 if (e.target === e.currentTarget) onClose();
             }}
         >
             <motion.div
-                initial={{ scale: 0.96, opacity: 0, y: 12 }}
+                initial={{ scale: 0.96, opacity: 0, y: 14 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.96, opacity: 0, y: 12 }}
-                transition={{ duration: 0.2, ease: 'easeOut' }}
-                className="relative my-auto flex w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-zinc-200/90 bg-white shadow-2xl dark:border-amber-500/30 dark:bg-[#0c152a]"
+                exit={{ scale: 0.96, opacity: 0, y: 14 }}
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                className="relative my-auto flex w-full max-w-4xl max-h-[92vh] flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-zinc-200/90 bg-white shadow-2xl dark:border-amber-500/30 dark:bg-[#080e21]"
             >
+                {/* Champagne Gold Specular Top Hairline */}
+                <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400/80 to-transparent pointer-events-none z-30" />
+
                 {/* Close Button */}
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 z-20 rounded-lg border border-zinc-200 bg-white/90 p-1.5 text-zinc-500 shadow-2xs transition-all hover:bg-zinc-100 hover:text-zinc-800 dark:border-blue-400/20 dark:bg-[#0f1b38] dark:text-zinc-300 dark:hover:text-amber-400 cursor-pointer"
+                    className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 z-30 flex size-8 sm:size-9 items-center justify-center rounded-xl border border-zinc-200 bg-white/90 text-zinc-500 shadow-sm transition-all hover:bg-zinc-100 hover:text-zinc-900 dark:border-white/10 dark:bg-[#0c162f]/80 dark:text-zinc-300 dark:hover:border-amber-400/40 dark:hover:bg-[#12214a] dark:hover:text-amber-300 cursor-pointer active:scale-95"
                     aria-label="Tutup modal"
                 >
                     <X size={16} />
                 </button>
 
-                {/* Main Two-Column Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-12 min-h-[540px]">
+                {/* Main Two-Column Grid (scrollable on mobile if content exceeds viewport) */}
+                <div className="grid grid-cols-1 md:grid-cols-12 overflow-y-auto min-h-0 flex-1">
                     {/* Left Column: Direct Fast-Track Channels (5 cols) */}
-                    <div className="md:col-span-5 flex flex-col justify-between border-b md:border-b-0 md:border-r border-zinc-200/80 bg-zinc-50/80 p-5 sm:p-7 dark:border-blue-400/15 dark:bg-[#080e22]">
-                        <div className="space-y-5">
+                    <div className="md:col-span-5 flex flex-col justify-between border-b md:border-b-0 md:border-r border-zinc-200/80 bg-zinc-50/80 p-5 sm:p-7 dark:border-white/10 dark:bg-gradient-to-b dark:from-[#091124] dark:to-[#070b1a] relative overflow-hidden">
+                        {/* Subtle background glow */}
+                        <div className="absolute -top-16 -left-16 size-48 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
+
+                        <div className="space-y-5 relative z-10">
                             {/* Availability Status Badge */}
-                            <div className="inline-flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-amber-600 dark:text-amber-300">
-                                <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_6px_rgba(16,185,129,0.8)]" />
-                                <span className="text-[10.5px] font-mono font-semibold tracking-wider uppercase">
+                            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-emerald-700 dark:text-emerald-400 shadow-xs">
+                                <span className="relative flex size-2">
+                                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                                    <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
+                                </span>
+                                <span className="text-[10px] sm:text-[11px] font-mono font-bold tracking-wider uppercase">
                                     Tersedia untuk Kolaborasi
                                 </span>
                             </div>
 
                             {/* Title & Introduction */}
-                            <div>
-                                <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
+                            <div className="space-y-1.5">
+                                <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-white flex items-center gap-2">
                                     Mari Bekerja Sama
+                                    <Sparkles size={18} className="text-amber-500 dark:text-amber-400" />
                                 </h3>
-                                <p className="mt-1.5 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
-                                    Punya ide proyek, kebutuhan sistem backend yang kokoh, atau ingin berdiskusi seputar peluang kerja sama?
+                                <p className="text-xs sm:text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">
+                                    Punya ide proyek, kebutuhan sistem backend yang kokoh, atau tawaran kerja sama? Silakan kontak langsung atau kirim detail pesan.
                                 </p>
                             </div>
 
                             {/* Direct Communication Channels */}
                             <div className="space-y-2.5 pt-1">
-                                <span className="text-[10px] font-mono uppercase tracking-wider text-amber-500/80 dark:text-amber-400/80 font-bold">
+                                <span className="text-[10px] font-mono uppercase tracking-wider text-amber-600 dark:text-amber-400 font-bold">
                                     Akses Instan & Langsung
                                 </span>
 
                                 {/* 1-Click Copy Email Pill */}
                                 <div
                                     onClick={handleCopyEmail}
-                                    className="group flex cursor-pointer items-center justify-between rounded-lg border border-zinc-200/90 bg-white p-3 shadow-2xs transition-all hover:border-amber-400 dark:border-blue-400/15 dark:bg-[#0c162f] dark:hover:border-amber-400/40"
+                                    className="group flex cursor-pointer items-center justify-between rounded-xl border border-zinc-200/90 bg-white p-3 sm:p-3.5 shadow-2xs transition-all hover:border-amber-400 hover:shadow-xs dark:border-white/10 dark:bg-[#0c162f]/80 dark:hover:border-amber-400/40 dark:hover:bg-[#101e3e] active:scale-[0.99]"
                                 >
-                                    <div className="flex items-center gap-2.5">
-                                        <div className="flex size-8 items-center justify-center rounded-lg bg-zinc-100 text-zinc-700 dark:bg-[#091126] dark:text-amber-400">
-                                            <Mail size={15} />
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 group-hover:scale-105 transition-transform">
+                                            <Mail size={16} />
                                         </div>
-                                        <div className="text-left">
-                                            <p className="text-[10px] font-mono text-zinc-400 dark:text-zinc-400">Email Langsung</p>
-                                            <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 font-mono">
+                                        <div className="text-left truncate">
+                                            <p className="text-[10px] font-mono uppercase tracking-wider text-amber-600 dark:text-amber-400/80 font-bold">Email Langsung</p>
+                                            <p className="text-xs sm:text-[13px] font-semibold text-zinc-800 dark:text-zinc-200 font-mono truncate">
                                                 {profileEmail}
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="rounded px-2 py-0.5 text-[10px] font-mono text-zinc-500 bg-zinc-100 dark:bg-[#091126] dark:text-amber-300">
+                                    <div className="shrink-0 rounded-lg px-2.5 py-1 text-[10px] sm:text-[10.5px] font-mono font-medium transition-colors bg-zinc-100 text-zinc-600 dark:bg-white/5 dark:text-zinc-300 border border-zinc-200 dark:border-white/10 group-hover:border-amber-400/30">
                                         {copiedEmail ? (
-                                            <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                                            <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
                                                 <Check size={11} /> Tersalin!
                                             </span>
                                         ) : (
-                                            <span className="flex items-center gap-1">
+                                            <span className="flex items-center gap-1 group-hover:text-amber-500 dark:group-hover:text-amber-300">
                                                 <Copy size={11} /> Salin
                                             </span>
                                         )}
@@ -216,52 +238,58 @@ export default function ContactModal({
 
                                 {/* WhatsApp Fast-Track */}
                                 <a
-                                    href={`https://wa.me/6281280628236?text=${whatsappMessage}`}
+                                    href={`https://wa.me/${normalizedWa}?text=${whatsappMessage}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="group flex items-center justify-between rounded-xl border border-emerald-500/20 bg-emerald-50/50 p-3 shadow-2xs transition-all hover:bg-emerald-50/80 dark:border-emerald-500/20 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/30"
+                                    className="group relative flex items-center justify-between rounded-xl border border-emerald-500/25 bg-emerald-50/70 p-3 sm:p-3.5 shadow-2xs transition-all hover:bg-emerald-50 hover:border-emerald-500/40 hover:shadow-xs dark:border-emerald-500/30 dark:bg-gradient-to-r dark:from-emerald-950/30 dark:via-[#091a22] dark:to-[#0a1824] dark:hover:border-emerald-400/60 dark:hover:shadow-[0_4px_20px_rgba(16,185,129,0.15)] active:scale-[0.99]"
                                 >
-                                    <div className="flex items-center gap-2.5">
-                                        <div className="flex size-8 items-center justify-center rounded-lg bg-emerald-500 text-white">
-                                            <MessageSquare size={15} />
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 group-hover:scale-105 transition-transform">
+                                            <MessageSquare size={16} />
                                         </div>
-                                        <div className="text-left">
-                                            <p className="text-[10px] font-mono text-emerald-700 dark:text-emerald-400">WhatsApp Fast-Track</p>
-                                            <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
-                                                Diskusi Cepat & Respon Kilat
+                                        <div className="text-left truncate">
+                                            <div className="flex items-center gap-1.5">
+                                                <p className="text-[10px] font-mono uppercase tracking-wider text-emerald-700 dark:text-emerald-400 font-bold">WhatsApp Fast-Track</p>
+                                                <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.2 text-[9px] font-mono font-bold text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">Online</span>
+                                            </div>
+                                            <p className="text-xs sm:text-[13px] font-semibold text-zinc-900 dark:text-zinc-100 font-mono tracking-tight truncate">
+                                                {displayPhone}
                                             </p>
                                         </div>
                                     </div>
-                                    <ArrowUpRight size={14} className="text-emerald-600 dark:text-emerald-400" />
+                                    <div className="flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 shrink-0 group-hover:translate-x-0.5 transition-transform">
+                                        <span className="hidden sm:inline text-[11px] font-mono">Chat</span>
+                                        <ArrowUpRight size={15} />
+                                    </div>
                                 </a>
                             </div>
                         </div>
 
                         {/* Trust Signals Footer */}
-                        <div className="mt-5 pt-4 border-t border-zinc-200/70 dark:border-zinc-800/70 space-y-2">
-                            <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
-                                <Clock size={12} className="text-zinc-400" />
-                                <span>Rata-rata respons: <strong>&lt; 4 jam</strong></span>
+                        <div className="mt-6 pt-5 border-t border-zinc-200/80 dark:border-white/10 space-y-2 relative z-10">
+                            <div className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300">
+                                <Clock size={13} className="text-amber-500 dark:text-amber-400 shrink-0" />
+                                <span>Rata-rata respons: <strong className="text-zinc-900 dark:text-white">&lt; 4 jam</strong> (Prioritas Utama)</span>
                             </div>
-                            <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
-                                <MapPin size={12} className="text-zinc-400" />
-                                <span>Tangerang Selatan • WIB (UTC+7)</span>
+                            <div className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300">
+                                <MapPin size={13} className="text-amber-500 dark:text-amber-400 shrink-0" />
+                                <span>Tangerang Selatan, Banten • WIB (UTC+7)</span>
                             </div>
-                            <div className="flex items-center gap-3 pt-1 text-xs">
+                            <div className="flex items-center gap-3 pt-1.5 text-xs font-mono text-zinc-500 dark:text-zinc-400">
                                 <a
                                     href={linkedinUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+                                    className="hover:text-amber-500 dark:hover:text-amber-400 transition-colors"
                                 >
                                     LinkedIn ↗
                                 </a>
-                                <span>•</span>
+                                <span className="text-zinc-400 dark:text-zinc-600">•</span>
                                 <a
                                     href={githubUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+                                    className="hover:text-amber-500 dark:hover:text-amber-400 transition-colors"
                                 >
                                     GitHub ↗
                                 </a>
@@ -270,113 +298,117 @@ export default function ContactModal({
                     </div>
 
                     {/* Right Column: Contact Form (7 cols) */}
-                    <div className="md:col-span-7 p-5 sm:p-7 flex flex-col justify-between">
+                    <div className="md:col-span-7 p-5 sm:p-7 flex flex-col justify-between bg-white dark:bg-[#080e21] relative">
+                        {/* Ambient glow in dark mode */}
+                        <div className="absolute -bottom-16 -right-16 size-48 rounded-full bg-blue-600/10 blur-3xl pointer-events-none" />
+
                         {isSubmitted ? (
-                            <div className="my-auto flex flex-col items-center justify-center py-8 text-center">
-                                <div className="mb-3 flex size-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
-                                    <CheckCircle2 size={28} />
+                            <div className="my-auto flex flex-col items-center justify-center py-10 px-4 text-center relative z-10">
+                                <div className="relative mb-4 flex size-14 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-500/30 shadow-[0_0_25px_rgba(16,185,129,0.2)]">
+                                    <CheckCircle2 size={32} />
                                 </div>
-                                <h4 className="text-xl font-bold text-zinc-900 dark:text-white">
+                                <h4 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white tracking-tight">
                                     Pesan Berhasil Terkirim!
                                 </h4>
-                                <p className="mt-1.5 max-w-sm text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
-                                    Pesan Anda telah tersimpan dengan aman di inbox prioritas. Anda akan menerima balasan email dalam kurun waktu kurang dari 4 jam.
+                                <p className="mt-2 max-w-sm text-xs sm:text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
+                                    Pesan Anda telah tersimpan dengan aman di inbox prioritas. Konfirmasi dan respon teknis akan dikirimkan ke email Anda dalam waktu <strong className="text-amber-600 dark:text-amber-400">&lt; 4 jam</strong>.
                                 </p>
 
-                                <div className="mt-5 flex items-center gap-2">
+                                <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                                     <button
                                         onClick={() => setIsSubmitted(false)}
-                                        className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 cursor-pointer"
+                                        className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-100 dark:border-white/10 dark:bg-[#0c162f] dark:text-zinc-300 dark:hover:border-amber-400/40 dark:hover:text-white transition-all cursor-pointer"
                                     >
                                         Kirim Pesan Lain
                                     </button>
                                     <button
                                         onClick={onClose}
-                                        className="rounded-lg bg-zinc-900 px-5 py-2 text-xs font-semibold text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-100 cursor-pointer"
+                                        className="rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 px-5 py-2.5 text-xs font-bold text-zinc-950 hover:brightness-110 transition-all cursor-pointer shadow-md"
                                     >
-                                        Tutup
+                                        Selesai & Tutup
                                     </button>
                                 </div>
                             </div>
                         ) : (
-                            <form onSubmit={handleFormSubmit} className="space-y-4">
+                            <form onSubmit={handleFormSubmit} className="space-y-4 relative z-10">
                                 {/* Intent Switcher Tabs */}
                                 <div>
-                                    <label className="mb-1.5 block text-[10.5px] font-mono uppercase tracking-wider text-zinc-500">
+                                    <label className="mb-1.5 block text-[10.5px] font-mono uppercase tracking-wider text-zinc-500 dark:text-amber-400/90 font-bold">
                                         Pilih Kategori Pesan
                                     </label>
-                                    <div className="grid grid-cols-3 gap-1 rounded-lg border border-zinc-200/90 bg-zinc-100/80 p-0.5 dark:border-zinc-800 dark:bg-zinc-900/80">
+                                    <div className="grid grid-cols-3 gap-1.5 rounded-xl border border-zinc-200/90 bg-zinc-100/80 p-1 dark:border-white/10 dark:bg-[#0c162f]/90">
                                         <button
                                             type="button"
                                             onClick={() => setIntent('project')}
-                                            className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-all ${
+                                            className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition-all ${
                                                 intent === 'project'
-                                                    ? 'bg-amber-500/15 text-amber-600 font-bold shadow-2xs dark:bg-amber-400/20 dark:text-amber-300 dark:border dark:border-amber-400/30'
-                                                    : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-amber-200'
+                                                    ? 'bg-white text-zinc-900 shadow-2xs dark:bg-amber-400/15 dark:text-amber-300 dark:border dark:border-amber-400/40 dark:shadow-[0_0_12px_rgba(245,158,11,0.18)]'
+                                                    : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 border border-transparent'
                                             }`}
                                         >
-                                            <Briefcase size={12} />
+                                            <Briefcase size={13} className={intent === 'project' ? 'text-amber-500 dark:text-amber-400' : ''} />
                                             <span>Proyek</span>
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setIntent('hiring')}
-                                            className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-all ${
+                                            className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition-all ${
                                                 intent === 'hiring'
-                                                    ? 'bg-amber-500/15 text-amber-600 font-bold shadow-2xs dark:bg-amber-400/20 dark:text-amber-300 dark:border dark:border-amber-400/30'
-                                                    : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-amber-200'
+                                                    ? 'bg-white text-zinc-900 shadow-2xs dark:bg-amber-400/15 dark:text-amber-300 dark:border dark:border-amber-400/40 dark:shadow-[0_0_12px_rgba(245,158,11,0.18)]'
+                                                    : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 border border-transparent'
                                             }`}
                                         >
-                                            <Building2 size={12} />
+                                            <Building2 size={13} className={intent === 'hiring' ? 'text-amber-500 dark:text-amber-400' : ''} />
                                             <span>Rekrutmen</span>
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setIntent('general')}
-                                            className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-all ${
+                                            className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition-all ${
                                                 intent === 'general'
-                                                    ? 'bg-amber-500/15 text-amber-600 font-bold shadow-2xs dark:bg-amber-400/20 dark:text-amber-300 dark:border dark:border-amber-400/30'
-                                                    : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-amber-200'
+                                                    ? 'bg-white text-zinc-900 shadow-2xs dark:bg-amber-400/15 dark:text-amber-300 dark:border dark:border-amber-400/40 dark:shadow-[0_0_12px_rgba(245,158,11,0.18)]'
+                                                    : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 border border-transparent'
                                             }`}
                                         >
-                                            <Sparkles size={12} />
+                                            <Sparkles size={13} className={intent === 'general' ? 'text-amber-500 dark:text-amber-400' : ''} />
                                             <span>Diskusi</span>
                                         </button>
                                     </div>
                                 </div>
 
                                 {errorMessage && (
-                                    <div className="rounded-lg border border-rose-200 bg-rose-50/80 p-2.5 text-xs font-medium text-rose-600 dark:border-rose-900/40 dark:bg-rose-950/30 dark:text-rose-400">
-                                        {errorMessage}
+                                    <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50/90 p-3 text-xs font-medium text-rose-600 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-400">
+                                        <AlertCircle size={15} className="shrink-0" />
+                                        <span>{errorMessage}</span>
                                     </div>
                                 )}
 
                                 {/* Row 1: Name and Email */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
-                                        <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300">
-                                            Nama Lengkap <span className="text-rose-500">*</span>
+                                        <label className="mb-1.5 block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                                            Nama Lengkap <span className="text-amber-500 dark:text-amber-400">*</span>
                                         </label>
                                         <input
                                             type="text"
                                             required
                                             value={formName}
                                             onChange={(e) => setFormName(e.target.value)}
-                                            placeholder="John Doe"
-                                            className="w-full rounded-lg border border-zinc-200/90 bg-zinc-50/50 px-3 py-2 text-xs sm:text-sm text-zinc-900 transition-all focus:border-zinc-400 focus:bg-white focus:outline-none dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-white dark:focus:border-zinc-600"
+                                            placeholder="Rian Pratama"
+                                            className="w-full rounded-xl border border-zinc-200/90 bg-zinc-50/60 px-3.5 py-2.5 text-xs sm:text-sm text-zinc-900 placeholder-zinc-400 transition-all focus:border-amber-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-[#0c162f]/80 dark:text-white dark:placeholder-zinc-500 dark:focus:border-amber-400/70 dark:focus:bg-[#101c3d] dark:focus:ring-amber-400/20"
                                         />
                                     </div>
                                     <div>
-                                        <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300">
-                                            Alamat Email <span className="text-rose-500">*</span>
+                                        <label className="mb-1.5 block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                                            Alamat Email <span className="text-amber-500 dark:text-amber-400">*</span>
                                         </label>
                                         <input
                                             type="email"
                                             required
                                             value={formEmail}
                                             onChange={(e) => setFormEmail(e.target.value)}
-                                            placeholder="john@company.com"
-                                            className="w-full rounded-lg border border-zinc-200/90 bg-zinc-50/50 px-3 py-2 text-xs sm:text-sm text-zinc-900 transition-all focus:border-zinc-400 focus:bg-white focus:outline-none dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-white dark:focus:border-zinc-600"
+                                            placeholder="rian@company.com"
+                                            className="w-full rounded-xl border border-zinc-200/90 bg-zinc-50/60 px-3.5 py-2.5 text-xs sm:text-sm text-zinc-900 placeholder-zinc-400 transition-all focus:border-amber-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-[#0c162f]/80 dark:text-white dark:placeholder-zinc-500 dark:focus:border-amber-400/70 dark:focus:bg-[#101c3d] dark:focus:ring-amber-400/20"
                                         />
                                     </div>
                                 </div>
@@ -388,7 +420,7 @@ export default function ContactModal({
                                             <label className="mb-1.5 block text-xs font-medium text-zinc-700 dark:text-zinc-300">
                                                 Estimasi Anggaran Proyek
                                             </label>
-                                            <div className="flex flex-wrap gap-1.5">
+                                            <div className="flex flex-wrap gap-1.5 sm:gap-2">
                                                 {[
                                                     '< Rp 5 Juta',
                                                     'Rp 5 - 15 Juta',
@@ -399,10 +431,10 @@ export default function ContactModal({
                                                         key={budget}
                                                         type="button"
                                                         onClick={() => setFormBudget(budget)}
-                                                        className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
+                                                        className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
                                                             formBudget === budget
-                                                                ? 'border-zinc-900 bg-zinc-900 text-white dark:border-white dark:bg-white dark:text-zinc-950'
-                                                                : 'border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400'
+                                                                ? 'border-amber-500 bg-amber-500/15 text-amber-700 dark:border-amber-400 dark:bg-amber-400/20 dark:text-amber-300 shadow-2xs'
+                                                                : 'border-zinc-200 bg-zinc-50 text-zinc-600 hover:border-zinc-300 dark:border-white/10 dark:bg-[#0c162f]/60 dark:text-zinc-400 dark:hover:border-amber-400/30 dark:hover:text-zinc-200'
                                                         }`}
                                                     >
                                                         {budget}
@@ -412,20 +444,23 @@ export default function ContactModal({
                                         </div>
 
                                         <div>
-                                            <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300">
-                                                Jenis Layanan
+                                            <label className="mb-1.5 block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                                                Jenis Layanan Utama
                                             </label>
-                                            <select
-                                                value={formService}
-                                                onChange={(e) => setFormService(e.target.value)}
-                                                className="w-full rounded-lg border border-zinc-200/90 bg-zinc-50/50 px-3 py-2 text-xs sm:text-sm text-zinc-900 transition-all focus:border-zinc-400 focus:bg-white focus:outline-none dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-white dark:focus:border-zinc-600"
-                                            >
-                                                <option value="Fullstack Web Application">Fullstack Web App (Laravel + React SPA)</option>
-                                                <option value="Backend REST API Engineering">Backend Architecture & RESTful API</option>
-                                                <option value="Frontend SPA React Integration">Interactive React / TypeScript Frontend</option>
-                                                <option value="Database & Performance Optimization">Database Architecture & Query Optimization</option>
-                                                <option value="Custom Project / Konsultasi Teknis">Custom Engineering & Konsultasi</option>
-                                            </select>
+                                            <div className="relative">
+                                                <select
+                                                    value={formService}
+                                                    onChange={(e) => setFormService(e.target.value)}
+                                                    className="w-full appearance-none rounded-xl border border-zinc-200/90 bg-zinc-50/60 px-3.5 py-2.5 pr-9 text-xs sm:text-sm text-zinc-900 transition-all focus:border-amber-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-[#0c162f] dark:text-white dark:focus:border-amber-400/70 dark:focus:bg-[#101c3d] cursor-pointer"
+                                                >
+                                                    <option value="Fullstack Web Application" className="dark:bg-[#080e21]">Fullstack Web App (Laravel + React SPA)</option>
+                                                    <option value="Backend REST API Engineering" className="dark:bg-[#080e21]">Backend Architecture & RESTful API</option>
+                                                    <option value="Frontend SPA React Integration" className="dark:bg-[#080e21]">Interactive React / TypeScript Frontend</option>
+                                                    <option value="Database & Performance Optimization" className="dark:bg-[#080e21]">Database Architecture & Query Optimization</option>
+                                                    <option value="Custom Project / Konsultasi Teknis" className="dark:bg-[#080e21]">Custom Engineering & Konsultasi</option>
+                                                </select>
+                                                <ChevronDown size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+                                            </div>
                                         </div>
                                     </div>
                                 )}
@@ -434,31 +469,34 @@ export default function ContactModal({
                                 {intent === 'hiring' && (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         <div>
-                                            <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                                            <label className="mb-1.5 block text-xs font-medium text-zinc-700 dark:text-zinc-300">
                                                 Nama Perusahaan / Startup
                                             </label>
                                             <input
                                                 type="text"
                                                 value={formCompany}
                                                 onChange={(e) => setFormCompany(e.target.value)}
-                                                placeholder="PT Teknologi Indonesia"
-                                                className="w-full rounded-lg border border-zinc-200/90 bg-zinc-50/50 px-3 py-2 text-xs sm:text-sm text-zinc-900 transition-all focus:border-zinc-400 focus:bg-white focus:outline-none dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-white dark:focus:border-zinc-600"
+                                                placeholder="PT Teknologi Unggul"
+                                                className="w-full rounded-xl border border-zinc-200/90 bg-zinc-50/60 px-3.5 py-2.5 text-xs sm:text-sm text-zinc-900 placeholder-zinc-400 transition-all focus:border-amber-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-[#0c162f]/80 dark:text-white dark:placeholder-zinc-500 dark:focus:border-amber-400/70 dark:focus:bg-[#101c3d]"
                                             />
                                         </div>
                                         <div>
-                                            <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                                            <label className="mb-1.5 block text-xs font-medium text-zinc-700 dark:text-zinc-300">
                                                 Tipe Posisi
                                             </label>
-                                            <select
-                                                value={formRole}
-                                                onChange={(e) => setFormRole(e.target.value)}
-                                                className="w-full rounded-lg border border-zinc-200/90 bg-zinc-50/50 px-3 py-2 text-xs sm:text-sm text-zinc-900 transition-all focus:border-zinc-400 focus:bg-white focus:outline-none dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-white dark:focus:border-zinc-600"
-                                            >
-                                                <option value="Full-Time Remote">Full-Time Remote</option>
-                                                <option value="Full-Time Hybrid / Onsite">Full-Time Hybrid / Onsite</option>
-                                                <option value="Contract / Project-Based">Contract / Project-Based</option>
-                                                <option value="Part-Time / Advisory">Part-Time / Advisory</option>
-                                            </select>
+                                            <div className="relative">
+                                                <select
+                                                    value={formRole}
+                                                    onChange={(e) => setFormRole(e.target.value)}
+                                                    className="w-full appearance-none rounded-xl border border-zinc-200/90 bg-zinc-50/60 px-3.5 py-2.5 pr-9 text-xs sm:text-sm text-zinc-900 transition-all focus:border-amber-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-[#0c162f] dark:text-white dark:focus:border-amber-400/70 dark:focus:bg-[#101c3d] cursor-pointer"
+                                                >
+                                                    <option value="Full-Time Remote" className="dark:bg-[#080e21]">Full-Time Remote</option>
+                                                    <option value="Full-Time Hybrid / Onsite" className="dark:bg-[#080e21]">Full-Time Hybrid / Onsite</option>
+                                                    <option value="Contract / Project-Based" className="dark:bg-[#080e21]">Contract / Project-Based</option>
+                                                    <option value="Part-Time / Advisory" className="dark:bg-[#080e21]">Part-Time / Advisory</option>
+                                                </select>
+                                                <ChevronDown size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+                                            </div>
                                         </div>
                                     </div>
                                 )}
@@ -466,23 +504,23 @@ export default function ContactModal({
                                 {/* Dynamic Fields: General Intent */}
                                 {intent === 'general' && (
                                     <div>
-                                        <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300">
-                                            Subjek / Topik Bahasan
+                                        <label className="mb-1.5 block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                                            Topik Bahasan
                                         </label>
                                         <input
                                             type="text"
                                             value={formSubject}
                                             onChange={(e) => setFormSubject(e.target.value)}
-                                            placeholder="Pertanyaan seputar Laravel architecture atau kolaborasi..."
-                                            className="w-full rounded-lg border border-zinc-200/90 bg-zinc-50/50 px-3 py-2 text-xs sm:text-sm text-zinc-900 transition-all focus:border-zinc-400 focus:bg-white focus:outline-none dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-white dark:focus:border-zinc-600"
+                                            placeholder="Diskusi teknis arsitektur Laravel, REST API, atau konsultasi..."
+                                            className="w-full rounded-xl border border-zinc-200/90 bg-zinc-50/60 px-3.5 py-2.5 text-xs sm:text-sm text-zinc-900 placeholder-zinc-400 transition-all focus:border-amber-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-[#0c162f]/80 dark:text-white dark:placeholder-zinc-500 dark:focus:border-amber-400/70 dark:focus:bg-[#101c3d]"
                                         />
                                     </div>
                                 )}
 
                                 {/* Message Textarea */}
                                 <div>
-                                    <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300">
-                                        Isi Pesan <span className="text-rose-500">*</span>
+                                    <label className="mb-1.5 block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                                        Isi Pesan <span className="text-amber-500 dark:text-amber-400">*</span>
                                     </label>
                                     <textarea
                                         required
@@ -491,29 +529,29 @@ export default function ContactModal({
                                         onChange={(e) => setFormMessage(e.target.value)}
                                         placeholder={
                                             intent === 'project'
-                                                ? 'Deskripsikan kebutuhan sistem, fitur utama, dan target tanggal...'
+                                                ? 'Deskripsikan ringkasan sistem yang ingin dibangun, fitur utama, dan ekspektasi timeline...'
                                                 : intent === 'hiring'
-                                                ? 'Sebutkan gambaran tim, teknologi yang digunakan, atau link job description...'
-                                                : 'Tuliskan pesan Anda secara jelas...'
+                                                ? 'Sebutkan gambaran peran kerja, tech stack, atau link informasi rekrutmen...'
+                                                : 'Tuliskan pesan atau pertanyaan teknis Anda secara jelas...'
                                         }
-                                        className="w-full resize-none rounded-lg border border-zinc-200/90 bg-zinc-50/50 px-3 py-2 text-xs sm:text-sm text-zinc-900 transition-all focus:border-zinc-400 focus:bg-white focus:outline-none dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-white dark:focus:border-zinc-600"
+                                        className="w-full resize-none rounded-xl border border-zinc-200/90 bg-zinc-50/60 px-3.5 py-2.5 text-xs sm:text-sm text-zinc-900 placeholder-zinc-400 transition-all focus:border-amber-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-[#0c162f]/80 dark:text-white dark:placeholder-zinc-500 dark:focus:border-amber-400/70 dark:focus:bg-[#101c3d]"
                                     />
                                 </div>
 
-                                {/* Submit Button */}
+                                {/* Luxury Submit Button */}
                                 <button
                                     type="submit"
                                     disabled={isSubmitting}
-                                    className="luxury-btn-primary flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg py-2.5 text-xs sm:text-sm font-black active:scale-99 disabled:opacity-50"
+                                    className="luxury-btn-primary flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl py-3 text-xs sm:text-sm font-black active:scale-[0.99] disabled:opacity-50"
                                 >
                                     {isSubmitting ? (
                                         <>
-                                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white dark:border-zinc-950 border-t-transparent"></div>
+                                            <div className="size-4 animate-spin rounded-full border-2 border-zinc-950 border-t-transparent" />
                                             <span>Mengirimkan Pesan...</span>
                                         </>
                                     ) : (
                                         <>
-                                            <Send size={14} />
+                                            <Send size={15} />
                                             <span>
                                                 {intent === 'project'
                                                     ? 'Kirim Permintaan Diskusi Proyek'

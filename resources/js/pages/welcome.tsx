@@ -417,6 +417,7 @@ export default function Welcome({
                 isOpen={isContactOpen}
                 onClose={() => setIsContactOpen(false)}
                 profileEmail={profile?.email || 'ridhwananang@gmail.com'}
+                whatsappNumber="081298502177"
                 linkedinUrl={profile?.linkedin_url || 'https://www.linkedin.com/in/ridhwan-anang-ma-ruf/'}
                 githubUrl={profile?.github_url || 'https://github.com/ridhwananang'}
             />
