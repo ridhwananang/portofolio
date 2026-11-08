@@ -3,7 +3,6 @@ import {
     Send,
     CheckCircle2,
     Mail,
-    MessageSquare,
     Copy,
     Check,
     Briefcase,
@@ -16,7 +15,8 @@ import {
     ChevronDown,
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { SiWhatsapp } from 'react-icons/si';
 
 interface ContactModalProps {
     isOpen: boolean;
@@ -50,6 +50,35 @@ export default function ContactModal({
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [copiedEmail, setCopiedEmail] = useState(false);
+
+    // Lock document scroll and handle Escape key to prevent glitchy background scrolling
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const originalOverflow = document.body.style.overflow;
+        const originalPaddingRight = document.body.style.paddingRight;
+
+        // Prevent layout shift from scrollbar disappearing
+        const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+        if (scrollBarWidth > 0) {
+            document.body.style.paddingRight = `${scrollBarWidth}px`;
+        }
+        document.body.style.overflow = 'hidden';
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                onClose();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            document.body.style.overflow = originalOverflow;
+            document.body.style.paddingRight = originalPaddingRight;
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isOpen, onClose]);
 
     if (!isOpen) {
         return null;
@@ -147,7 +176,7 @@ export default function ContactModal({
     return (
         <div
             id="contact-modal"
-            className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/80 p-3 sm:p-4 md:p-6 backdrop-blur-md overflow-y-auto"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/80 p-3 sm:p-4 md:p-6 backdrop-blur-md overflow-y-auto overscroll-contain"
             onClick={(e) => {
                 if (e.target === e.currentTarget) onClose();
             }}
@@ -156,8 +185,8 @@ export default function ContactModal({
                 initial={{ scale: 0.96, opacity: 0, y: 14 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.96, opacity: 0, y: 14 }}
-                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                className="relative my-auto flex w-full max-w-4xl max-h-[92vh] flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-zinc-200/90 bg-white shadow-2xl dark:border-amber-500/30 dark:bg-[#080e21]"
+                transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                className="relative my-auto flex w-full max-w-4xl max-h-[calc(100dvh-2rem)] md:max-h-[min(90vh,680px)] flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-zinc-200/90 bg-white shadow-2xl dark:border-amber-500/30 dark:bg-[#080e21]"
             >
                 {/* Champagne Gold Specular Top Hairline */}
                 <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400/80 to-transparent pointer-events-none z-30" />
@@ -171,14 +200,14 @@ export default function ContactModal({
                     <X size={16} />
                 </button>
 
-                {/* Main Two-Column Grid (scrollable on mobile if content exceeds viewport) */}
-                <div className="grid grid-cols-1 md:grid-cols-12 overflow-y-auto min-h-0 flex-1">
-                    {/* Left Column: Direct Fast-Track Channels (5 cols) */}
-                    <div className="md:col-span-5 flex flex-col justify-between border-b md:border-b-0 md:border-r border-zinc-200/80 bg-zinc-50/80 p-5 sm:p-7 dark:border-white/10 dark:bg-gradient-to-b dark:from-[#091124] dark:to-[#070b1a] relative overflow-hidden">
+                {/* Main Two-Column Structure */}
+                <div className="grid grid-cols-1 md:grid-cols-12 flex-1 min-h-0 overflow-y-auto md:overflow-visible">
+                    {/* Left Column: Direct Fast-Track Channels (5 cols - Anchored on desktop) */}
+                    <div className="md:col-span-5 flex flex-col justify-between border-b md:border-b-0 md:border-r border-zinc-200/80 bg-zinc-50/80 p-5 sm:p-6 md:p-7 dark:border-white/10 dark:bg-gradient-to-b dark:from-[#091124] dark:to-[#070b1a] relative overflow-hidden shrink-0">
                         {/* Subtle background glow */}
                         <div className="absolute -top-16 -left-16 size-48 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
 
-                        <div className="space-y-5 relative z-10">
+                        <div className="space-y-4 sm:space-y-5 relative z-10">
                             {/* Availability Status Badge */}
                             <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-emerald-700 dark:text-emerald-400 shadow-xs">
                                 <span className="relative flex size-2">
@@ -236,16 +265,16 @@ export default function ContactModal({
                                     </div>
                                 </div>
 
-                                {/* WhatsApp Fast-Track */}
+                                {/* Official WhatsApp Fast-Track with Authentic WhatsApp Icon */}
                                 <a
                                     href={`https://wa.me/${normalizedWa}?text=${whatsappMessage}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="group relative flex items-center justify-between rounded-xl border border-emerald-500/25 bg-emerald-50/70 p-3 sm:p-3.5 shadow-2xs transition-all hover:bg-emerald-50 hover:border-emerald-500/40 hover:shadow-xs dark:border-emerald-500/30 dark:bg-gradient-to-r dark:from-emerald-950/30 dark:via-[#091a22] dark:to-[#0a1824] dark:hover:border-emerald-400/60 dark:hover:shadow-[0_4px_20px_rgba(16,185,129,0.15)] active:scale-[0.99]"
+                                    className="group relative flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-50/70 p-3 sm:p-3.5 shadow-2xs transition-all hover:bg-emerald-50 hover:border-emerald-500/50 hover:shadow-xs dark:border-emerald-500/30 dark:bg-gradient-to-r dark:from-emerald-950/30 dark:via-[#091a22] dark:to-[#0a1824] dark:hover:border-emerald-400/60 dark:hover:shadow-[0_4px_20px_rgba(16,185,129,0.2)] active:scale-[0.99]"
                                 >
                                     <div className="flex items-center gap-3 min-w-0">
-                                        <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 group-hover:scale-105 transition-transform">
-                                            <MessageSquare size={16} />
+                                        <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white dark:bg-emerald-500/20 dark:text-emerald-400 border border-emerald-500/30 group-hover:scale-105 group-hover:bg-emerald-500 group-hover:text-white dark:group-hover:bg-emerald-500 dark:group-hover:text-white transition-all shadow-[0_0_12px_rgba(16,185,129,0.25)]">
+                                            <SiWhatsapp size={18} />
                                         </div>
                                         <div className="text-left truncate">
                                             <div className="flex items-center gap-1.5">
@@ -266,7 +295,7 @@ export default function ContactModal({
                         </div>
 
                         {/* Trust Signals Footer */}
-                        <div className="mt-6 pt-5 border-t border-zinc-200/80 dark:border-white/10 space-y-2 relative z-10">
+                        <div className="mt-5 pt-4 border-t border-zinc-200/80 dark:border-white/10 space-y-2 relative z-10">
                             <div className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300">
                                 <Clock size={13} className="text-amber-500 dark:text-amber-400 shrink-0" />
                                 <span>Rata-rata respons: <strong className="text-zinc-900 dark:text-white">&lt; 4 jam</strong> (Prioritas Utama)</span>
@@ -275,7 +304,7 @@ export default function ContactModal({
                                 <MapPin size={13} className="text-amber-500 dark:text-amber-400 shrink-0" />
                                 <span>Tangerang Selatan, Banten • WIB (UTC+7)</span>
                             </div>
-                            <div className="flex items-center gap-3 pt-1.5 text-xs font-mono text-zinc-500 dark:text-zinc-400">
+                            <div className="flex items-center gap-3 pt-1 text-xs font-mono text-zinc-500 dark:text-zinc-400">
                                 <a
                                     href={linkedinUrl}
                                     target="_blank"
@@ -297,8 +326,8 @@ export default function ContactModal({
                         </div>
                     </div>
 
-                    {/* Right Column: Contact Form (7 cols) */}
-                    <div className="md:col-span-7 p-5 sm:p-7 flex flex-col justify-between bg-white dark:bg-[#080e21] relative">
+                    {/* Right Column: Contact Form (7 cols - Independently scrollable on short screens) */}
+                    <div className="md:col-span-7 p-5 sm:p-6 md:p-7 flex flex-col justify-between bg-white dark:bg-[#080e21] relative md:max-h-[640px] md:overflow-y-auto">
                         {/* Ambient glow in dark mode */}
                         <div className="absolute -bottom-16 -right-16 size-48 rounded-full bg-blue-600/10 blur-3xl pointer-events-none" />
 
@@ -332,7 +361,7 @@ export default function ContactModal({
                         ) : (
                             <form onSubmit={handleFormSubmit} className="space-y-4 relative z-10">
                                 {/* Intent Switcher Tabs */}
-                                <div>
+                                <div className="pr-8 sm:pr-10">
                                     <label className="mb-1.5 block text-[10.5px] font-mono uppercase tracking-wider text-zinc-500 dark:text-amber-400/90 font-bold">
                                         Pilih Kategori Pesan
                                     </label>
