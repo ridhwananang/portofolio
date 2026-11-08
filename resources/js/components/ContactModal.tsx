@@ -145,7 +145,7 @@ export default function ContactModal({
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.96, opacity: 0, y: 12 }}
                 transition={{ duration: 0.2, ease: 'easeOut' }}
-                className="relative my-auto flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-zinc-200/90 bg-white shadow-2xl dark:border-white/10 dark:bg-[#0c0e14]"
+                className="relative my-auto flex w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-zinc-200/90 bg-white shadow-2xl dark:border-white/10 dark:bg-[#0c0e14]"
             >
                 {/* Close Button */}
                 <button

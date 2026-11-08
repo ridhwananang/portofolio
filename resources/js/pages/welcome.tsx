@@ -142,72 +142,73 @@ export default function Welcome({
             </motion.div>
 
             {/* Main Showcase Layout Wrapper */}
-            <main className="relative z-10 mx-auto max-w-7xl space-y-12 px-4 pt-24 pb-16 sm:px-6 lg:px-8">
-                {/* Core two-column grid */}
-                <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-12">
-                    {/* Left Column (Sticky Author Profile Card - 4 slots wide) */}
-                    <motion.div
-                        className="z-20 h-fit md:sticky md:top-20 md:col-span-4"
-                        initial={{ x: -20, opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
-                        transition={{
-                            duration: 0.5,
-                            ease: 'easeOut',
-                            delay: 0.05,
-                        }}
-                    >
-                        <ProfileCard
-                            profile={profile}
-                            loading={loading}
-                            onOpenContact={() => setIsContactOpen(true)}
-                        />
-                    </motion.div>
-
-                    {/* Right Column (Scrollable details grids - 8 slots wide) */}
-                    <div className="space-y-6 md:col-span-8">
-                        {/* Section 1: Hero Greetings Wrapper */}
+            <main className="relative z-10 mx-auto max-w-7xl space-y-10 px-4 pt-24 pb-16 sm:px-6 lg:px-8">
+                {/* Hero & Identity Bento Tier (Balanced 2-Column Grid) */}
+                <div id="hero" className="scroll-mt-24">
+                    <div className="grid grid-cols-1 items-stretch gap-5 lg:grid-cols-12">
+                        {/* Left Column (Author Profile Card - 4 slots wide) */}
                         <motion.div
-                            id="hero"
-                            className="scroll-mt-24"
-                            initial={{ y: 15, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
+                            className="z-20 flex flex-col lg:col-span-4"
+                            initial={{ x: -16, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
                             transition={{
-                                duration: 0.5,
+                                duration: 0.45,
+                                ease: 'easeOut',
+                                delay: 0.05,
+                            }}
+                        >
+                            <ProfileCard
+                                profile={profile}
+                                loading={loading}
+                                onOpenContact={() => setIsContactOpen(true)}
+                            />
+                        </motion.div>
+
+                        {/* Right Column (Hero Dossier - 8 slots wide) */}
+                        <motion.div
+                            className="flex flex-col lg:col-span-8"
+                            initial={{ x: 16, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            transition={{
+                                duration: 0.45,
                                 ease: 'easeOut',
                                 delay: 0.1,
                             }}
                         >
-                            <MainHero onOpenTracking={() => setIsTrackingOpen(true)} />
-                        </motion.div>
-
-                        {/* Section 2: Technical Grid Wrapper */}
-                        <motion.div
-                            id="tech-stack"
-                            className="scroll-mt-24"
-                            initial={{ y: 15, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            transition={{
-                                duration: 0.5,
-                                ease: 'easeOut',
-                                delay: 0.2,
-                            }}
-                        >
-                            <TechStack
-                                techStacks={techStacks}
-                                loading={loading}
+                            <MainHero
+                                onOpenTracking={() => setIsTrackingOpen(true)}
+                                onOpenContact={() => setIsContactOpen(true)}
                             />
                         </motion.div>
                     </div>
                 </div>
 
-                {/* Section 3: Project Cases List Wrapper */}
+                {/* Section 2: Technical Stack Console (Full-Width Section) */}
                 <motion.div
-                    id="karya"
-                    className="content-auto scroll-mt-24 border-t border-zinc-200/80 pt-8 dark:border-white/10"
+                    id="tech-stack"
+                    className="content-auto scroll-mt-24 border-t border-zinc-200/80 pt-8 dark:border-white/[0.07]"
                     initial={{ y: 15, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{
-                        duration: 0.5,
+                        duration: 0.45,
+                        ease: 'easeOut',
+                        delay: 0.2,
+                    }}
+                >
+                    <TechStack
+                        techStacks={techStacks}
+                        loading={loading}
+                    />
+                </motion.div>
+
+                {/* Section 3: Project Cases List Wrapper */}
+                <motion.div
+                    id="karya"
+                    className="content-auto scroll-mt-24 border-t border-zinc-200/80 pt-8 dark:border-white/[0.07]"
+                    initial={{ y: 15, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{
+                        duration: 0.45,
                         ease: 'easeOut',
                         delay: 0.3,
                     }}
@@ -218,11 +219,11 @@ export default function Welcome({
                 {/* Section 4: Certificates Grid Wrapper */}
                 <motion.div
                     id="sertifikat"
-                    className="content-auto scroll-mt-24"
+                    className="content-auto scroll-mt-24 border-t border-zinc-200/80 pt-8 dark:border-white/[0.07]"
                     initial={{ y: 15, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{
-                        duration: 0.5,
+                        duration: 0.45,
                         ease: 'easeOut',
                         delay: 0.4,
                     }}
@@ -351,7 +352,7 @@ export default function Welcome({
                                     <button
                                         type="button"
                                         onClick={() => setIsContactOpen(true)}
-                                        className="luxury-btn-primary cursor-pointer inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold tracking-wide"
+                                        className="luxury-btn-primary cursor-pointer inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold tracking-wide"
                                     >
                                         <Sparkles size={12} />
                                         <span>Buka Dialog Kontak</span>

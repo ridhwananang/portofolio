@@ -139,7 +139,7 @@ export default function Header({
                 </div>
 
                 {/* Desktop Minimalist Floating Nav Dock */}
-                <nav className="luxury-card hidden items-center gap-0.5 rounded-xl p-1 shadow-md md:flex">
+                <nav className="luxury-card hidden items-center gap-0.5 rounded-lg p-1 shadow-md md:flex">
                     <div className="specular-top" />
                     {navItems.map((item) => {
                         const Icon = item.icon;
@@ -149,7 +149,7 @@ export default function Header({
                             <button
                                 key={item.id}
                                 onClick={() => handleNavClick(item.id)}
-                                className={`relative z-10 flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150 ${
+                                className={`relative z-10 flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-150 ${
                                     isActive
                                         ? 'text-zinc-950 dark:text-white font-bold'
                                         : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
@@ -158,7 +158,7 @@ export default function Header({
                                 {isActive && (
                                     <motion.div
                                         layoutId="activeNavBackground"
-                                        className="absolute inset-0 -z-10 rounded-lg bg-zinc-100 shadow-2xs border border-zinc-200/80 dark:bg-white/10 dark:border-white/15"
+                                        className="absolute inset-0 -z-10 rounded-md bg-zinc-100 shadow-2xs border border-zinc-200/80 dark:bg-white/10 dark:border-white/15"
                                         transition={{
                                             type: 'spring',
                                             stiffness: 450,
@@ -178,7 +178,7 @@ export default function Header({
                         href="https://www.dicoding.com/users/riedmarf12/academies"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex cursor-pointer items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+                        className="flex cursor-pointer items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
                     >
                         <span>Dicoding</span>
                         <ExternalLink size={10} className="opacity-60" />
@@ -190,22 +190,22 @@ export default function Header({
                     {/* Theme Toggle Button */}
                     <button
                         onClick={toggleTheme}
-                        className="luxury-btn-secondary cursor-pointer rounded-xl p-2 text-zinc-700 dark:text-zinc-300"
+                        className="luxury-btn-secondary cursor-pointer rounded-lg p-2 text-zinc-700 dark:text-zinc-300"
                         aria-label="Toggle tema gelap/terang"
                     >
                         {isDarkMode ? (
-                            <Sun size={15} className="text-amber-400" />
+                            <Sun size={14} className="text-amber-400" />
                         ) : (
-                            <Moon size={15} className="text-zinc-700" />
+                            <Moon size={14} className="text-zinc-700" />
                         )}
                     </button>
 
                     {/* Quick Contact Button */}
                     <button
                         onClick={onOpenContact}
-                        className="luxury-btn-primary hidden cursor-pointer items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold tracking-wide sm:inline-flex"
+                        className="luxury-btn-primary hidden cursor-pointer items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-bold tracking-wide sm:inline-flex"
                     >
-                        <Send size={12} />
+                        <Send size={11} />
                         <span>Hubungi</span>
                     </button>
 
