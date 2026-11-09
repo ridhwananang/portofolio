@@ -50,8 +50,8 @@ class GeminiChatService
             }
         }
 
-        // 1. Gather dynamic portfolio context (Cached with v3 key for immediate update)
-        $systemPrompt = \Illuminate\Support\Facades\Cache::remember('portfolio_gemini_system_prompt_v3', 3600, function () {
+        // 1. Gather dynamic portfolio context (Cached with v4 key for immediate update)
+        $systemPrompt = \Illuminate\Support\Facades\Cache::remember('portfolio_gemini_system_prompt_v4', 3600, function () {
             $profile = Profile::first();
             $projects = Project::all();
             $techStacks = TechStack::all();
@@ -289,8 +289,8 @@ class GeminiChatService
             return "Selain **Finverra**, beberapa proyek unggulan Ridhwan lainnya:\n- **MyClassyTask**: Task manager dengan AI LLM extraction untuk parsing otomatis teks ke deadline & subtugas.\n- **ProManageSys**: Kanban board kolaboratif tim dengan dynamic permissions & optimasi relasi database.\n- **SiPresens**: Presensi karyawan geofencing GPS real-time dengan proteksi anti-mock location.\n- **SportIn**: Booking lapangan olahraga dengan database pessimistic locking untuk mencegah double-booking.";
         }
 
-        if (str_contains($q, 'kontak') || str_contains($q, 'email') || str_contains($q, 'hire') || str_contains($q, 'kerja') || str_contains($q, 'status') || str_contains($q, 'kolaborasi') || str_contains($q, 'rate') || str_contains($q, 'harga')) {
-            return "Ridhwan saat ini berstatus **Available for Work** (Terbuka untuk kontrak rekayasa software, proyek backend/fullstack, maupun remote roles).\n- **Email**: `ridhwananang@gmail.com`\n- **Lokasi**: Tangerang Selatan, Indonesia\n- **Rate**: Fleksibel dan kompetitif sesuai ruang lingkup proyek. Silakan klik tombol **Hubungi Saya** pada halaman ini!";
+        if (str_contains($q, 'kontak') || str_contains($q, 'email') || str_contains($q, 'hire') || str_contains($q, 'kerja') || str_contains($q, 'status') || str_contains($q, 'kolaborasi') || str_contains($q, 'wa') || str_contains($q, 'whatsapp')) {
+            return "Ridhwan saat ini berstatus **Available for Work** (Terbuka untuk peluang kerja full-time, kontrak rekayasa software, maupun kolaborasi proyek teknis).\n- **Email**: `ridhwananang@gmail.com`\n- **WhatsApp**: `+62 812-9850-2177`\n- **Lokasi**: Tangerang Selatan, Indonesia\nSilakan klik tombol **Hubungi Saya** pada halaman portofolio untuk membuka dialog kontak langsung!";
         }
 
         if (str_contains($q, 'halo') || str_contains($q, 'hai') || str_contains($q, 'hi') || str_contains($q, 'hello') || str_contains($q, 'hey') || str_contains($q, 'pagi') || str_contains($q, 'siang') || str_contains($q, 'sore') || str_contains($q, 'malam')) {

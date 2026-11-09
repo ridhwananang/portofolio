@@ -15,7 +15,6 @@ import MouseAmbientAura from '../components/MouseAmbientAura';
 import ProfileCard from '../components/ProfileCard';
 import Projects from '../components/Projects';
 import TechStack from '../components/TechStack';
-import TrackingModal from '../components/TrackingModal';
 import { Sparkles } from 'lucide-react';
 
 interface WelcomeProps {
@@ -23,7 +22,6 @@ interface WelcomeProps {
     initialProjects?: any[];
     initialTechStacks?: any[];
     initialCertificates?: any[];
-    initialPackages?: any[];
 }
 
 export default function Welcome({
@@ -31,17 +29,14 @@ export default function Welcome({
     initialProjects = [],
     initialTechStacks = [],
     initialCertificates = [],
-    initialPackages = [],
 }: WelcomeProps) {
     const [activeSection, setActiveSection] = useState('hero');
     const [isContactOpen, setIsContactOpen] = useState(false);
-    const [isTrackingOpen, setIsTrackingOpen] = useState(false);
 
     const [profile, setProfile] = useState<any>(initialProfile || null);
     const [projects, setProjects] = useState<any[]>(Array.isArray(initialProjects) ? initialProjects : []);
     const [techStacks, setTechStacks] = useState<any[]>(Array.isArray(initialTechStacks) ? initialTechStacks : []);
     const [certificates, setCertificates] = useState<any[]>(Array.isArray(initialCertificates) ? initialCertificates : []);
-    const [packages, setPackages] = useState<any[]>(Array.isArray(initialPackages) ? initialPackages : []);
     const [loading, setLoading] = useState(!initialProfile);
 
     useEffect(() => {
@@ -55,16 +50,12 @@ export default function Welcome({
             fetch('/api/projects').then((res) => res.json()),
             fetch('/api/tech-stacks').then((res) => res.json()),
             fetch('/api/certificates').then((res) => res.json()),
-            fetch('/api/service-packages').then((res) => res.json()).catch(() => []),
         ])
-            .then(([profileData, projectsData, techStacksData, certificatesData, packagesData]) => {
+            .then(([profileData, projectsData, techStacksData, certificatesData]) => {
                 setProfile(profileData && !profileData.message ? profileData : null);
                 setProjects(Array.isArray(projectsData) ? projectsData : []);
                 setTechStacks(Array.isArray(techStacksData) ? techStacksData : []);
                 setCertificates(Array.isArray(certificatesData) ? certificatesData : []);
-                if (Array.isArray(packagesData) && packagesData.length > 0) {
-                    setPackages(packagesData);
-                }
                 setLoading(false);
             })
             .catch((err) => {
@@ -150,7 +141,6 @@ export default function Welcome({
                 setActiveSection={setActiveSection}
                 onSectionSelect={handleSectionSelect}
                 onOpenContact={() => setIsContactOpen(true)}
-                onOpenTracking={() => setIsTrackingOpen(true)}
             />
 
             {/* Main Showcase Layout Wrapper */}
@@ -188,7 +178,6 @@ export default function Welcome({
                             }}
                         >
                             <MainHero
-                                onOpenTracking={() => setIsTrackingOpen(true)}
                                 onOpenContact={() => setIsContactOpen(true)}
                             />
                         </motion.div>
@@ -420,12 +409,6 @@ export default function Welcome({
                 whatsappNumber="081298502177"
                 linkedinUrl={profile?.linkedin_url || 'https://www.linkedin.com/in/ridhwan-anang-ma-ruf/'}
                 githubUrl={profile?.github_url || 'https://github.com/ridhwananang'}
-            />
-
-            {/* Quick Project Tracker Modal */}
-            <TrackingModal
-                isOpen={isTrackingOpen}
-                onClose={() => setIsTrackingOpen(false)}
             />
 
             {/* Floating AI Chat Assistant widget */}

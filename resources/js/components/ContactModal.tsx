@@ -42,8 +42,8 @@ export default function ContactModal({
     const [formEmail, setFormEmail] = useState('');
     const [formCompany, setFormCompany] = useState('');
     const [formRole, setFormRole] = useState('Full-Time Remote');
-    const [formService, setFormService] = useState('Fullstack Web Application');
-    const [formBudget, setFormBudget] = useState('Rp 5 - 15 Juta');
+    const [formProjectTopic, setFormProjectTopic] = useState('');
+    const [formCollaborationType, setFormCollaborationType] = useState('Partner Teknis / Co-Development');
     const [formSubject, setFormSubject] = useState('');
     const [formMessage, setFormMessage] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -101,9 +101,9 @@ export default function ContactModal({
 
     const whatsappMessage = encodeURIComponent(
         intent === 'project'
-            ? `Halo Ridhwan, saya ingin mendiskusikan pembuatan proyek web (${formService}) dengan estimasi budget ${formBudget}. Bisakah kita jadwalkan diskusi teknis?`
+            ? `Halo Ridhwan, saya melihat portofolio Anda dan tertarik untuk mendiskusikan peluang kolaborasi proyek. Bisakah kita jadwalkan waktu untuk diskusi?`
             : intent === 'hiring'
-            ? `Halo Ridhwan, kami tertarik dengan profil Anda untuk peluang kerja di tim kami. Bisakah kita terhubung?`
+            ? `Halo Ridhwan, kami tertarik dengan profil dan portofolio Anda untuk peluang kerja di tim kami. Bisakah kita terhubung?`
             : `Halo Ridhwan, saya melihat portofolio Anda dan ingin berdiskusi seputar software engineering.`
     );
 
@@ -122,8 +122,8 @@ export default function ContactModal({
         let structuredMessage = formMessage.trim();
 
         if (intent === 'project') {
-            formattedSubject = `[PROYEK] ${formService} (${formBudget}) - ${formName.trim()}`;
-            structuredMessage = `${formMessage.trim()}\n\n---\n📋 Ringkasan Kebutuhan Proyek:\n• Layanan: ${formService}\n• Estimasi Budget: ${formBudget}\n• Klien: ${formName.trim()} (${formEmail.trim()})`;
+            formattedSubject = `[KOLABORASI] ${formProjectTopic.trim() || 'Proyek'} - ${formName.trim()}`;
+            structuredMessage = `${formMessage.trim()}\n\n---\n🤝 Detail Kolaborasi Proyek:\n• Topik / Proyek: ${formProjectTopic.trim() || 'Kolaborasi Teknis'}\n• Bentuk Kolaborasi: ${formCollaborationType}\n• Kontak: ${formName.trim()} (${formEmail.trim()})`;
         } else if (intent === 'hiring') {
             formattedSubject = `[REKRUTMEN] ${formRole}${formCompany ? ` di ${formCompany.trim()}` : ''} - ${formName.trim()}`;
             structuredMessage = `${formMessage.trim()}\n\n---\n🏢 Detail Rekrutmen:\n• Perusahaan: ${formCompany.trim() || 'N/A'}\n• Tipe Posisi: ${formRole}\n• Kontak: ${formName.trim()} (${formEmail.trim()})`;
@@ -164,6 +164,7 @@ export default function ContactModal({
             setFormName('');
             setFormEmail('');
             setFormCompany('');
+            setFormProjectTopic('');
             setFormSubject('');
             setFormMessage('');
         } catch (error: any) {
@@ -226,7 +227,7 @@ export default function ContactModal({
                                     <Sparkles size={18} className="text-amber-500 dark:text-amber-400" />
                                 </h3>
                                 <p className="text-xs sm:text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">
-                                    Punya ide proyek, kebutuhan sistem backend yang kokoh, atau tawaran kerja sama? Silakan kontak langsung atau kirim detail pesan.
+                                    Punya peluang karir, ide proyek untuk dikembangkan bersama, atau ingin berdiskusi teknis? Silakan kontak langsung atau kirim detail pesan.
                                 </p>
                             </div>
 
@@ -376,7 +377,7 @@ export default function ContactModal({
                                             }`}
                                         >
                                             <Briefcase size={13} className={intent === 'project' ? 'text-amber-500 dark:text-amber-400' : ''} />
-                                            <span>Proyek</span>
+                                            <span>Kolaborasi</span>
                                         </button>
                                         <button
                                             type="button"
@@ -423,7 +424,7 @@ export default function ContactModal({
                                             required
                                             value={formName}
                                             onChange={(e) => setFormName(e.target.value)}
-                                            placeholder="Rian Pratama"
+                                            placeholder="Nama Anda"
                                             className="w-full rounded-xl border border-zinc-200/90 bg-zinc-50/60 px-3.5 py-2.5 text-xs sm:text-sm text-zinc-900 placeholder-zinc-400 transition-all focus:border-amber-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-[#0c162f]/80 dark:text-white dark:placeholder-zinc-500 dark:focus:border-amber-400/70 dark:focus:bg-[#101c3d] dark:focus:ring-amber-400/20"
                                         />
                                     </div>
@@ -436,57 +437,43 @@ export default function ContactModal({
                                             required
                                             value={formEmail}
                                             onChange={(e) => setFormEmail(e.target.value)}
-                                            placeholder="rian@company.com"
+                                            placeholder="email@company.com"
                                             className="w-full rounded-xl border border-zinc-200/90 bg-zinc-50/60 px-3.5 py-2.5 text-xs sm:text-sm text-zinc-900 placeholder-zinc-400 transition-all focus:border-amber-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-[#0c162f]/80 dark:text-white dark:placeholder-zinc-500 dark:focus:border-amber-400/70 dark:focus:bg-[#101c3d] dark:focus:ring-amber-400/20"
                                         />
                                     </div>
                                 </div>
 
-                                {/* Dynamic Fields: Project Intent */}
+                                {/* Dynamic Fields: Project Collaboration Intent */}
                                 {intent === 'project' && (
-                                    <div className="space-y-3">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         <div>
                                             <label className="mb-1.5 block text-xs font-medium text-zinc-700 dark:text-zinc-300">
-                                                Estimasi Anggaran Proyek
+                                                Topik / Nama Proyek
                                             </label>
-                                            <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                                                {[
-                                                    '< Rp 5 Juta',
-                                                    'Rp 5 - 15 Juta',
-                                                    'Rp 15 - 30 Juta',
-                                                    '> Rp 30 Juta',
-                                                ].map((budget) => (
-                                                    <button
-                                                        key={budget}
-                                                        type="button"
-                                                        onClick={() => setFormBudget(budget)}
-                                                        className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
-                                                            formBudget === budget
-                                                                ? 'border-amber-500 bg-amber-500/15 text-amber-700 dark:border-amber-400 dark:bg-amber-400/20 dark:text-amber-300 shadow-2xs'
-                                                                : 'border-zinc-200 bg-zinc-50 text-zinc-600 hover:border-zinc-300 dark:border-white/10 dark:bg-[#0c162f]/60 dark:text-zinc-400 dark:hover:border-amber-400/30 dark:hover:text-zinc-200'
-                                                        }`}
-                                                    >
-                                                        {budget}
-                                                    </button>
-                                                ))}
-                                            </div>
+                                            <input
+                                                type="text"
+                                                value={formProjectTopic}
+                                                onChange={(e) => setFormProjectTopic(e.target.value)}
+                                                placeholder="Contoh: Platform FinTech, MVP Startup, dsb."
+                                                className="w-full rounded-xl border border-zinc-200/90 bg-zinc-50/60 px-3.5 py-2.5 text-xs sm:text-sm text-zinc-900 placeholder-zinc-400 transition-all focus:border-amber-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-[#0c162f]/80 dark:text-white dark:placeholder-zinc-500 dark:focus:border-amber-400/70 dark:focus:bg-[#101c3d]"
+                                            />
                                         </div>
-
                                         <div>
                                             <label className="mb-1.5 block text-xs font-medium text-zinc-700 dark:text-zinc-300">
-                                                Jenis Layanan Utama
+                                                Bentuk Kolaborasi
                                             </label>
                                             <div className="relative">
                                                 <select
-                                                    value={formService}
-                                                    onChange={(e) => setFormService(e.target.value)}
+                                                    value={formCollaborationType}
+                                                    onChange={(e) => setFormCollaborationType(e.target.value)}
                                                     className="w-full appearance-none rounded-xl border border-zinc-200/90 bg-zinc-50/60 px-3.5 py-2.5 pr-9 text-xs sm:text-sm text-zinc-900 transition-all focus:border-amber-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-[#0c162f] dark:text-white dark:focus:border-amber-400/70 dark:focus:bg-[#101c3d] cursor-pointer"
                                                 >
-                                                    <option value="Fullstack Web Application" className="dark:bg-[#080e21]">Fullstack Web App (Laravel + React SPA)</option>
-                                                    <option value="Backend REST API Engineering" className="dark:bg-[#080e21]">Backend Architecture & RESTful API</option>
-                                                    <option value="Frontend SPA React Integration" className="dark:bg-[#080e21]">Interactive React / TypeScript Frontend</option>
-                                                    <option value="Database & Performance Optimization" className="dark:bg-[#080e21]">Database Architecture & Query Optimization</option>
-                                                    <option value="Custom Project / Konsultasi Teknis" className="dark:bg-[#080e21]">Custom Engineering & Konsultasi</option>
+                                                    <option value="Partner Teknis / Co-Development" className="dark:bg-[#080e21]">Partner Teknis / Co-Development</option>
+                                                    <option value="Backend & Database Engineering" className="dark:bg-[#080e21]">Backend & Database Engineering</option>
+                                                    <option value="Frontend Modern (React + TypeScript)" className="dark:bg-[#080e21]">Frontend Modern (React + TypeScript)</option>
+                                                    <option value="Riset / Proyek Open Source & AI" className="dark:bg-[#080e21]">Riset / Proyek Open Source & AI</option>
+                                                    <option value="Konsultasi & Code Review" className="dark:bg-[#080e21]">Konsultasi & Code Review</option>
+                                                    <option value="Kolaborasi Lainnya" className="dark:bg-[#080e21]">Kolaborasi Lainnya</option>
                                                 </select>
                                                 <ChevronDown size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
                                             </div>
@@ -521,7 +508,7 @@ export default function ContactModal({
                                                 >
                                                     <option value="Full-Time Remote" className="dark:bg-[#080e21]">Full-Time Remote</option>
                                                     <option value="Full-Time Hybrid / Onsite" className="dark:bg-[#080e21]">Full-Time Hybrid / Onsite</option>
-                                                    <option value="Contract / Project-Based" className="dark:bg-[#080e21]">Contract / Project-Based</option>
+                                                    <option value="Kontrak Rekayasa Software" className="dark:bg-[#080e21]">Kontrak Rekayasa Software</option>
                                                     <option value="Part-Time / Advisory" className="dark:bg-[#080e21]">Part-Time / Advisory</option>
                                                 </select>
                                                 <ChevronDown size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
@@ -540,7 +527,7 @@ export default function ContactModal({
                                             type="text"
                                             value={formSubject}
                                             onChange={(e) => setFormSubject(e.target.value)}
-                                            placeholder="Diskusi teknis arsitektur Laravel, REST API, atau konsultasi..."
+                                            placeholder="Diskusi teknis arsitektur Laravel, React 19, optimasi database, atau networking..."
                                             className="w-full rounded-xl border border-zinc-200/90 bg-zinc-50/60 px-3.5 py-2.5 text-xs sm:text-sm text-zinc-900 placeholder-zinc-400 transition-all focus:border-amber-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-[#0c162f]/80 dark:text-white dark:placeholder-zinc-500 dark:focus:border-amber-400/70 dark:focus:bg-[#101c3d]"
                                         />
                                     </div>
@@ -553,14 +540,14 @@ export default function ContactModal({
                                     </label>
                                     <textarea
                                         required
-                                        rows={intent === 'project' ? 3 : 4}
+                                        rows={3}
                                         value={formMessage}
                                         onChange={(e) => setFormMessage(e.target.value)}
                                         placeholder={
                                             intent === 'project'
-                                                ? 'Deskripsikan ringkasan sistem yang ingin dibangun, fitur utama, dan ekspektasi timeline...'
+                                                ? 'Ceritakan tentang ide proyek yang ingin dikembangkan atau tujuan kolaborasi teknis Anda...'
                                                 : intent === 'hiring'
-                                                ? 'Sebutkan gambaran peran kerja, tech stack, atau link informasi rekrutmen...'
+                                                ? 'Sebutkan gambaran peran kerja, tech stack, atau link informasi lowongan kerja...'
                                                 : 'Tuliskan pesan atau pertanyaan teknis Anda secara jelas...'
                                         }
                                         className="w-full resize-none rounded-xl border border-zinc-200/90 bg-zinc-50/60 px-3.5 py-2.5 text-xs sm:text-sm text-zinc-900 placeholder-zinc-400 transition-all focus:border-amber-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-[#0c162f]/80 dark:text-white dark:placeholder-zinc-500 dark:focus:border-amber-400/70 dark:focus:bg-[#101c3d]"
@@ -583,7 +570,7 @@ export default function ContactModal({
                                             <Send size={15} />
                                             <span>
                                                 {intent === 'project'
-                                                    ? 'Kirim Permintaan Diskusi Proyek'
+                                                    ? 'Kirim Pesan Kolaborasi'
                                                     : intent === 'hiring'
                                                     ? 'Kirim Informasi Peluang Kerja'
                                                     : 'Kirim Pesan Sekarang'}

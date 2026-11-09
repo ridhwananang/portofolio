@@ -15,7 +15,6 @@ import { useAppearance } from '@/hooks/use-appearance';
 
 interface HeaderProps {
     onOpenContact: () => void;
-    onOpenTracking?: () => void;
     activeSection: string;
     setActiveSection: (section: string) => void;
     onSectionSelect?: (section: string, isManual?: boolean) => void;

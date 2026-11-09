@@ -1,7 +1,6 @@
 import { ArrowRight, Award, Sparkles } from 'lucide-react';
 
 interface MainHeroProps {
-    onOpenTracking?: () => void;
     onOpenContact?: () => void;
 }
 
