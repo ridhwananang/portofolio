@@ -170,7 +170,6 @@ export default function AIChatWidget() {
         if (!customText) {
             setChatInput('');
         }
-        setShowTooltip(false);
 
         const newUserMessage: ChatMessage = {
             sender: 'user',
