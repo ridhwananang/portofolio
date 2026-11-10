@@ -25,6 +25,7 @@ Route::get('/service-packages', function () {
     return response()->json(\App\Models\ServicePackage::where('is_active', true)->orderBy('sort_order')->orderBy('id')->get());
 })->middleware('throttle:60,1');
 Route::post('/chat', [ChatController::class, 'store'])->middleware('throttle:15,1');
+Route::get('/chat/sync', [ChatController::class, 'sync'])->middleware('throttle:120,1');
 Route::post('/contact', [ContactController::class, 'store'])->middleware('throttle:6,1');
 
 /*

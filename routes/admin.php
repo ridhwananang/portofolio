@@ -23,6 +23,7 @@ $registerAdminRoutes = function () {
     Route::resource('tech-stacks', TechStackController::class)->except(['create', 'show', 'edit']);
     Route::resource('certificates', CertificateController::class);
 
+    Route::get('/messages/sync', [MessageController::class, 'sync'])->name('messages.sync');
     Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
     Route::post('/messages/{message}/reply', [MessageController::class, 'reply'])->name('messages.reply');
     Route::patch('/messages/{message}/toggle-read', [MessageController::class, 'toggleRead'])->name('messages.toggle-read');

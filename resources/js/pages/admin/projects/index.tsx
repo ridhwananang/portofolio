@@ -50,7 +50,7 @@ export default function ProjectsIndex({ projects = [] }: ProjectsIndexProps) {
     const handleDelete = () => {
         if (!projectToDelete) return;
         setDeleting(true);
-        router.delete(`/admin/projects/${projectToDelete.id}`, {
+        router.delete(`/studio/projects/${projectToDelete.id}`, {
             onSuccess: () => {
                 toast.success('Proyek berhasil dihapus.');
                 setProjectToDelete(null);
@@ -80,8 +80,8 @@ export default function ProjectsIndex({ projects = [] }: ProjectsIndexProps) {
     return (
         <AppLayout
             breadcrumbs={[
-                { title: 'Studio', href: '/admin' },
-                { title: 'Portofolio Proyek', href: '/admin/projects' },
+                { title: 'Studio', href: '/studio' },
+                { title: 'Portofolio Proyek', href: '/studio/projects' },
             ]}
         >
             <Head title="Galeri Portofolio Proyek - Ridhwan Studio" />
@@ -107,7 +107,7 @@ export default function ProjectsIndex({ projects = [] }: ProjectsIndexProps) {
                     </div>
 
                     <Link
-                        href="/admin/projects/create"
+                        href="/studio/projects/create"
                         className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 px-5 py-3 text-xs font-bold text-white shadow-lg shadow-violet-500/25 transition-all duration-300 hover:shadow-violet-500/40 hover:scale-[1.02] active:scale-[0.98] self-start sm:self-auto"
                     >
                         <Plus size={15} />
@@ -280,7 +280,7 @@ export default function ProjectsIndex({ projects = [] }: ProjectsIndexProps) {
                                             variant="outline"
                                             className="h-8 gap-1.5 text-xs rounded-xl border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 hover:bg-slate-50 text-slate-700 dark:text-slate-300 font-bold"
                                         >
-                                            <Link href={`/admin/projects/${project.id}/edit`}>
+                                            <Link href={`/studio/projects/${project.id}/edit`}>
                                                 <Edit2 className="size-3 text-violet-500" />
                                                 Edit
                                             </Link>
@@ -352,7 +352,7 @@ export default function ProjectsIndex({ projects = [] }: ProjectsIndexProps) {
                                                 variant="outline"
                                                 className="h-7 text-xs rounded-lg"
                                             >
-                                                <Link href={`/admin/projects/${project.id}/edit`}>
+                                                <Link href={`/studio/projects/${project.id}/edit`}>
                                                     Edit
                                                 </Link>
                                             </Button>

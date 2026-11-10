@@ -44,7 +44,7 @@ export default function ProjectCreate() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post('/admin/projects', {
+        post('/studio/projects', {
             forceFormData: true,
             onSuccess: () => {
                 toast.success('Proyek baru berhasil ditambahkan!');
@@ -58,9 +58,9 @@ export default function ProjectCreate() {
     return (
         <AppLayout
             breadcrumbs={[
-                { title: 'Studio', href: '/admin' },
-                { title: 'Portofolio Proyek', href: '/admin/projects' },
-                { title: 'Tambah Baru', href: '/admin/projects/create' },
+                { title: 'Studio', href: '/studio' },
+                { title: 'Portofolio Proyek', href: '/studio/projects' },
+                { title: 'Tambah Baru', href: '/studio/projects/create' },
             ]}
         >
             <Head title="Tambah Proyek Baru - Ridhwan Studio" />
@@ -200,7 +200,7 @@ export default function ProjectCreate() {
                                 variant="ghost"
                                 className="rounded-2xl text-xs font-bold"
                             >
-                                <Link href="/admin/projects">Batal</Link>
+                                <Link href="/studio/projects">Batal</Link>
                             </Button>
 
                             <Button

@@ -126,3 +126,62 @@ test('chat api returns not found message for unknown email', function () {
     $text = $response->json('text');
     expect($text)->toContain('tidak menemukan riwayat pesan');
 });
+
+test('chat api pauses AI and activates human takeover when owner reply exists in thread', function () {
+    config(['services.gemini.key' => null]);
+
+    // User previously received a direct reply from Ridhwan
+    $payload = [
+        'messages' => [
+            [
+                'sender' => 'user',
+                'text' => 'Halo Mas Ridhwan'
+            ],
+            [
+                'sender' => 'ridhwan',
+                'text' => 'oke mas'
+            ],
+            [
+                'sender' => 'user',
+                'text' => 'apa kita bisa ketemu besok?'
+            ]
+        ],
+        'user_email' => 'klien@company.com'
+    ];
+
+    $response = $this->postJson('/api/chat', $payload);
+
+    $response->assertStatus(200)
+             ->assertJsonStructure(['text', 'human_takeover', 'whatsapp_url']);
+
+    expect($response->json('human_takeover'))->toBeTrue();
+    expect($response->json('text'))->toContain('Asisten AI dijeda otomatis');
+    expect($response->json('whatsapp_url'))->toContain('wa.me');
+
+    // Asserts follow-up message is stored in database as unread for Ridhwan
+    $latestMessage = \App\Models\Message::where('email', 'klien@company.com')->latest()->first();
+    expect($latestMessage)->not->toBeNull();
+    expect($latestMessage->message)->toBe('apa kita bisa ketemu besok?');
+    expect($latestMessage->is_read)->toBeFalse();
+});
+
+test('chat sync api returns real-time replies from Ridhwan', function () {
+    \App\Models\Message::create([
+        'name' => 'Klien Realtime',
+        'email' => 'realtime@klien.com',
+        'subject' => 'Proyek Baru',
+        'message' => 'Halo mas, ada waktu?',
+        'reply_content' => 'Halo! Iya ada mas, mari diskusikan.',
+        'replied_at' => now(),
+        'is_read' => true,
+    ]);
+
+    $response = $this->getJson('/api/chat/sync?email=realtime@klien.com');
+
+    $response->assertStatus(200)
+             ->assertJsonStructure(['replies', 'latest_reply']);
+
+    expect($response->json('latest_reply'))->toBe('Halo! Iya ada mas, mari diskusikan.');
+    expect($response->json('replies'))->toHaveCount(1);
+    expect($response->json('replies')[0]['sender'])->toBe('ridhwan');
+});

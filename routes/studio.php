@@ -47,6 +47,7 @@ $registerStudioAdminCmsRoutes = function () {
         Route::resource('certificates', CertificateController::class);
 
         // 4. Client Communication & Inbound Messages
+        Route::get('/messages/sync', [MessageController::class, 'sync'])->name('messages.sync');
         Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
         Route::post('/messages/{message}/reply', [MessageController::class, 'reply'])->name('messages.reply');
         Route::patch('/messages/{message}/toggle-read', [MessageController::class, 'toggleRead'])->name('messages.toggle-read');
@@ -174,11 +175,8 @@ Route::middleware(['auth'])->prefix('studio')->as('studio.main.')->group(functio
     }
 });
 
-// 4. Backward Compatibility Redirect: /admin/* to /studio/*
-Route::middleware(['auth'])->prefix('admin')->group(function () {
-    Route::any('/{any?}', function ($any = null) {
-        $path = $any ? '/'.ltrim($any, '/') : '';
-
-        return redirect('/studio'.$path, 301);
-    })->where('any', '.*');
+// 4. Full Backward Compatibility Alias: Mount all routes directly under /admin as well
+// This ensures any POST, PUT, PATCH, DELETE or GET requests sent to /admin/* resolve seamlessly with zero 405 errors
+Route::middleware(['auth'])->prefix('admin')->as('admin.alias.')->group(function () use ($registerStudioRoutes) {
+    $registerStudioRoutes();
 });

@@ -49,18 +49,11 @@ export default function ContactModal({
     const [errorMessage, setErrorMessage] = useState('');
     const [copiedEmail, setCopiedEmail] = useState(false);
 
-    // Auto-restore previous contact info if user visited before
-    useEffect(() => {
-        if (!isOpen) return;
-        try {
-            const savedEmail = localStorage.getItem('user_contact_email');
-            const savedName = localStorage.getItem('user_contact_name');
-            if (savedEmail && !formEmail) setFormEmail(savedEmail);
-            if (savedName && !formName) setFormName(savedName);
-        } catch {
-            // Ignore localStorage errors
-        }
-    }, [isOpen]);
+    const handleClose = () => {
+        setIsSubmitted(false);
+        setErrorMessage('');
+        onClose();
+    };
 
     // Lock document scroll and handle Escape key without inducing body layout shifts
     useEffect(() => {
@@ -71,7 +64,7 @@ export default function ContactModal({
 
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
-                onClose();
+                handleClose();
             }
         };
 
@@ -81,7 +74,7 @@ export default function ContactModal({
             document.body.style.overflow = originalOverflow;
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [isOpen, onClose]);
+    }, [isOpen]);
 
     if (!isOpen) {
         return null;
@@ -153,7 +146,9 @@ export default function ContactModal({
 
             setIsSubmitted(true);
 
-            // Reset message & subject, keep name & email for user convenience
+            // Cleanly reset all input form fields on successful submission
+            setFormName('');
+            setFormEmail('');
             setFormSubject('');
             setFormMessage('');
         } catch (error: any) {
@@ -168,7 +163,7 @@ export default function ContactModal({
             id="contact-modal"
             className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 dark:bg-black/80 p-2 sm:p-4 md:p-6 backdrop-blur-md overflow-y-auto overscroll-contain scrollbar-none"
             onClick={(e) => {
-                if (e.target === e.currentTarget) onClose();
+                if (e.target === e.currentTarget) handleClose();
             }}
         >
             <motion.div
@@ -183,7 +178,7 @@ export default function ContactModal({
 
                 {/* Close Button with high touch area & visibility */}
                 <button
-                    onClick={onClose}
+                    onClick={handleClose}
                     className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 z-30 flex size-9 items-center justify-center rounded-xl border border-slate-200 bg-white/95 text-slate-500 shadow-xs transition-all hover:bg-slate-100 hover:text-slate-900 hover:border-slate-300 dark:border-slate-700 dark:bg-[#0c162f] dark:text-slate-300 dark:hover:border-amber-400/50 dark:hover:bg-[#12214a] dark:hover:text-amber-300 cursor-pointer active:scale-95"
                     aria-label="Tutup dialog kontak"
                 >
@@ -326,14 +321,20 @@ export default function ContactModal({
                                 <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                                     <button
                                         type="button"
-                                        onClick={() => setIsSubmitted(false)}
+                                        onClick={() => {
+                                            setFormName('');
+                                            setFormEmail('');
+                                            setFormSubject('');
+                                            setFormMessage('');
+                                            setIsSubmitted(false);
+                                        }}
                                         className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:bg-[#0c162f] dark:text-slate-300 dark:hover:border-amber-400/40 dark:hover:text-white transition-all cursor-pointer shadow-2xs active:scale-95"
                                     >
                                         Kirim Pesan Lain
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={onClose}
+                                        onClick={handleClose}
                                         className="luxury-btn-primary rounded-xl px-5 py-2.5 text-xs font-black transition-all cursor-pointer shadow-md active:scale-95"
                                     >
                                         Selesai & Tutup

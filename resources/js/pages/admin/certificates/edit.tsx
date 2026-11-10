@@ -51,7 +51,7 @@ export default function CertificateEdit({ certificate }: CertificateEditProps) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(`/admin/certificates/${certificate.id}`, {
+        post(`/studio/certificates/${certificate.id}`, {
             forceFormData: true,
             onSuccess: () => {
                 toast.success('Sertifikat berhasil diperbarui!');
@@ -65,9 +65,9 @@ export default function CertificateEdit({ certificate }: CertificateEditProps) {
     return (
         <AppLayout
             breadcrumbs={[
-                { title: 'Studio', href: '/admin' },
-                { title: 'Sertifikat & Lisensi', href: '/admin/certificates' },
-                { title: 'Edit Sertifikat', href: `/admin/certificates/${certificate.id}/edit` },
+                { title: 'Studio', href: '/studio' },
+                { title: 'Sertifikat & Lisensi', href: '/studio/certificates' },
+                { title: 'Edit Sertifikat', href: `/studio/certificates/${certificate.id}/edit` },
             ]}
         >
             <Head title={`Edit Sertifikat: ${certificate.title} - Ridhwan Studio`} />
@@ -223,7 +223,7 @@ export default function CertificateEdit({ certificate }: CertificateEditProps) {
                                 variant="ghost"
                                 className="rounded-2xl text-xs font-bold"
                             >
-                                <Link href="/admin/certificates">Batal</Link>
+                                <Link href="/studio/certificates">Batal</Link>
                             </Button>
 
                             <Button

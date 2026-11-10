@@ -116,7 +116,7 @@ export default function TechStacksIndex({ techStacks = [] }: TechStacksIndexProp
         e.preventDefault();
 
         if (editingStack) {
-            put(`/admin/tech-stacks/${editingStack.id}`, {
+            put(`/studio/tech-stacks/${editingStack.id}`, {
                 onSuccess: () => {
                     toast.success('Tech stack berhasil diperbarui.');
                     setIsDialogOpen(false);
@@ -127,7 +127,7 @@ export default function TechStacksIndex({ techStacks = [] }: TechStacksIndexProp
                 },
             });
         } else {
-            post('/admin/tech-stacks', {
+            post('/studio/tech-stacks', {
                 onSuccess: () => {
                     toast.success('Tech stack baru berhasil ditambahkan.');
                     setIsDialogOpen(false);
@@ -143,7 +143,7 @@ export default function TechStacksIndex({ techStacks = [] }: TechStacksIndexProp
     const handleDelete = () => {
         if (!stackToDelete) return;
         setDeleting(true);
-        router.delete(`/admin/tech-stacks/${stackToDelete.id}`, {
+        router.delete(`/studio/tech-stacks/${stackToDelete.id}`, {
             onSuccess: () => {
                 toast.success('Tech stack berhasil dihapus.');
                 setStackToDelete(null);
@@ -176,8 +176,8 @@ export default function TechStacksIndex({ techStacks = [] }: TechStacksIndexProp
     return (
         <AppLayout
             breadcrumbs={[
-                { title: 'Studio', href: '/admin' },
-                { title: 'Tech Stacks Matrix', href: '/admin/tech-stacks' },
+                { title: 'Studio', href: '/studio' },
+                { title: 'Tech Stacks Matrix', href: '/studio/tech-stacks' },
             ]}
         >
             <Head title="Tech Stacks Matrix - Ridhwan Studio" />

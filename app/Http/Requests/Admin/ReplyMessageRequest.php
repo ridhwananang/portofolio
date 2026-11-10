@@ -14,7 +14,7 @@ class ReplyMessageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'subject' => ['required', 'string', 'max:255'],
+            'subject' => ['nullable', 'string', 'max:255'],
             'reply_content' => ['required', 'string'],
         ];
     }

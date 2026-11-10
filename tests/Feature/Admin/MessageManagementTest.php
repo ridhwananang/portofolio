@@ -51,3 +51,25 @@ test('admin can reply to a message via email', function () {
         return $mail->hasTo('jane@example.com');
     });
 });
+
+test('admin can reply to a message in chat mode without subject', function () {
+    Mail::fake();
+
+    $message = Message::create([
+        'name' => 'Klien Chat',
+        'email' => 'chat@example.com',
+        'subject' => 'Diskusi Santai',
+        'message' => 'Halo mas, mau tanya.',
+        'is_read' => false,
+    ]);
+
+    $response = $this->actingAs($this->admin)->post(route('admin.messages.reply', $message), [
+        'reply_content' => 'Halo juga mas, ada apa?',
+    ]);
+
+    $response->assertSessionHasNoErrors();
+    $fresh = $message->fresh();
+    expect($fresh->is_read)->toBeTrue();
+    expect($fresh->reply_content)->toBe('Halo juga mas, ada apa?');
+    expect($fresh->replied_at)->not->toBeNull();
+});

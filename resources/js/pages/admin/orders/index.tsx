@@ -119,7 +119,7 @@ export default function OrdersIndex({ orders, filters }: OrdersIndexProps) {
     const handleSearch = (val: string) => {
         setSearch(val);
         router.get(
-            '/admin/orders',
+            '/studio/orders',
             { ...filters, search: val },
             { preserveState: true, replace: true }
         );
@@ -127,7 +127,7 @@ export default function OrdersIndex({ orders, filters }: OrdersIndexProps) {
 
     const handleStatusFilter = (statusVal: string) => {
         router.get(
-            '/admin/orders',
+            '/studio/orders',
             { ...filters, status: statusVal },
             { preserveState: true }
         );
@@ -229,7 +229,7 @@ export default function OrdersIndex({ orders, filters }: OrdersIndexProps) {
     const handleUpdateOrder = (e: React.FormEvent, orderId: number) => {
         e.preventDefault();
 
-        updateForm.put(`/admin/orders/${orderId}`, {
+        updateForm.put(`/studio/orders/${orderId}`, {
             onSuccess: () => {
                 toast.success('Data pesanan dan milestone berhasil diperbarui.');
             },
@@ -380,8 +380,8 @@ export default function OrdersIndex({ orders, filters }: OrdersIndexProps) {
     return (
         <AppLayout
             breadcrumbs={[
-                { title: 'Studio Cockpit', href: '/admin' },
-                { title: 'Order Layanan & Escrow', href: '/admin/orders' },
+                { title: 'Studio Cockpit', href: '/studio' },
+                { title: 'Order Layanan & Escrow', href: '/studio/orders' },
             ]}
         >
             <Head title="Order Layanan & Delivery Command Center - Ridhwan Studio" />

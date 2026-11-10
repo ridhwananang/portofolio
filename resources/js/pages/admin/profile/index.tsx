@@ -63,7 +63,7 @@ export default function AdminProfile({ profile }: ProfilePageProps) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post('/admin/profile', {
+        post('/studio/profile', {
             forceFormData: true,
             onSuccess: () => {
                 toast.success('Profil portofolio berhasil diperbarui.');
@@ -77,8 +77,8 @@ export default function AdminProfile({ profile }: ProfilePageProps) {
     return (
         <AppLayout
             breadcrumbs={[
-                { title: 'Studio', href: '/admin' },
-                { title: 'Profil & Bio Portofolio', href: '/admin/profile' },
+                { title: 'Studio', href: '/studio' },
+                { title: 'Profil & Bio Portofolio', href: '/studio/profile' },
             ]}
         >
             <Head title="Creator Identity Studio - Ridhwan Anang" />
@@ -115,7 +115,7 @@ export default function AdminProfile({ profile }: ProfilePageProps) {
                                 asChild
                                 className="rounded-2xl border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 shadow-xs cursor-pointer"
                             >
-                                <Link href="/admin">
+                                <Link href="/studio">
                                     <ArrowLeft className="size-4 mr-1.5" />
                                     Kembali ke Cockpit
                                 </Link>

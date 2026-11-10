@@ -9,14 +9,18 @@ import {
     Check,
     MessageSquare,
     CheckCircle2,
+    ArrowUpRight,
+    UserCheck,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useEffect, useRef } from 'react';
+import { SiWhatsapp } from 'react-icons/si';
 
 interface ChatMessage {
-    sender: 'user' | 'bot' | 'ridhwan';
+    sender: 'user' | 'bot' | 'ridhwan' | 'system';
     text: string;
     time: string;
+    whatsappUrl?: string;
 }
 
 const CURATED_SUGGESTIONS = [
@@ -48,10 +52,14 @@ export default function AIChatWidget() {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [isTyping, setIsTyping] = useState(false);
     const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+    const [forcedAIMode, setForcedAIMode] = useState(false);
 
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const isSendingRef = useRef(false);
+
+    const hasRidhwanReply = messages.some((m) => m.sender === 'ridhwan');
+    const isHumanMode = hasRidhwanReply && !forcedAIMode;
 
     // Initial technical welcome greeting
     const createInitialMessage = (): ChatMessage => ({
@@ -86,8 +94,7 @@ export default function AIChatWidget() {
         }
     }, [isOpen]);
 
-    // Autocheck reply silently in background if email exists in localStorage when chat is opened
-    // NOTE: Does NOT set isTyping = true so user can immediately type and press Enter without lock!
+    // Real-time synchronization loop: polls /api/chat/sync every 2.5s for instant replies from Ridhwan
     useEffect(() => {
         if (!isOpen) return;
 
@@ -100,57 +107,91 @@ export default function AIChatWidget() {
 
         if (!email) return;
 
-        fetch('/api/chat', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Accept: 'application/json',
-            },
-            body: JSON.stringify({
-                messages: [{ sender: 'user', text: email }],
-            }),
-        })
-            .then((res) => {
-                if (!res.ok) throw new Error('API Error');
-                return res.json();
-            })
-            .then((data) => {
-                if (data.reply) {
-                    setMessages((prev) => {
-                        if (
-                            prev.some(
-                                (m) =>
-                                    m.sender === 'ridhwan' &&
-                                    m.text === data.reply,
-                            )
-                        ) {
-                            return prev;
-                        }
-                        return [
-                            ...prev,
-                            {
-                                sender: 'ridhwan',
-                                text: data.reply,
-                                time: new Date().toLocaleTimeString('id-ID', {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                }),
-                            },
-                        ];
-                    });
+        let isPolling = false;
+
+        const syncReplies = async () => {
+            if (isPolling || document.hidden) return;
+            isPolling = true;
+
+            try {
+                const res = await fetch(`/api/chat/sync?email=${encodeURIComponent(email!)}`, {
+                    headers: { Accept: 'application/json' },
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    if (Array.isArray(data.replies) && data.replies.length > 0) {
+                        setMessages((prev) => {
+                            let hasNew = false;
+                            const next = [...prev];
+
+                            for (const reply of data.replies) {
+                                const exists = next.some(
+                                    (m) => m.sender === 'ridhwan' && m.text === reply.text
+                                );
+                                if (!exists) {
+                                    hasNew = true;
+                                    next.push({
+                                        sender: 'ridhwan',
+                                        text: reply.text,
+                                        time: reply.time || new Date().toLocaleTimeString('id-ID', {
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                        }),
+                                    });
+                                }
+                            }
+
+                            return hasNew ? next : prev;
+                        });
+                    }
                 }
-            })
-            .catch((err) =>
-                console.error('Silent background reply check failed:', err),
-            );
+            } catch (err) {
+                // Silently ignore background poll errors
+            } finally {
+                isPolling = false;
+            }
+        };
+
+        // Immediate check on open
+        syncReplies();
+
+        // 2.5-second live heartbeat for real-time responsiveness
+        const pollTimer = setInterval(syncReplies, 2500);
+
+        const handleVisibilityChange = () => {
+            if (!document.hidden) syncReplies();
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            clearInterval(pollTimer);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
     }, [isOpen]);
 
     const handleResetChat = () => {
         setMessages([createInitialMessage()]);
+        setForcedAIMode(false);
         isSendingRef.current = false;
         setIsTyping(false);
         setChatInput('');
         inputRef.current?.focus();
+    };
+
+    const handleSwitchToAIMode = () => {
+        setForcedAIMode(true);
+        setMessages((prev) => [
+            ...prev,
+            {
+                sender: 'bot',
+                text: 'Mode Asisten AI diaktifkan kembali. Anda dapat bertanya seputar arsitektur teknis, optimasi database, atau portofolio Ridhwan!',
+                time: new Date().toLocaleTimeString('id-ID', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                }),
+            },
+        ]);
     };
 
     const handleCopyMessage = (text: string, index: number) => {
@@ -184,6 +225,25 @@ export default function AIChatWidget() {
         setMessages(updatedMessages);
         setIsTyping(true);
 
+        let userEmail: string | null = null;
+        try {
+            userEmail = localStorage.getItem('user_contact_email');
+        } catch {
+            // Safe guard against restricted localStorage
+        }
+
+        if (!userEmail) {
+            const emailMatch = textToSend.match(/([\w\.\-]+@[\w\.\-]+\.\w+)/);
+            if (emailMatch) {
+                userEmail = emailMatch[1];
+                try {
+                    localStorage.setItem('user_contact_email', userEmail);
+                } catch {
+                    // Safe guard
+                }
+            }
+        }
+
         try {
             const response = await fetch('/api/chat', {
                 method: 'POST',
@@ -196,6 +256,7 @@ export default function AIChatWidget() {
                         sender: m.sender,
                         text: m.text,
                     })),
+                    user_email: userEmail,
                 }),
             });
 
@@ -204,31 +265,64 @@ export default function AIChatWidget() {
             const data = await response.json();
             const newMsgs: ChatMessage[] = [];
 
-            if (data.text) {
-                newMsgs.push({
-                    sender: 'bot',
-                    text: data.text,
-                    time: new Date().toLocaleTimeString('id-ID', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                    }),
-                });
-            }
+            if (data.human_takeover) {
+                // Prevent duplicate system takeover cards: only display once in the chat history
+                const alreadyNotified = updatedMessages.some(
+                    (m) =>
+                        m.sender === 'system' &&
+                        (m.text.includes('Asisten AI dijeda') ||
+                            m.text.includes('Pesan Diteruskan')),
+                );
 
-            if (data.reply) {
-                newMsgs.push({
-                    sender: 'ridhwan',
-                    text: data.reply,
-                    time: new Date().toLocaleTimeString('id-ID', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                    }),
-                });
+                if (!alreadyNotified) {
+                    newMsgs.push({
+                        sender: 'system',
+                        text: data.text,
+                        time: new Date().toLocaleTimeString('id-ID', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                        }),
+                        whatsappUrl: data.whatsapp_url,
+                    });
+                }
+
+                if (data.reply) {
+                    newMsgs.push({
+                        sender: 'ridhwan',
+                        text: data.reply,
+                        time: new Date().toLocaleTimeString('id-ID', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                        }),
+                    });
+                }
+            } else {
+                if (data.text) {
+                    newMsgs.push({
+                        sender: 'bot',
+                        text: data.text,
+                        time: new Date().toLocaleTimeString('id-ID', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                        }),
+                    });
+                }
+
+                if (data.reply) {
+                    newMsgs.push({
+                        sender: 'ridhwan',
+                        text: data.reply,
+                        time: new Date().toLocaleTimeString('id-ID', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                        }),
+                    });
+                }
             }
 
             if (newMsgs.length > 0) {
                 setMessages((prev) => [...prev, ...newMsgs]);
-            } else {
+            } else if (!data.human_takeover) {
                 setMessages((prev) => [
                     ...prev,
                     {
@@ -476,6 +570,10 @@ export default function AIChatWidget() {
                                                 className="h-full w-full object-cover"
                                             />
                                         </div>
+                                    ) : m.sender === 'system' ? (
+                                        <div className="flex size-7 shrink-0 items-center justify-center rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 shadow-xs dark:border-emerald-400/20 dark:text-emerald-400">
+                                            <UserCheck size={13} />
+                                        </div>
                                     ) : (
                                         <div
                                             className={`flex size-7 shrink-0 items-center justify-center rounded-lg border shadow-xs ${
@@ -497,27 +595,65 @@ export default function AIChatWidget() {
                                         className={`relative rounded-2xl border px-3.5 py-2.5 text-xs shadow-xs ${
                                             m.sender === 'ridhwan'
                                                 ? 'rounded-bl-none border-amber-500/40 bg-amber-500/10 text-zinc-900 shadow-[0_2px_12px_rgba(245,158,11,0.12)] dark:bg-amber-500/12 dark:text-amber-100'
-                                                : m.sender === 'user'
-                                                  ? 'rounded-br-none border-blue-400/30 bg-gradient-to-tr from-[#0a1538] via-[#0f2152] to-[#162d6d] text-white shadow-md'
-                                                  : 'rounded-bl-none border-zinc-200/90 bg-white/95 text-zinc-800 dark:border-blue-400/20 dark:bg-[#0c162f]/90 dark:text-zinc-100'
+                                                : m.sender === 'system'
+                                                  ? 'rounded-bl-none border-emerald-500/40 bg-emerald-500/10 text-zinc-900 shadow-[0_2px_12px_rgba(16,185,129,0.12)] dark:bg-emerald-500/12 dark:text-emerald-100'
+                                                  : m.sender === 'user'
+                                                    ? 'rounded-br-none border-blue-400/30 bg-gradient-to-tr from-[#0a1538] via-[#0f2152] to-[#162d6d] text-white shadow-md'
+                                                    : 'rounded-bl-none border-zinc-200/90 bg-white/95 text-zinc-800 dark:border-blue-400/20 dark:bg-[#0c162f]/90 dark:text-zinc-100'
                                         }`}
                                     >
                                         {m.sender === 'ridhwan' && (
-                                            <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
-                                                <CheckCircle2
-                                                    size={11}
-                                                    className="text-amber-500"
-                                                />
-                                                <span>
-                                                    Balasan Langsung dari
-                                                    Ridhwan
+                                            <div className="mb-1.5 flex items-center justify-between gap-2 border-b border-amber-500/20 pb-1 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                                                <div className="flex items-center gap-1.5">
+                                                    <CheckCircle2
+                                                        size={11}
+                                                        className="text-amber-500"
+                                                    />
+                                                    <span>
+                                                        Balasan Langsung dari Ridhwan
+                                                    </span>
+                                                </div>
+                                                <a
+                                                    href="https://wa.me/6281298502177?text=Halo%20Mas%20Ridhwan,%20saya%20ingin%20melanjutkan%20diskusi%20dari%20website"
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="inline-flex items-center gap-1 text-[9.5px] font-mono text-emerald-600 dark:text-emerald-400 hover:underline"
+                                                >
+                                                    <SiWhatsapp size={10} />
+                                                    <span>Balas via WA</span>
+                                                </a>
+                                            </div>
+                                        )}
+
+                                        {m.sender === 'system' && (
+                                            <div className="mb-1.5 flex items-center gap-1.5 border-b border-emerald-500/20 pb-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                                                <span className="relative flex size-2">
+                                                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                                                    <span className="relative inline-flex size-2 rounded-full bg-emerald-500"></span>
                                                 </span>
+                                                <span>Pesan Diteruskan • AI Dijeda</span>
                                             </div>
                                         )}
 
                                         <div className="space-y-1">
                                             {renderMessageText(m.text)}
                                         </div>
+
+                                        {/* Action button inside system takeover message */}
+                                        {m.whatsappUrl && (
+                                            <div className="mt-2.5 pt-2 border-t border-emerald-500/20">
+                                                <a
+                                                    href={m.whatsappUrl}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-[11px] font-bold text-white shadow-xs hover:bg-emerald-700 transition-colors"
+                                                >
+                                                    <SiWhatsapp size={12} />
+                                                    <span>Lanjut via WhatsApp (Respon Cepat)</span>
+                                                    <ArrowUpRight size={11} />
+                                                </a>
+                                            </div>
+                                        )}
 
                                         <div className="mt-1 flex items-center justify-between gap-3 text-[8.5px] opacity-60">
                                             {m.sender !== 'user' ? (
@@ -580,21 +716,72 @@ export default function AIChatWidget() {
                             )}
                         </div>
 
-                        {/* Curated Suggestion Chips (Specific Engineering Topics) */}
-                        <div className="relative z-10 border-t border-zinc-200/60 bg-zinc-50/60 px-3 py-2 backdrop-blur-md dark:border-blue-400/10 dark:bg-[#0a1226]/80">
-                            <div className="chips-scroll-container flex items-center gap-1.5 overflow-x-auto py-0.5">
-                                {CURATED_SUGGESTIONS.map((sug, i) => (
-                                    <button
-                                        key={i}
-                                        onClick={() =>
-                                            handleSendMessage(sug.query)
-                                        }
-                                        className="shrink-0 cursor-pointer rounded-full border border-amber-500/25 bg-white/90 px-2.5 py-1 text-[10.5px] font-medium text-zinc-700 shadow-2xs transition-all hover:border-amber-400/50 hover:bg-amber-500/10 hover:text-amber-700 active:scale-95 dark:border-blue-400/20 dark:bg-[#0c162f]/80 dark:text-zinc-300 dark:hover:border-amber-400/40 dark:hover:text-amber-300"
-                                    >
-                                        <span>{sug.label}</span>
-                                    </button>
-                                ))}
+                        {/* Mode Indicator Bar (Active when Human Takeover is engaged) */}
+                        {isHumanMode && (
+                            <div className="relative z-10 flex items-center justify-between border-t border-amber-500/25 bg-amber-500/10 px-3.5 py-1.5 text-[10.5px] backdrop-blur-md dark:border-amber-400/20 dark:bg-amber-500/15">
+                                <div className="flex items-center gap-1.5 font-semibold text-amber-800 dark:text-amber-200">
+                                    <span className="relative flex size-2">
+                                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                                        <span className="relative inline-flex size-2 rounded-full bg-emerald-500"></span>
+                                    </span>
+                                    <span className="text-[10px] sm:text-[10.5px]">
+                                        Mode Diskusi Personal (AI Dijeda)
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleSwitchToAIMode}
+                                    className="font-mono text-[9px] font-bold text-amber-700 underline hover:text-amber-900 dark:text-amber-300 dark:hover:text-amber-100 cursor-pointer"
+                                    title="Beralih kembali ke Asisten AI untuk pertanyaan teknis"
+                                >
+                                    Beralih ke AI
+                                </button>
                             </div>
+                        )}
+
+                        {/* Curated Suggestion Chips / Quick Actions */}
+                        <div className="relative z-10 border-t border-zinc-200/60 bg-zinc-50/60 px-3 py-2 backdrop-blur-md dark:border-blue-400/10 dark:bg-[#0a1226]/80">
+                            {isHumanMode ? (
+                                <div className="chips-scroll-container flex items-center gap-1.5 overflow-x-auto py-0.5">
+                                    <a
+                                        href="https://wa.me/6281298502177?text=Halo%20Mas%20Ridhwan,%20saya%20ingin%20melanjutkan%20diskusi%20dari%20website"
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[10.5px] font-bold text-emerald-700 shadow-2xs transition-all hover:bg-emerald-500/20 dark:border-emerald-400/30 dark:text-emerald-300"
+                                    >
+                                        <SiWhatsapp size={11} />
+                                        <span>WhatsApp Ridhwan (Cepat)</span>
+                                    </a>
+                                    <a
+                                        href="mailto:ridhwananang@gmail.com?subject=Follow-up%20Pesan%20Portofolio"
+                                        className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 px-2.5 py-1 text-[10.5px] font-medium text-blue-700 shadow-2xs transition-all hover:bg-blue-500/20 dark:border-blue-400/30 dark:text-blue-300"
+                                    >
+                                        <span>Kirim Email Langsung</span>
+                                    </a>
+                                    <button
+                                        type="button"
+                                        onClick={handleSwitchToAIMode}
+                                        className="shrink-0 inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-amber-500/30 bg-white/90 px-2.5 py-1 text-[10.5px] font-medium text-zinc-700 shadow-2xs transition-all hover:bg-amber-500/10 hover:text-amber-700 dark:border-blue-400/20 dark:bg-[#0c162f]/80 dark:text-zinc-300"
+                                    >
+                                        <Bot size={11} />
+                                        <span>Tanya Asisten AI</span>
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="chips-scroll-container flex items-center gap-1.5 overflow-x-auto py-0.5">
+                                    {CURATED_SUGGESTIONS.map((sug, i) => (
+                                        <button
+                                            key={i}
+                                            onClick={() =>
+                                                handleSendMessage(sug.query)
+                                            }
+                                            className="shrink-0 cursor-pointer rounded-full border border-amber-500/25 bg-white/90 px-2.5 py-1 text-[10.5px] font-medium text-zinc-700 shadow-2xs transition-all hover:border-amber-400/50 hover:bg-amber-500/10 hover:text-amber-700 active:scale-95 dark:border-blue-400/20 dark:bg-[#0c162f]/80 dark:text-zinc-300 dark:hover:border-amber-400/40 dark:hover:text-amber-300"
+                                        >
+                                            <span>{sug.label}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         {/* Input Capsule Dock */}
@@ -615,8 +802,10 @@ export default function AIChatWidget() {
                                     }
                                     placeholder={
                                         isTyping
-                                            ? 'Asisten sedang menjawab...'
-                                            : 'Tanya arsitektur, proyek, atau keahlian...'
+                                            ? 'Sedang memproses...'
+                                            : isHumanMode
+                                              ? 'Tulis pesan lanjutan untuk Mas Ridhwan...'
+                                              : 'Tanya arsitektur, proyek, atau keahlian...'
                                     }
                                     disabled={isTyping}
                                     className="flex-1 bg-transparent px-2.5 py-1 text-xs text-zinc-900 placeholder-zinc-400 outline-none focus:outline-none disabled:opacity-60 dark:text-zinc-100 dark:placeholder-zinc-500"
@@ -636,11 +825,11 @@ export default function AIChatWidget() {
 
                             <div className="mt-2 flex items-center justify-between text-[8px] font-medium text-zinc-500 dark:text-zinc-400">
                                 <span className="flex items-center gap-1 font-mono">
-                                    <MessageSquare
+                                    {/* <MessageSquare
                                         size={9}
                                         className="text-amber-500"
-                                    />
-                                    <span>Gemini 2.5 Flash • Respon Cepat</span>
+                                    /> */}
+                                    {/* <span>Gemini 2.5 Flash • Respon Cepat</span> */}
                                 </span>
                                 <span className="flex items-center gap-1 font-mono">
                                     <span>Tekan Enter</span>

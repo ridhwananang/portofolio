@@ -162,7 +162,7 @@ export default function ServicesIndex({ packages, addons, settings }: ServicesIn
     const handlePackageSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingPackage) {
-            packageForm.put(`/admin/services/packages/${editingPackage.id}`, {
+            packageForm.put(`/studio/services/packages/${editingPackage.id}`, {
                 onSuccess: () => {
                     toast.success('Paket layanan berhasil diperbarui.');
                     cancelPackageForm();
@@ -170,7 +170,7 @@ export default function ServicesIndex({ packages, addons, settings }: ServicesIn
                 onError: () => toast.error('Gagal memperbarui paket.'),
             });
         } else {
-            packageForm.post('/admin/services/packages', {
+            packageForm.post('/studio/services/packages', {
                 onSuccess: () => {
                     toast.success('Paket layanan baru berhasil ditambahkan.');
                     cancelPackageForm();
@@ -181,7 +181,7 @@ export default function ServicesIndex({ packages, addons, settings }: ServicesIn
     };
 
     const handleTogglePackage = (pkg: ServicePackage) => {
-        router.patch(`/admin/services/packages/${pkg.id}/toggle`, {}, {
+        router.patch(`/studio/services/packages/${pkg.id}/toggle`, {}, {
             preserveScroll: true,
             onSuccess: () => toast.success(`Status ${pkg.title} berhasil diubah.`),
         });
@@ -193,7 +193,7 @@ export default function ServicesIndex({ packages, addons, settings }: ServicesIn
 
     const confirmDeletePackage = () => {
         if (!deletingPackage) return;
-        router.delete(`/admin/services/packages/${deletingPackage.id}`, {
+        router.delete(`/studio/services/packages/${deletingPackage.id}`, {
             preserveScroll: true,
             onSuccess: () => {
                 toast.success(`Paket ${deletingPackage.title} berhasil dihapus.`);
@@ -239,7 +239,7 @@ export default function ServicesIndex({ packages, addons, settings }: ServicesIn
     const handleAddonSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingAddon) {
-            addonForm.put(`/admin/services/addons/${editingAddon.id}`, {
+            addonForm.put(`/studio/services/addons/${editingAddon.id}`, {
                 onSuccess: () => {
                     toast.success('Fitur add-on berhasil diperbarui.');
                     cancelAddonForm();
@@ -247,7 +247,7 @@ export default function ServicesIndex({ packages, addons, settings }: ServicesIn
                 onError: () => toast.error('Gagal memperbarui add-on.'),
             });
         } else {
-            addonForm.post('/admin/services/addons', {
+            addonForm.post('/studio/services/addons', {
                 onSuccess: () => {
                     toast.success('Fitur add-on baru berhasil ditambahkan.');
                     cancelAddonForm();
@@ -258,7 +258,7 @@ export default function ServicesIndex({ packages, addons, settings }: ServicesIn
     };
 
     const handleToggleAddon = (addon: ServiceAddon) => {
-        router.patch(`/admin/services/addons/${addon.id}/toggle`, {}, {
+        router.patch(`/studio/services/addons/${addon.id}/toggle`, {}, {
             preserveScroll: true,
             onSuccess: () => toast.success(`Status ${addon.name} berhasil diubah.`),
         });
@@ -270,7 +270,7 @@ export default function ServicesIndex({ packages, addons, settings }: ServicesIn
 
     const confirmDeleteAddon = () => {
         if (!deletingAddon) return;
-        router.delete(`/admin/services/addons/${deletingAddon.id}`, {
+        router.delete(`/studio/services/addons/${deletingAddon.id}`, {
             preserveScroll: true,
             onSuccess: () => {
                 toast.success(`Add-on ${deletingAddon.name} berhasil dihapus.`);
@@ -282,7 +282,7 @@ export default function ServicesIndex({ packages, addons, settings }: ServicesIn
     // --- Settings Handler ---
     const handleSettingsSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        settingsForm.post('/admin/services/settings', {
+        settingsForm.post('/studio/services/settings', {
             preserveScroll: true,
             onSuccess: () => toast.success('Pengaturan global layanan berhasil disimpan.'),
             onError: () => toast.error('Gagal menyimpan pengaturan.'),
@@ -303,8 +303,8 @@ export default function ServicesIndex({ packages, addons, settings }: ServicesIn
     return (
         <AppLayout
             breadcrumbs={[
-                { title: 'Studio Cockpit', href: '/admin' },
-                { title: 'Katalog & Penentuan Harga Layanan', href: '/admin/services' },
+                { title: 'Studio Cockpit', href: '/studio' },
+                { title: 'Katalog & Penentuan Harga Layanan', href: '/studio/services' },
             ]}
         >
             <Head title="Kelola Katalog Layanan & Pricing Engine - Ridhwan Studio" />

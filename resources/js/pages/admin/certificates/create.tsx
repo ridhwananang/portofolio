@@ -43,7 +43,7 @@ export default function CertificateCreate() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post('/admin/certificates', {
+        post('/studio/certificates', {
             forceFormData: true,
             onSuccess: () => {
                 toast.success('Sertifikat berhasil ditambahkan!');
@@ -57,9 +57,9 @@ export default function CertificateCreate() {
     return (
         <AppLayout
             breadcrumbs={[
-                { title: 'Studio', href: '/admin' },
-                { title: 'Sertifikat & Lisensi', href: '/admin/certificates' },
-                { title: 'Tambah Baru', href: '/admin/certificates/create' },
+                { title: 'Studio', href: '/studio' },
+                { title: 'Sertifikat & Lisensi', href: '/studio/certificates' },
+                { title: 'Tambah Baru', href: '/studio/certificates/create' },
             ]}
         >
             <Head title="Tambah Sertifikat Baru - Ridhwan Studio" />
@@ -214,7 +214,7 @@ export default function CertificateCreate() {
                                 variant="ghost"
                                 className="rounded-2xl text-xs font-bold"
                             >
-                                <Link href="/admin/certificates">Batal</Link>
+                                <Link href="/studio/certificates">Batal</Link>
                             </Button>
 
                             <Button

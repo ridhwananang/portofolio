@@ -14,15 +14,31 @@ class GeminiChatService
      * Get chat response from Gemini API or fallback logic.
      *
      * @param array $messages
+     * @param string|null $userEmail
      * @return string
      */
-    public function getChatResponse(array $messages): string
+    public function getChatResponse(array $messages, ?string $userEmail = null): string
     {
-        // 0. Direct Intercept for Reply Checking (Fast & 100% Reliable Bypass)
+        // 0. Extract user's email if not explicitly provided
+        if (!$userEmail) {
+            foreach ($messages as $msg) {
+                if (preg_match('/([\w\.\-]+@[\w\.\-]+\.\w+)/', $msg['text'] ?? '', $matches)) {
+                    $userEmail = trim($matches[1]);
+                    break;
+                }
+            }
+        }
+
+        // 0.1 Check for active Human Takeover mode
+        $hasRidhwanReplyInMessages = collect($messages)->contains(fn ($m) => ($m['sender'] ?? '') === 'ridhwan');
+        $hasRepliedDbMessage = $userEmail && \App\Models\Message::where('email', $userEmail)->whereNotNull('replied_at')->exists();
+        $isHumanTakeover = $hasRidhwanReplyInMessages || $hasRepliedDbMessage;
+
+        // 0.2 Find the latest user message
         $lastUserMessage = null;
         foreach (array_reverse($messages) as $msg) {
-            if ($msg['sender'] === 'user') {
-                $lastUserMessage = $msg['text'];
+            if (($msg['sender'] ?? '') === 'user') {
+                $lastUserMessage = trim($msg['text'] ?? '');
                 break;
             }
         }
@@ -47,6 +63,31 @@ class GeminiChatService
             if (preg_match('/^\s*([\w\.\-]+@[\w\.\-]+\.\w+)\s*$/', $lastUserMessage, $matches)) {
                 $email = trim($matches[1]);
                 return $this->parseSpecialTokens("[CHECK_REPLY:{$email}]");
+            }
+
+            // 0.3 HUMAN TAKEOVER INTERCEPT (Solusi #1):
+            // If the conversation already has a direct response from Ridhwan and the user sends a follow-up,
+            // PAUSE AI! Forward the user's message to the database for Ridhwan and offer direct WhatsApp fast-track.
+            if ($isHumanTakeover) {
+                $existingMsg = $userEmail ? \App\Models\Message::where('email', $userEmail)->latest()->first() : null;
+
+                // Log as a new unread message for Ridhwan in Studio Cockpit
+                \App\Models\Message::create([
+                    'name' => $existingMsg?->name ?? 'Pengunjung Web',
+                    'email' => $userEmail ?? ($existingMsg?->email ?? 'chat-visitor@ridhwananang.id'),
+                    'subject' => $existingMsg?->subject ?? 'Percakapan Portofolio',
+                    'message' => $lastUserMessage,
+                    'is_read' => false,
+                ]);
+
+                $cleanWa = '6281298502177';
+                $waText = urlencode("Halo Mas Ridhwan, saya ingin follow-up obrolan di portofolio:\n\"{$lastUserMessage}\"");
+                $waUrl = "https://wa.me/{$cleanWa}?text={$waText}";
+
+                return '|||human_takeover|||' . json_encode([
+                    'text' => "Pesan lanjutan Anda telah diteruskan langsung ke Mas Ridhwan di dashboard studio.\n\nKarena ini adalah percakapan personal, **Asisten AI dijeda otomatis** agar tidak menginterupsi obrolan Anda dengan Ridhwan. Ridhwan akan segera membalasnya kembali.",
+                    'whatsapp_url' => $waUrl,
+                ]);
             }
         }
 
@@ -309,17 +350,23 @@ class GeminiChatService
         if (preg_match('/\[?CHECK_REPLY\s*:\s*([\w\.\-]+@[\w\.\-]+\.\w+)\]?/i', $text, $matches)) {
             $email = trim($matches[1]);
             
-            $msg = \App\Models\Message::where('email', $email)->latest()->first();
+            // Find the most recent reply from Ridhwan for this email
+            $msgWithReply = \App\Models\Message::where('email', $email)
+                ->whereNotNull('reply_content')
+                ->where('reply_content', '!=', '')
+                ->latest('replied_at')
+                ->first();
             
-            if (!$msg) {
+            if ($msgWithReply && !empty(trim($msgWithReply->reply_content))) {
+                return "|||reply|||" . $msgWithReply->reply_content;
+            }
+
+            $anyMsg = \App\Models\Message::where('email', $email)->latest()->first();
+            if (!$anyMsg) {
                 return "Maaf, saya tidak menemukan riwayat pesan kontak yang dikirim menggunakan alamat email **{$email}**. Pastikan email yang Anda masukkan sudah benar atau silakan kirim pesan baru melalui formulir kontak.";
             }
             
-            if ($msg->replied_at) {
-                return "|||reply|||" . $msg->reply_content;
-            }
-            
-            return "Pesan Anda dengan subjek '**{$msg->subject}**' sudah kami terima pada " . $msg->created_at->format('d M Y H:i') . ", namun saat ini Ridhwan belum sempat membalasnya. Mohon tunggu sebentar ya!";
+            return "Pesan Anda dengan subjek '**{$anyMsg->subject}**' sudah kami terima pada " . $anyMsg->created_at->format('d M Y H:i') . ", namun saat ini Ridhwan belum sempat membalasnya. Mohon tunggu sebentar ya!";
         }
         
         return $text;

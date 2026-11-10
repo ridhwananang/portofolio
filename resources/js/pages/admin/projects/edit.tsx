@@ -48,7 +48,7 @@ export default function ProjectEdit({ project }: ProjectEditProps) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(`/admin/projects/${project.id}`, {
+        post(`/studio/projects/${project.id}`, {
             forceFormData: true,
             onSuccess: () => {
                 toast.success('Proyek berhasil diperbarui!');
@@ -62,9 +62,9 @@ export default function ProjectEdit({ project }: ProjectEditProps) {
     return (
         <AppLayout
             breadcrumbs={[
-                { title: 'Studio', href: '/admin' },
-                { title: 'Portofolio Proyek', href: '/admin/projects' },
-                { title: 'Edit Proyek', href: `/admin/projects/${project.id}/edit` },
+                { title: 'Studio', href: '/studio' },
+                { title: 'Portofolio Proyek', href: '/studio/projects' },
+                { title: 'Edit Proyek', href: `/studio/projects/${project.id}/edit` },
             ]}
         >
             <Head title={`Edit Proyek: ${project.title} - Ridhwan Studio`} />
@@ -205,7 +205,7 @@ export default function ProjectEdit({ project }: ProjectEditProps) {
                                 variant="ghost"
                                 className="rounded-2xl text-xs font-bold"
                             >
-                                <Link href="/admin/projects">Batal</Link>
+                                <Link href="/studio/projects">Batal</Link>
                             </Button>
 
                             <Button
