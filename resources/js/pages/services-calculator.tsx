@@ -656,7 +656,7 @@ export default function ServicesCalculator({ initialPackages, initialAddons, ini
             {/* Modal: Input Data Klien & Buat Proposal Digital */}
             <AnimatePresence>
                 {isOrderModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/70 p-4 backdrop-blur-sm">
+                    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/70 p-4 backdrop-blur-sm scrollbar-none">
                         <motion.div
                             initial={{ scale: 0.95, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}

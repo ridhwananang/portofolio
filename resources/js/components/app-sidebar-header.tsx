@@ -65,7 +65,8 @@ export function AppSidebarHeader({
 
     return (
         <>
-            <header className="sticky top-3 z-30 mx-3 sm:mx-6 lg:mx-8 mt-3 relative p-[1px] rounded-2xl bg-gradient-to-r from-violet-600 to-cyan-400 shadow-[0_0_18px_rgba(124,58,237,0.18)] dark:shadow-[0_0_24px_rgba(6,182,212,0.25)] transition-all duration-300 group">
+            <div className="sticky top-0 z-40 w-full pt-3 pb-2 px-3 sm:px-6 lg:px-8 bg-[#F6F8FC]/80 dark:bg-[#0B1120]/80 backdrop-blur-md transition-colors">
+                <header className="relative p-[1px] rounded-2xl bg-gradient-to-r from-violet-600 to-cyan-400 shadow-[0_0_18px_rgba(124,58,237,0.18)] dark:shadow-[0_0_24px_rgba(6,182,212,0.25)] transition-all duration-300 group">
                 {/* Ambient Glowing Aura */}
                 <div className="pointer-events-none absolute -inset-[1px] rounded-2xl bg-gradient-to-r from-violet-600 to-cyan-400 opacity-25 dark:opacity-45 blur-[2px] group-hover:opacity-40 dark:group-hover:opacity-65 transition-opacity duration-300" />
 
@@ -150,21 +151,28 @@ export function AppSidebarHeader({
                             </DropdownMenuLabel>
                             <DropdownMenuSeparator className="my-1" />
                             <DropdownMenuItem
-                                onClick={() => router.visit('/admin/projects/create')}
+                                onClick={() => router.visit('/studio/pms/projects/create')}
+                                className="cursor-pointer gap-2.5 rounded-xl text-xs py-2 px-2.5 font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+                            >
+                                <Briefcase className="size-4 text-indigo-500" />
+                                <span>Inisialisasi Proyek PMS Baru</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={() => router.visit('/studio/projects/create')}
                                 className="cursor-pointer gap-2.5 rounded-xl text-xs py-2 px-2.5 font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
                             >
                                 <Briefcase className="size-4 text-violet-500" />
-                                <span>Tambah Proyek</span>
+                                <span>Tambah Karya Portofolio</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                                onClick={() => router.visit('/admin/certificates/create')}
+                                onClick={() => router.visit('/studio/certificates/create')}
                                 className="cursor-pointer gap-2.5 rounded-xl text-xs py-2 px-2.5 font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
                             >
                                 <Award className="size-4 text-amber-500" />
                                 <span>Tambah Sertifikat</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                                onClick={() => router.visit('/admin/tech-stacks')}
+                                onClick={() => router.visit('/studio/tech-stacks')}
                                 className="cursor-pointer gap-2.5 rounded-xl text-xs py-2 px-2.5 font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
                             >
                                 <Layers className="size-4 text-cyan-500" />
@@ -172,7 +180,7 @@ export function AppSidebarHeader({
                             </DropdownMenuItem>
                             <DropdownMenuSeparator className="my-1" />
                             <DropdownMenuItem
-                                onClick={() => router.visit('/admin/orders')}
+                                onClick={() => router.visit('/studio/orders')}
                                 className="cursor-pointer gap-2.5 rounded-xl text-xs py-2 px-2.5 font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
                             >
                                 <ShoppingBag className="size-4 text-emerald-500" />
@@ -256,6 +264,7 @@ export function AppSidebarHeader({
                 </div>
                 </div>
             </header>
+            </div>
 
             {/* Global Command Palette Modal */}
             <CommandPalette open={commandOpen} onOpenChange={setCommandOpen} />

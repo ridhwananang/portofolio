@@ -141,6 +141,7 @@ export default function Welcome({
                 setActiveSection={setActiveSection}
                 onSectionSelect={handleSectionSelect}
                 onOpenContact={() => setIsContactOpen(true)}
+                linkedinUrl={profile?.linkedin_url || 'https://www.linkedin.com/in/ridhwan-anang-ma-ruf/'}
             />
 
             {/* Main Showcase Layout Wrapper */}
@@ -233,14 +234,18 @@ export default function Welcome({
                 </motion.div>
             </main>
 
-            {/* Aesthetic Distinctive Luxury Footer (Midnight Deep Blue & Gold Vault) */}
-            <footer className="mt-20 w-full border-t-2 border-amber-500/40 bg-zinc-50/95 py-14 shadow-[0_-12px_40px_rgba(245,158,11,0.08)] dark:bg-gradient-to-b dark:from-[#050a18] dark:via-[#081226] dark:to-[#03060f] relative overflow-hidden">
-                <div className="specular-top" />
-                {/* Ambient Golden Crown Spotlight */}
-                <div className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 h-40 w-[600px] rounded-full bg-gradient-to-b from-amber-500/20 via-blue-500/08 to-transparent blur-3xl" />
+            {/* Aesthetic Distinctive Luxury Footer (Refined Platinum-Slate in Light Mode, Golden Vault in Dark Mode) */}
+            <footer className="mt-20 w-full border-t border-slate-300/80 bg-gradient-to-b from-slate-100/90 via-[#f8fafc]/90 to-slate-100 py-14 shadow-[0_-10px_30px_rgba(15,23,42,0.05)] dark:border-amber-500/40 dark:shadow-[0_-12px_40px_rgba(245,158,11,0.08)] dark:bg-gradient-to-b dark:from-[#050a18] dark:via-[#081226] dark:to-[#03060f] relative overflow-hidden">
+                {/* Refined Top Accent Line: Harmonious Sapphire-Gold in Light Mode, Champagne Gold in Dark Mode */}
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-blue-600/50 via-sky-500/70 to-amber-500/60 dark:from-amber-400/80 dark:via-yellow-500/60 dark:to-blue-500/60 shadow-xs" />
+
+                {/* Ambient Spotlights */}
+                <div className="pointer-events-none absolute -top-24 left-1/4 h-48 w-96 rounded-full bg-blue-500/10 blur-3xl dark:hidden" />
+                <div className="pointer-events-none absolute -top-24 right-1/4 h-48 w-96 rounded-full bg-amber-500/08 blur-3xl dark:hidden" />
+                <div className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 h-40 w-[600px] rounded-full bg-gradient-to-b from-amber-500/20 via-blue-500/08 to-transparent blur-3xl hidden dark:block" />
 
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
-                    <div className="grid grid-cols-1 gap-8 border-b border-zinc-200/80 pb-10 sm:grid-cols-2 md:grid-cols-4 dark:border-blue-400/15">
+                    <div className="grid grid-cols-1 gap-8 border-b border-slate-200/90 pb-10 sm:grid-cols-2 md:grid-cols-4 dark:border-blue-400/15">
                         {/* Brand / Name info */}
                         <div className="space-y-3">
                             <div className="flex items-center gap-2.5">
@@ -251,7 +256,7 @@ export default function Welcome({
                                     Ridhwan Anang Ma'ruf
                                 </h4>
                             </div>
-                            <p className="max-w-xs text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+                            <p className="max-w-xs text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
                                 Full Stack Software Engineer yang berfokus membangun sistem backend Laravel yang andal dan antarmuka SPA React yang reaktif.
                             </p>
                             <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-mono font-medium text-emerald-600 dark:text-emerald-400 shadow-2xs">
@@ -262,14 +267,15 @@ export default function Welcome({
 
                         {/* Navigation Links */}
                         <div className="space-y-2.5">
-                            <h5 className="text-[10.5px] font-mono uppercase tracking-wider text-amber-500/90 dark:text-amber-400/90 font-bold">
-                                Navigasi
+                            <h5 className="text-[11px] font-mono uppercase tracking-wider text-slate-900 dark:text-amber-400/90 font-bold flex items-center gap-1.5">
+                                <span className="size-1 rounded-full bg-blue-600 dark:bg-amber-400" />
+                                <span>Navigasi</span>
                             </h5>
-                            <ul className="space-y-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                            <ul className="space-y-1.5 text-xs font-medium text-slate-600 dark:text-zinc-400">
                                 <li>
                                     <a
                                         href="#hero"
-                                        className="transition-colors hover:text-amber-600 dark:hover:text-amber-300"
+                                        className="transition-colors hover:text-blue-600 dark:hover:text-amber-300"
                                     >
                                         Profil & Ringkasan
                                     </a>
@@ -277,7 +283,7 @@ export default function Welcome({
                                 <li>
                                     <a
                                         href="#tech-stack"
-                                        className="transition-colors hover:text-amber-600 dark:hover:text-amber-300"
+                                        className="transition-colors hover:text-blue-600 dark:hover:text-amber-300"
                                     >
                                         Tech Stack
                                     </a>
@@ -285,7 +291,7 @@ export default function Welcome({
                                 <li>
                                     <a
                                         href="#karya"
-                                        className="transition-colors hover:text-amber-600 dark:hover:text-amber-300"
+                                        className="transition-colors hover:text-blue-600 dark:hover:text-amber-300"
                                     >
                                         Proyek Unggulan
                                     </a>
@@ -293,7 +299,7 @@ export default function Welcome({
                                 <li>
                                     <a
                                         href="#sertifikat"
-                                        className="transition-colors hover:text-amber-600 dark:hover:text-amber-300"
+                                        className="transition-colors hover:text-blue-600 dark:hover:text-amber-300"
                                     >
                                         Sertifikasi & Lisensi
                                     </a>
@@ -303,14 +309,15 @@ export default function Welcome({
 
                         {/* Legal & Compliance */}
                         <div className="space-y-2.5">
-                            <h5 className="text-[10.5px] font-mono uppercase tracking-wider text-amber-500/90 dark:text-amber-400/90 font-bold">
-                                Kebijakan & Dokumen
+                            <h5 className="text-[11px] font-mono uppercase tracking-wider text-slate-900 dark:text-amber-400/90 font-bold flex items-center gap-1.5">
+                                <span className="size-1 rounded-full bg-blue-600 dark:bg-amber-400" />
+                                <span>Kebijakan & Dokumen</span>
                             </h5>
-                            <ul className="space-y-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                            <ul className="space-y-1.5 text-xs font-medium text-slate-600 dark:text-zinc-400">
                                 <li>
                                     <Link
                                         href="/terms-and-conditions"
-                                        className="transition-colors hover:text-amber-600 dark:hover:text-amber-300"
+                                        className="transition-colors hover:text-blue-600 dark:hover:text-amber-300"
                                     >
                                         Syarat & Ketentuan (T&C)
                                     </Link>
@@ -318,38 +325,30 @@ export default function Welcome({
                                 <li>
                                     <Link
                                         href="/privacy-policy"
-                                        className="transition-colors hover:text-amber-600 dark:hover:text-amber-300"
+                                        className="transition-colors hover:text-blue-600 dark:hover:text-amber-300"
                                     >
                                         Kebijakan Privasi
                                     </Link>
-                                </li>
-                                <li>
-                                    <a
-                                        href="/images/Profile.pdf"
-                                        download="Ridhwan_Anang_Maruf_Resume.pdf"
-                                        className="transition-colors hover:text-amber-600 dark:hover:text-amber-300"
-                                    >
-                                        Curriculum Vitae (PDF)
-                                    </a>
                                 </li>
                             </ul>
                         </div>
 
                         {/* Contacts / Quick links */}
                         <div className="space-y-2.5">
-                            <h5 className="text-[10.5px] font-mono uppercase tracking-wider text-amber-500/90 dark:text-amber-400/90 font-bold">
-                                Kontak
+                            <h5 className="text-[11px] font-mono uppercase tracking-wider text-slate-900 dark:text-amber-400/90 font-bold flex items-center gap-1.5">
+                                <span className="size-1 rounded-full bg-blue-600 dark:bg-amber-400" />
+                                <span>Kontak</span>
                             </h5>
-                            <ul className="space-y-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                            <ul className="space-y-1.5 text-xs font-medium text-slate-600 dark:text-zinc-400">
                                 <li>
                                     <a
                                         href="mailto:ridhwananang@gmail.com"
-                                        className="transition-colors hover:text-amber-600 dark:hover:text-amber-300 font-mono"
+                                        className="transition-colors hover:text-blue-600 dark:hover:text-amber-300 font-mono text-slate-700 dark:text-zinc-300 font-semibold"
                                     >
                                         ridhwananang@gmail.com
                                     </a>
                                 </li>
-                                <li className="text-zinc-500 dark:text-zinc-400">
+                                <li className="text-slate-500 dark:text-zinc-400">
                                     Tangerang Selatan, Indonesia
                                 </li>
                                 <li className="pt-2">
@@ -367,24 +366,16 @@ export default function Welcome({
                     </div>
 
                     {/* Copyright footer bottom */}
-                    <div className="flex flex-col items-center justify-between gap-4 pt-6 text-xs text-zinc-500 sm:flex-row dark:text-zinc-500">
+                    <div className="flex flex-col items-center justify-between gap-4 pt-6 text-xs text-slate-500 sm:flex-row dark:text-zinc-500">
                         <p>
                             © {new Date().getFullYear()} Ridhwan Anang Ma'ruf. All rights reserved.
                         </p>
                         <div className="flex items-center gap-4 font-medium">
                             <a
-                                href="https://github.com/ridhwananang"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="transition-colors hover:text-amber-600 dark:hover:text-amber-300"
-                            >
-                                GitHub
-                            </a>
-                            <a
                                 href="https://www.linkedin.com/in/ridhwan-anang-ma-ruf/"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="transition-colors hover:text-[#0A66C2] dark:hover:text-sky-400"
+                                className="transition-colors hover:text-[#0A66C2] dark:hover:text-sky-400 text-slate-600 dark:text-zinc-400"
                             >
                                 LinkedIn
                             </a>
@@ -392,7 +383,7 @@ export default function Welcome({
                                 href="https://www.dicoding.com/users/riedmarf12/academies"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="transition-colors hover:text-amber-600 dark:hover:text-amber-400"
+                                className="transition-colors hover:text-amber-600 dark:hover:text-amber-400 text-slate-600 dark:text-zinc-400"
                             >
                                 Dicoding
                             </a>
@@ -408,7 +399,6 @@ export default function Welcome({
                 profileEmail={profile?.email || 'ridhwananang@gmail.com'}
                 whatsappNumber="081298502177"
                 linkedinUrl={profile?.linkedin_url || 'https://www.linkedin.com/in/ridhwan-anang-ma-ruf/'}
-                githubUrl={profile?.github_url || 'https://github.com/ridhwananang'}
             />
 
             {/* Floating AI Chat Assistant widget */}

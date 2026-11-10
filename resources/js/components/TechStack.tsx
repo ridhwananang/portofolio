@@ -49,6 +49,25 @@ export default function TechStack({
 }: TechStackProps) {
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
     const [isExpanded, setIsExpanded] = useState(false);
+    const [isMobile, setIsMobile] = useState(() =>
+        typeof window !== 'undefined' ? window.innerWidth < 768 : false
+    );
+
+    useEffect(() => {
+        const mediaQuery = window.matchMedia('(max-width: 767px)');
+        const updateMatch = (e: MediaQueryListEvent | MediaQueryList) => {
+            setIsMobile(e.matches);
+        };
+        updateMatch(mediaQuery);
+
+        if (mediaQuery.addEventListener) {
+            mediaQuery.addEventListener('change', updateMatch);
+            return () => mediaQuery.removeEventListener('change', updateMatch);
+        } else {
+            mediaQuery.addListener(updateMatch);
+            return () => mediaQuery.removeListener(updateMatch);
+        }
+    }, []);
 
     const safeTechStacks = Array.isArray(techStacks) ? techStacks : [];
 
@@ -56,9 +75,11 @@ export default function TechStack({
         setIsExpanded(false);
     }, [safeTechStacks.length]);
 
+    const effectiveLimit = isMobile ? 3 : initialCount;
+
     const visibleTechStacks = isExpanded
         ? safeTechStacks
-        : safeTechStacks.slice(0, initialCount);
+        : safeTechStacks.slice(0, effectiveLimit);
 
     const renderIcon = (iconName: string) => {
         const IconComponent = iconsMap[iconName];
@@ -206,11 +227,18 @@ export default function TechStack({
                     </div>
 
                     {/* Expand/Collapse Toggle if more items */}
-                    {safeTechStacks.length > initialCount && (
+                    {safeTechStacks.length > effectiveLimit && (
                         <div className="mt-6 flex justify-center w-full">
                             <button
                                 type="button"
-                                onClick={() => setIsExpanded(!isExpanded)}
+                                onClick={() => {
+                                    if (isExpanded) {
+                                        document.getElementById('tech-stack')?.scrollIntoView({ behavior: 'smooth' });
+                                        setTimeout(() => setIsExpanded(false), 100);
+                                    } else {
+                                        setIsExpanded(true);
+                                    }
+                                }}
                                 className="luxury-btn-secondary flex cursor-pointer items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold text-zinc-800 dark:text-zinc-200"
                             >
                                 <span>{isExpanded ? 'Tampilkan Lebih Sedikit' : 'Tampilkan Lebih Banyak'}</span>

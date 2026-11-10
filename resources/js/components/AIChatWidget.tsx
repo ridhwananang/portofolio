@@ -47,7 +47,6 @@ export default function AIChatWidget() {
     const [chatInput, setChatInput] = useState('');
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [isTyping, setIsTyping] = useState(false);
-    const [showTooltip, setShowTooltip] = useState(false);
     const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
     const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -66,12 +65,6 @@ export default function AIChatWidget() {
 
     useEffect(() => {
         setMessages([createInitialMessage()]);
-
-        const timer = setTimeout(() => {
-            setShowTooltip(true);
-        }, 2800);
-
-        return () => clearTimeout(timer);
     }, []);
 
     // Internal container scroll ONLY — never scrolls outer window/page on Enter
@@ -87,7 +80,6 @@ export default function AIChatWidget() {
     // Focus input on open
     useEffect(() => {
         if (isOpen) {
-            setShowTooltip(false);
             setTimeout(() => {
                 inputRef.current?.focus();
             }, 250);
@@ -125,7 +117,13 @@ export default function AIChatWidget() {
             .then((data) => {
                 if (data.reply) {
                     setMessages((prev) => {
-                        if (prev.some((m) => m.sender === 'ridhwan' && m.text === data.reply)) {
+                        if (
+                            prev.some(
+                                (m) =>
+                                    m.sender === 'ridhwan' &&
+                                    m.text === data.reply,
+                            )
+                        ) {
                             return prev;
                         }
                         return [
@@ -142,7 +140,9 @@ export default function AIChatWidget() {
                     });
                 }
             })
-            .catch((err) => console.error('Silent background reply check failed:', err));
+            .catch((err) =>
+                console.error('Silent background reply check failed:', err),
+            );
     }, [isOpen]);
 
     const handleResetChat = () => {
@@ -274,24 +274,35 @@ export default function AIChatWidget() {
                 return <div key={i} className="h-1.5" />;
             }
 
-            const isBullet = trimmed.startsWith('- ') || trimmed.startsWith('* ');
-            const contentLine = isBullet ? trimmed.replace(/^[-*]\s+/, '') : line;
+            const isBullet =
+                trimmed.startsWith('- ') || trimmed.startsWith('* ');
+            const contentLine = isBullet
+                ? trimmed.replace(/^[-*]\s+/, '')
+                : line;
 
             // Split by inline code first (`code`), then bold (**text**)
             const parts = contentLine.split(/(`[^`]+`|\*\*[^*]+\*\*)/g);
 
             const renderedContent = parts.map((part, j) => {
-                if (part.startsWith('`') && part.endsWith('`') && part.length > 2) {
+                if (
+                    part.startsWith('`') &&
+                    part.endsWith('`') &&
+                    part.length > 2
+                ) {
                     return (
                         <code
                             key={j}
-                            className="rounded bg-amber-500/10 px-1 py-0.5 font-mono text-[11px] font-semibold text-amber-700 dark:text-amber-300 border border-amber-500/20"
+                            className="rounded border border-amber-500/20 bg-amber-500/10 px-1 py-0.5 font-mono text-[11px] font-semibold text-amber-700 dark:text-amber-300"
                         >
                             {part.slice(1, -1)}
                         </code>
                     );
                 }
-                if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+                if (
+                    part.startsWith('**') &&
+                    part.endsWith('**') &&
+                    part.length > 4
+                ) {
                     return (
                         <strong
                             key={j}
@@ -306,9 +317,14 @@ export default function AIChatWidget() {
 
             if (isBullet) {
                 return (
-                    <li key={i} className="ml-2 flex items-start gap-1.5 text-xs py-0.5">
+                    <li
+                        key={i}
+                        className="ml-2 flex items-start gap-1.5 py-0.5 text-xs"
+                    >
                         <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-amber-500 dark:bg-amber-400" />
-                        <span className="flex-1 leading-relaxed">{renderedContent}</span>
+                        <span className="flex-1 leading-relaxed">
+                            {renderedContent}
+                        </span>
                     </li>
                 );
             }
@@ -354,33 +370,6 @@ export default function AIChatWidget() {
                 }
             `}</style>
 
-            {/* Tooltip Popup (Luxury Capsule Preview) */}
-            <AnimatePresence>
-                {showTooltip && !isOpen && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.9 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.9 }}
-                        onClick={() => {
-                            setIsOpen(true);
-                            setShowTooltip(false);
-                        }}
-                        className="absolute right-0 bottom-[148px] mb-2 cursor-pointer select-none rounded-2xl border border-amber-500/30 bg-white/95 px-4 py-2.5 text-xs font-bold whitespace-nowrap text-zinc-800 shadow-[0_10px_30px_rgba(0,0,0,0.15)] backdrop-blur-xl dark:border-blue-400/25 dark:bg-[#0c162f]/95 dark:text-zinc-100 dark:shadow-[0_10px_35px_rgba(0,0,0,0.4)]"
-                    >
-                        <div className="flex items-center gap-2">
-                            <span className="relative flex size-2">
-                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"></span>
-                                <span className="relative inline-flex size-2 rounded-full bg-amber-500"></span>
-                            </span>
-                            <span className="tracking-tight">Tanya Asisten AI Ridhwan</span>
-                            <Sparkles size={11} className="text-amber-500 dark:text-amber-400" />
-                        </div>
-                        {/* Tooltip triangle */}
-                        <div className="absolute right-6 bottom-[-6px] h-3 w-3 rotate-45 border-r border-b border-amber-500/30 bg-white dark:border-blue-400/25 dark:bg-[#0c162f]"></div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
             {/* Interactive Mode: Mutually exclusive between Chat Dialog and Avatar FAB (Zero Gaps, Zero Redundant Floating Buttons) */}
             <AnimatePresence mode="wait">
                 {isOpen ? (
@@ -400,10 +389,10 @@ export default function AIChatWidget() {
                             stiffness: 380,
                             damping: 28,
                         }}
-                        className="relative flex h-[570px] max-h-[calc(100vh-24px)] w-[calc(100vw-24px)] sm:w-[410px] flex-col overflow-hidden rounded-[1.75rem] border border-amber-500/25 bg-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.25)] backdrop-blur-2xl dark:border-blue-400/20 dark:bg-[#080e21] dark:shadow-[0_25px_70px_-15px_rgba(0,0,0,0.65)]"
+                        className="relative flex h-[570px] max-h-[calc(100vh-24px)] w-[calc(100vw-24px)] flex-col overflow-hidden rounded-[1.75rem] border border-amber-500/25 bg-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.25)] backdrop-blur-2xl sm:w-[410px] dark:border-blue-400/20 dark:bg-[#080e21] dark:shadow-[0_25px_70px_-15px_rgba(0,0,0,0.65)]"
                     >
                         {/* Top Champagne Gold Specular Hairline */}
-                        <div className="pointer-events-none absolute top-0 left-0 right-0 z-20 h-[1.5px] bg-gradient-to-r from-transparent via-amber-400/60 to-transparent" />
+                        <div className="pointer-events-none absolute top-0 right-0 left-0 z-20 h-[1.5px] bg-gradient-to-r from-transparent via-amber-400/60 to-transparent" />
 
                         {/* Ambient Deep Blue/Gold Background Glows */}
                         <div className="pointer-events-none absolute -top-16 -right-16 z-0 size-48 rounded-full bg-amber-500/10 blur-3xl dark:bg-amber-500/12"></div>
@@ -428,10 +417,10 @@ export default function AIChatWidget() {
                                         </h4>
                                         <Sparkles
                                             size={11}
-                                            className="text-amber-500 fill-amber-500/30 dark:text-amber-400"
+                                            className="fill-amber-500/30 text-amber-500 dark:text-amber-400"
                                         />
                                     </div>
-                                    <p className="text-[9px] font-mono font-semibold tracking-wider text-amber-700/80 uppercase dark:text-amber-300/80">
+                                    <p className="font-mono text-[9px] font-semibold tracking-wider text-amber-700/80 uppercase dark:text-amber-300/80">
                                         Full Stack Engineering Specialist
                                     </p>
                                 </div>
@@ -442,7 +431,7 @@ export default function AIChatWidget() {
                                 <button
                                     onClick={handleResetChat}
                                     title="Mulai percakapan baru"
-                                    className="cursor-pointer flex size-7 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-200/60 hover:text-amber-600 dark:text-zinc-400 dark:hover:bg-blue-400/10 dark:hover:text-amber-300"
+                                    className="flex size-7 cursor-pointer items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-200/60 hover:text-amber-600 dark:text-zinc-400 dark:hover:bg-blue-400/10 dark:hover:text-amber-300"
                                     aria-label="Reset chat"
                                 >
                                     <RotateCcw size={13} />
@@ -450,7 +439,7 @@ export default function AIChatWidget() {
                                 <button
                                     onClick={() => setIsOpen(false)}
                                     title="Tutup percakapan"
-                                    className="cursor-pointer flex size-7 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-200/60 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-blue-400/10 dark:hover:text-zinc-100"
+                                    className="flex size-7 cursor-pointer items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-200/60 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-blue-400/10 dark:hover:text-zinc-100"
                                     aria-label="Tutup obrolan"
                                 >
                                     <X size={15} strokeWidth={2.5} />
@@ -508,16 +497,22 @@ export default function AIChatWidget() {
                                     <div
                                         className={`relative rounded-2xl border px-3.5 py-2.5 text-xs shadow-xs ${
                                             m.sender === 'ridhwan'
-                                                ? 'rounded-bl-none border-amber-500/40 bg-amber-500/10 text-zinc-900 dark:bg-amber-500/12 dark:text-amber-100 shadow-[0_2px_12px_rgba(245,158,11,0.12)]'
+                                                ? 'rounded-bl-none border-amber-500/40 bg-amber-500/10 text-zinc-900 shadow-[0_2px_12px_rgba(245,158,11,0.12)] dark:bg-amber-500/12 dark:text-amber-100'
                                                 : m.sender === 'user'
-                                                    ? 'rounded-br-none border-blue-400/30 bg-gradient-to-tr from-[#0a1538] via-[#0f2152] to-[#162d6d] text-white shadow-md'
-                                                    : 'rounded-bl-none border-zinc-200/90 bg-white/95 text-zinc-800 dark:border-blue-400/20 dark:bg-[#0c162f]/90 dark:text-zinc-100'
+                                                  ? 'rounded-br-none border-blue-400/30 bg-gradient-to-tr from-[#0a1538] via-[#0f2152] to-[#162d6d] text-white shadow-md'
+                                                  : 'rounded-bl-none border-zinc-200/90 bg-white/95 text-zinc-800 dark:border-blue-400/20 dark:bg-[#0c162f]/90 dark:text-zinc-100'
                                         }`}
                                     >
                                         {m.sender === 'ridhwan' && (
                                             <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
-                                                <CheckCircle2 size={11} className="text-amber-500" />
-                                                <span>Balasan Langsung dari Ridhwan</span>
+                                                <CheckCircle2
+                                                    size={11}
+                                                    className="text-amber-500"
+                                                />
+                                                <span>
+                                                    Balasan Langsung dari
+                                                    Ridhwan
+                                                </span>
                                             </div>
                                         )}
 
@@ -528,14 +523,24 @@ export default function AIChatWidget() {
                                         <div className="mt-1 flex items-center justify-between gap-3 text-[8.5px] opacity-60">
                                             {m.sender !== 'user' ? (
                                                 <button
-                                                    onClick={() => handleCopyMessage(m.text, idx)}
-                                                    className="cursor-pointer inline-flex items-center gap-1 font-mono transition-opacity hover:opacity-100"
+                                                    onClick={() =>
+                                                        handleCopyMessage(
+                                                            m.text,
+                                                            idx,
+                                                        )
+                                                    }
+                                                    className="inline-flex cursor-pointer items-center gap-1 font-mono transition-opacity hover:opacity-100"
                                                     title="Salin teks"
                                                 >
                                                     {copiedIndex === idx ? (
                                                         <>
-                                                            <Check size={9} className="text-emerald-500" />
-                                                            <span className="text-emerald-500 font-bold">Tersalin</span>
+                                                            <Check
+                                                                size={9}
+                                                                className="text-emerald-500"
+                                                            />
+                                                            <span className="font-bold text-emerald-500">
+                                                                Tersalin
+                                                            </span>
                                                         </>
                                                     ) : (
                                                         <>
@@ -547,7 +552,9 @@ export default function AIChatWidget() {
                                             ) : (
                                                 <span />
                                             )}
-                                            <span className="font-mono">{m.time}</span>
+                                            <span className="font-mono">
+                                                {m.time}
+                                            </span>
                                         </div>
                                     </div>
                                 </motion.div>
@@ -580,8 +587,10 @@ export default function AIChatWidget() {
                                 {CURATED_SUGGESTIONS.map((sug, i) => (
                                     <button
                                         key={i}
-                                        onClick={() => handleSendMessage(sug.query)}
-                                        className="cursor-pointer shrink-0 rounded-full border border-amber-500/25 bg-white/90 px-2.5 py-1 text-[10.5px] font-medium text-zinc-700 shadow-2xs transition-all hover:border-amber-400/50 hover:bg-amber-500/10 hover:text-amber-700 active:scale-95 dark:border-blue-400/20 dark:bg-[#0c162f]/80 dark:text-zinc-300 dark:hover:border-amber-400/40 dark:hover:text-amber-300"
+                                        onClick={() =>
+                                            handleSendMessage(sug.query)
+                                        }
+                                        className="shrink-0 cursor-pointer rounded-full border border-amber-500/25 bg-white/90 px-2.5 py-1 text-[10.5px] font-medium text-zinc-700 shadow-2xs transition-all hover:border-amber-400/50 hover:bg-amber-500/10 hover:text-amber-700 active:scale-95 dark:border-blue-400/20 dark:bg-[#0c162f]/80 dark:text-zinc-300 dark:hover:border-amber-400/40 dark:hover:text-amber-300"
                                     >
                                         <span>{sug.label}</span>
                                     </button>
@@ -602,29 +611,41 @@ export default function AIChatWidget() {
                                     ref={inputRef}
                                     type="text"
                                     value={chatInput}
-                                    onChange={(e) => setChatInput(e.target.value)}
-                                    placeholder={isTyping ? "Asisten sedang menjawab..." : "Tanya arsitektur, proyek, atau keahlian..."}
+                                    onChange={(e) =>
+                                        setChatInput(e.target.value)
+                                    }
+                                    placeholder={
+                                        isTyping
+                                            ? 'Asisten sedang menjawab...'
+                                            : 'Tanya arsitektur, proyek, atau keahlian...'
+                                    }
                                     disabled={isTyping}
-                                    className="flex-1 bg-transparent px-2.5 py-1 text-xs text-zinc-900 placeholder-zinc-400 outline-none focus:outline-none dark:text-zinc-100 dark:placeholder-zinc-500 disabled:opacity-60"
+                                    className="flex-1 bg-transparent px-2.5 py-1 text-xs text-zinc-900 placeholder-zinc-400 outline-none focus:outline-none disabled:opacity-60 dark:text-zinc-100 dark:placeholder-zinc-500"
                                 />
                                 <button
                                     type="submit"
                                     disabled={!chatInput.trim() || isTyping}
-                                    className="luxury-btn-primary flex size-7.5 cursor-pointer items-center justify-center rounded-lg text-zinc-950 shadow-xs transition-transform hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                                    className="luxury-btn-primary flex size-7.5 cursor-pointer items-center justify-center rounded-lg text-zinc-950 shadow-xs transition-transform hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
                                     aria-label="Kirim pesan"
                                 >
-                                    <SendHorizontal size={13} strokeWidth={2.5} />
+                                    <SendHorizontal
+                                        size={13}
+                                        strokeWidth={2.5}
+                                    />
                                 </button>
                             </form>
 
                             <div className="mt-2 flex items-center justify-between text-[8px] font-medium text-zinc-500 dark:text-zinc-400">
                                 <span className="flex items-center gap-1 font-mono">
-                                    <MessageSquare size={9} className="text-amber-500" />
+                                    <MessageSquare
+                                        size={9}
+                                        className="text-amber-500"
+                                    />
                                     <span>Gemini 2.5 Flash • Respon Cepat</span>
                                 </span>
                                 <span className="flex items-center gap-1 font-mono">
                                     <span>Tekan Enter</span>
-                                    <span className="rounded border border-zinc-300 bg-zinc-100 px-1 py-0.2 text-[7.5px] dark:border-zinc-700 dark:bg-zinc-800">
+                                    <span className="py-0.2 rounded border border-zinc-300 bg-zinc-100 px-1 text-[7.5px] dark:border-zinc-700 dark:bg-zinc-800">
                                         ↵
                                     </span>
                                 </span>

@@ -41,10 +41,10 @@ export default function MainHero({ onOpenContact }: MainHeroProps) {
                 </div>
             </div>
 
-            {/* Headline Typography with Champagne Gold & Sapphire Sheen */}
+            {/* Headline Typography with Champagne Gold & Sapphire Sheen (High-Contrast for Light & Dark Mode) */}
             <h1 className="relative z-10 mb-3.5 text-2xl sm:text-3xl lg:text-[2.1rem] leading-tight font-black tracking-tight text-zinc-900 dark:text-white">
                 Membangun{' '}
-                <span className="bg-gradient-to-r from-amber-400 via-yellow-300 to-sky-300 bg-clip-text text-transparent font-black">
+                <span className="bg-gradient-to-r from-amber-600 via-orange-600 to-blue-600 dark:from-amber-400 dark:via-amber-200 dark:to-sky-300 bg-clip-text text-transparent font-black">
                     Aplikasi Web Skala Produksi
                 </span>{' '}
                 yang Cepat, Aman, & Teruji.

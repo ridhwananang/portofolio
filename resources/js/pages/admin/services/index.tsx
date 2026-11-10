@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import { ServicePackage, ServiceAddon, ServiceSettingsMap } from '@/types/admin';
 import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/admin/confirm-dialog';
 
 interface ServicesIndexProps {
     packages: ServicePackage[];
@@ -65,6 +66,10 @@ export default function ServicesIndex({ packages, addons, settings }: ServicesIn
 
     const [editingAddon, setEditingAddon] = useState<ServiceAddon | null>(null);
     const [isCreatingAddon, setIsCreatingAddon] = useState(false);
+
+    // Delete confirmation modal states
+    const [deletingPackage, setDeletingPackage] = useState<ServicePackage | null>(null);
+    const [deletingAddon, setDeletingAddon] = useState<ServiceAddon | null>(null);
 
     // Package Form
     const packageForm = useForm({
@@ -183,12 +188,18 @@ export default function ServicesIndex({ packages, addons, settings }: ServicesIn
     };
 
     const handleDeletePackage = (pkg: ServicePackage) => {
-        if (confirm(`Apakah Anda yakin ingin menghapus paket "${pkg.title}"?`)) {
-            router.delete(`/admin/services/packages/${pkg.id}`, {
-                preserveScroll: true,
-                onSuccess: () => toast.success(`Paket ${pkg.title} berhasil dihapus.`),
-            });
-        }
+        setDeletingPackage(pkg);
+    };
+
+    const confirmDeletePackage = () => {
+        if (!deletingPackage) return;
+        router.delete(`/admin/services/packages/${deletingPackage.id}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success(`Paket ${deletingPackage.title} berhasil dihapus.`);
+                setDeletingPackage(null);
+            },
+        });
     };
 
     // --- Addon Handlers ---
@@ -254,12 +265,18 @@ export default function ServicesIndex({ packages, addons, settings }: ServicesIn
     };
 
     const handleDeleteAddon = (addon: ServiceAddon) => {
-        if (confirm(`Apakah Anda yakin ingin menghapus add-on "${addon.name}"?`)) {
-            router.delete(`/admin/services/addons/${addon.id}`, {
-                preserveScroll: true,
-                onSuccess: () => toast.success(`Add-on ${addon.name} berhasil dihapus.`),
-            });
-        }
+        setDeletingAddon(addon);
+    };
+
+    const confirmDeleteAddon = () => {
+        if (!deletingAddon) return;
+        router.delete(`/admin/services/addons/${deletingAddon.id}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success(`Add-on ${deletingAddon.name} berhasil dihapus.`);
+                setDeletingAddon(null);
+            },
+        });
     };
 
     // --- Settings Handler ---
@@ -1260,6 +1277,28 @@ export default function ServicesIndex({ packages, addons, settings }: ServicesIn
                         </div>
                     </div>
                 )}
+
+                {/* Modal Konfirmasi Hapus Paket (Tanpa Browser Alert!) */}
+                <ConfirmDialog
+                    open={Boolean(deletingPackage)}
+                    onOpenChange={(open) => !open && setDeletingPackage(null)}
+                    title="Hapus Paket Layanan?"
+                    description={`Apakah Anda yakin ingin menghapus paket "${deletingPackage?.title}"? Tindakan ini akan menghapus paket dari konfigurasi.`}
+                    confirmText="Hapus Paket"
+                    variant="destructive"
+                    onConfirm={confirmDeletePackage}
+                />
+
+                {/* Modal Konfirmasi Hapus Add-on (Tanpa Browser Alert!) */}
+                <ConfirmDialog
+                    open={Boolean(deletingAddon)}
+                    onOpenChange={(open) => !open && setDeletingAddon(null)}
+                    title="Hapus Fitur Add-on?"
+                    description={`Apakah Anda yakin ingin menghapus add-on "${deletingAddon?.name}"? Tindakan ini akan menghapus add-on dari opsi layanan.`}
+                    confirmText="Hapus Add-on"
+                    variant="destructive"
+                    onConfirm={confirmDeleteAddon}
+                />
             </div>
         </AppLayout>
     );

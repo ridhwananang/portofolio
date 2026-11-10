@@ -2,14 +2,22 @@ import React from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import {
     Award,
+    BarChart3,
     Briefcase,
     Calculator,
+    CalendarDays,
+    CheckSquare,
     Code2,
+    Coins,
+    FolderKanban,
     Globe,
+    History,
     LayoutDashboard,
     Mail,
     ShoppingBag,
     UserCheck,
+    Users,
+    Zap,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
@@ -29,24 +37,68 @@ import type { Auth, NavItem } from '@/types';
 // Studio Core Modules
 const studioNavItems: NavItem[] = [
     {
-        title: 'Dashboard Cockpit',
-        href: '/admin',
+        title: 'Studio Cockpit',
+        href: '/studio',
         icon: LayoutDashboard,
     },
     {
         title: 'Order & Proyek Klien',
-        href: '/admin/orders',
+        href: '/studio/orders',
         icon: ShoppingBag,
     },
     {
         title: 'Kelola Layanan',
-        href: '/admin/services',
+        href: '/studio/services',
         icon: Calculator,
     },
     {
         title: 'Pesan Masuk (Inbox)',
-        href: '/admin/messages',
+        href: '/studio/messages',
         icon: Mail,
+    },
+];
+
+// Project Management System (PMS) Suite
+const pmsNavItems: NavItem[] = [
+    {
+        title: 'PMS Cockpit',
+        href: '/studio/pms',
+        icon: BarChart3,
+    },
+    {
+        title: 'Manajemen Proyek',
+        href: '/studio/pms/projects',
+        icon: FolderKanban,
+    },
+    {
+        title: 'Sprint Cycles',
+        href: '/studio/pms/sprints',
+        icon: Zap,
+    },
+    {
+        title: 'Kanban & Tasks',
+        href: '/studio/pms/tasks',
+        icon: CheckSquare,
+    },
+    {
+        title: 'Interactive Timeline',
+        href: '/studio/pms/timeline',
+        icon: CalendarDays,
+    },
+    {
+        title: 'Keuangan & Budget',
+        href: '/studio/pms/finances',
+        icon: Coins,
+    },
+    {
+        title: 'Tim & Pengguna Dinamis',
+        href: '/studio/users',
+        icon: Users,
+    },
+    {
+        title: 'Audit & Activity Log',
+        href: '/studio/pms/activity-logs',
+        icon: History,
     },
 ];
 
@@ -54,23 +106,57 @@ const studioNavItems: NavItem[] = [
 const contentNavItems: NavItem[] = [
     {
         title: 'Portofolio Proyek',
-        href: '/admin/projects',
+        href: '/studio/projects',
         icon: Briefcase,
     },
     {
         title: 'Tech Stacks Matrix',
-        href: '/admin/tech-stacks',
+        href: '/studio/tech-stacks',
         icon: Code2,
     },
     {
         title: 'Sertifikat & Lisensi',
-        href: '/admin/certificates',
+        href: '/studio/certificates',
         icon: Award,
     },
     {
         title: 'Profil & Bio Portofolio',
-        href: '/admin/profile',
+        href: '/studio/profile',
         icon: UserCheck,
+    },
+];
+
+// Member PMS Navigation (Scoped strictly to Assigned Projects & Tasks)
+const memberPmsNavItems: NavItem[] = [
+    {
+        title: 'PMS Cockpit',
+        href: '/studio',
+        icon: BarChart3,
+    },
+    {
+        title: 'Proyek Saya',
+        href: '/studio/pms/projects',
+        icon: FolderKanban,
+    },
+    {
+        title: 'Jobdesk & Tasks',
+        href: '/studio/pms/tasks',
+        icon: CheckSquare,
+    },
+    {
+        title: 'Sprint Cycles',
+        href: '/studio/pms/sprints',
+        icon: Zap,
+    },
+    {
+        title: 'Interactive Timeline',
+        href: '/studio/pms/timeline',
+        icon: CalendarDays,
+    },
+    {
+        title: 'Audit & Log Aktivitas',
+        href: '/studio/pms/activity-logs',
+        icon: History,
     },
 ];
 
@@ -200,7 +286,7 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild className="hover:bg-transparent focus-visible:ring-0">
-                            <Link href="/admin" prefetch>
+                            <Link href={isAdmin ? "/studio" : "/studio/pms"} prefetch>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>
@@ -212,10 +298,11 @@ export function AppSidebar() {
                 {isAdmin ? (
                     <>
                         <NavMain items={studioNavItems} label="Studio Hub" />
+                        <NavMain items={pmsNavItems} label="Project Management (PMS)" />
                         <NavMain items={contentNavItems} label="Karya & Aset" />
                     </>
                 ) : (
-                    <NavMain items={quickToolsItems} label="Layanan Pembuatan Web" />
+                    <NavMain items={memberPmsNavItems} label="Ruang Kerja & Jobdesk" />
                 )}
             </SidebarContent>
 

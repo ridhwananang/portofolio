@@ -31,6 +31,16 @@ import {
     Zap,
 } from 'lucide-react';
 import { ProjectOrder, ProjectMilestone, ClientRevision, HandoverData } from '@/types/admin';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 
 interface Props {
     order: ProjectOrder;
@@ -84,21 +94,18 @@ export default function ProjectTracker({ order }: Props) {
         setTimeout(() => setCopied(false), 2500);
     };
 
-    const handleApprove = () => {
-        if (
-            confirm(
-                'Apakah Anda puas dengan hasil pengerjaan website dan ingin merilis dana rekber ke Ridhwan Anang Ma\'ruf? Akses repositori dan kredensial CMS akan langsung terbuka.'
-            )
-        ) {
-            setIsApproving(true);
-            router.post(
-                `/track-project/${order.tracking_code}/approve`,
-                {},
-                {
-                    onFinish: () => setIsApproving(false),
-                }
-            );
-        }
+    const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
+
+    const handleExecuteApprove = () => {
+        setIsApproving(true);
+        setIsApproveModalOpen(false);
+        router.post(
+            `/track-project/${order.tracking_code}/approve`,
+            {},
+            {
+                onFinish: () => setIsApproving(false),
+            }
+        );
     };
 
     const handleRevisionSubmit = (e: React.FormEvent) => {
@@ -150,7 +157,7 @@ export default function ProjectTracker({ order }: Props) {
                 window.location.href = data.invoice_url;
             }
         } catch (err: any) {
-            alert(err.message || 'Terjadi kesalahan saat memproses pelunasan.');
+            toast.error(err.message || 'Terjadi kesalahan saat memproses pelunasan.');
         } finally {
             setIsRequestingSettlement(false);
         }
@@ -537,7 +544,7 @@ export default function ProjectTracker({ order }: Props) {
                                 ) : (
                                     <button
                                         type="button"
-                                        onClick={handleApprove}
+                                        onClick={() => setIsApproveModalOpen(true)}
                                         disabled={isApproving}
                                         className="cursor-pointer inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-3 text-xs font-bold text-white shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-98 disabled:opacity-50 transition-all"
                                     >
@@ -1113,7 +1120,7 @@ export default function ProjectTracker({ order }: Props) {
                 {showCertificate && (
                     <div
                         id="print-modal-container"
-                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-2 sm:p-4 overflow-y-auto"
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-2 sm:p-4 overflow-y-auto scrollbar-none"
                     >
                         <div className="relative w-full max-w-3xl rounded-3xl bg-white text-slate-900 shadow-2xl overflow-hidden my-auto border border-slate-200">
                             {/* Top Control Bar (NO PRINT) */}
@@ -1492,6 +1499,34 @@ export default function ProjectTracker({ order }: Props) {
                         </div>
                     </div>
                 )}
+
+                {/* Modal Konfirmasi Persetujuan Hasil & Handover (Tanpa Browser Alert!) */}
+                <Dialog open={isApproveModalOpen} onOpenChange={setIsApproveModalOpen}>
+                    <DialogContent className="max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-6">
+                        <DialogHeader>
+                            <DialogTitle className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                <ShieldCheck className="size-5 text-emerald-500" />
+                                Setujui Hasil & Rilis Handover?
+                            </DialogTitle>
+                            <DialogDescription className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+                                Apakah Anda puas dengan hasil pengerjaan website dan ingin merilis dana rekber ke <strong>Ridhwan Anang Ma'ruf</strong>? Akses repositori dan kredensial CMS akan langsung terbuka secara otomatis.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter className="gap-2 mt-5">
+                            <Button type="button" variant="outline" onClick={() => setIsApproveModalOpen(false)} className="rounded-xl h-9 text-xs">
+                                Batal
+                            </Button>
+                            <Button
+                                type="button"
+                                onClick={handleExecuteApprove}
+                                disabled={isApproving}
+                                className="rounded-xl h-9 text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
+                            >
+                                {isApproving ? 'Memproses...' : 'Ya, Setujui & Buka Handover'}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
         </>
     );

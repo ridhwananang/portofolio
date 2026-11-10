@@ -22,16 +22,21 @@
         {{-- Inline style to set the HTML background color based on our theme in app.css --}}
         <style>
             html {
-                background-color: oklch(1 0 0);
+                background-color: #ffffff;
             }
 
             html.dark {
-                background-color: oklch(0.145 0 0);
+                background-color: #080e21;
             }
         </style>
 
         <link rel="icon" href="/images/anang-logo.png" type="image/png">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+        <!-- Google Fonts: Outfit & Urbanist for Clean Luxury Brand Identity -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700;800;900&family=Urbanist:wght@700;800;900&display=swap" rel="stylesheet">
 
         @fonts
 

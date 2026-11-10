@@ -3,8 +3,6 @@ import { router } from '@inertiajs/react';
 import {
     Dialog,
     DialogContent,
-    DialogPortal,
-    DialogOverlay,
 } from '@/components/ui/dialog';
 import {
     Search,
@@ -30,7 +28,7 @@ interface CommandItem {
     title: string;
     description?: string;
     icon: React.ElementType;
-    group: 'Navigasi Studio' | 'Aksi Cepat' | 'Preferensi';
+    group: 'Navigasi Studio' | 'Project Management (PMS)' | 'Aksi Cepat' | 'Preferensi';
     keywords: string[];
     action: () => void;
 }
@@ -56,7 +54,61 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 icon: LayoutDashboard,
                 group: 'Navigasi Studio',
                 keywords: ['dashboard', 'home', 'overview', 'ringkasan', 'metrik'],
-                action: () => router.visit('/admin'),
+                action: () => router.visit('/studio'),
+            },
+            {
+                id: 'nav-pms-dashboard',
+                title: 'PMS Cockpit & Health',
+                description: 'Pusat komando Project Management System & kesehatan proyek',
+                icon: LayoutDashboard,
+                group: 'Project Management (PMS)',
+                keywords: ['pms', 'project management', 'health', 'sprint', 'task', 'gantt'],
+                action: () => router.visit('/studio/pms'),
+            },
+            {
+                id: 'nav-pms-projects',
+                title: 'Proyek PMS Aktif',
+                description: 'Daftar proyek managed, roadmap, dan sprint cycle',
+                icon: Briefcase,
+                group: 'Project Management (PMS)',
+                keywords: ['pms projects', 'proyek pms', 'managed', 'client project'],
+                action: () => router.visit('/studio/pms/projects'),
+            },
+            {
+                id: 'nav-pms-tasks',
+                title: 'Kanban Board & Tasks',
+                description: 'Papan tugas agile, backlog, dan checklist subtask',
+                icon: Layers,
+                group: 'Project Management (PMS)',
+                keywords: ['kanban', 'tasks', 'tugas', 'board', 'subtask'],
+                action: () => router.visit('/studio/pms/tasks'),
+            },
+            {
+                id: 'nav-pms-timeline',
+                title: 'Interactive Timeline (Gantt)',
+                description: 'Visualisasi roadmap proyek dan sprint timeline',
+                icon: Layers,
+                group: 'Project Management (PMS)',
+                keywords: ['timeline', 'gantt', 'roadmap', 'schedule', 'jadwal'],
+                action: () => router.visit('/studio/pms/timeline'),
+            },
+            {
+                id: 'nav-pms-finances',
+                title: 'Keuangan & Anggaran Proyek',
+                description: 'Catatan termin masuk, biaya server, dan pengeluaran operasional',
+                icon: ShoppingBag,
+                group: 'Project Management (PMS)',
+                keywords: ['finance', 'keuangan', 'budget', 'uang', 'expense', 'income'],
+                action: () => router.visit('/studio/pms/finances'),
+            },
+            {
+                id: 'nav-pms-team',
+                title: 'Tim & Pengguna Dinamis',
+                description: 'Kelola seluruh pengguna, hak akses, dan peran anggota tim',
+                icon: User,
+                group: 'Project Management (PMS)',
+                keywords: ['users', 'tim', 'anggota', 'role', 'pengguna'],
+                action: () => router.visit('/studio/users'),
             },
             {
                 id: 'nav-projects',
@@ -65,7 +117,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 icon: Briefcase,
                 group: 'Navigasi Studio',
                 keywords: ['proyek', 'projects', 'portfolio', 'karya', 'showcase'],
-                action: () => router.visit('/admin/projects'),
+                action: () => router.visit('/studio/projects'),
             },
             {
                 id: 'nav-tech-stacks',
@@ -74,7 +126,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 icon: Layers,
                 group: 'Navigasi Studio',
                 keywords: ['tech', 'stack', 'teknologi', 'skills', 'keahlian'],
-                action: () => router.visit('/admin/tech-stacks'),
+                action: () => router.visit('/studio/tech-stacks'),
             },
             {
                 id: 'nav-certificates',
@@ -83,7 +135,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 icon: Award,
                 group: 'Navigasi Studio',
                 keywords: ['sertifikat', 'certificates', 'lisensi', 'kursus', 'dicoding'],
-                action: () => router.visit('/admin/certificates'),
+                action: () => router.visit('/studio/certificates'),
             },
             {
                 id: 'nav-messages',
@@ -92,7 +144,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 icon: Mail,
                 group: 'Navigasi Studio',
                 keywords: ['pesan', 'messages', 'inbox', 'kontak', 'email'],
-                action: () => router.visit('/admin/messages'),
+                action: () => router.visit('/studio/messages'),
             },
             {
                 id: 'nav-orders',
@@ -101,7 +153,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 icon: ShoppingBag,
                 group: 'Navigasi Studio',
                 keywords: ['order', 'pesanan', 'layanan', 'tracking', 'klien', 'staging'],
-                action: () => router.visit('/admin/orders'),
+                action: () => router.visit('/studio/orders'),
             },
             {
                 id: 'nav-profile',
@@ -110,10 +162,19 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 icon: User,
                 group: 'Navigasi Studio',
                 keywords: ['profil', 'profile', 'bio', 'pendidikan', 'avatar'],
-                action: () => router.visit('/admin/profile'),
+                action: () => router.visit('/studio/profile'),
             },
 
             // Aksi Cepat
+            {
+                id: 'action-new-pms-project',
+                title: 'Inisialisasi Proyek PMS Baru',
+                description: 'Buka formulir lengkap pembuatan proyek & cetak biru arsitektur PMS',
+                icon: PlusCircle,
+                group: 'Aksi Cepat',
+                keywords: ['buat pms', 'new pms', 'inisialisasi proyek', 'proyek baru'],
+                action: () => router.visit('/studio/pms/projects/create'),
+            },
             {
                 id: 'action-new-project',
                 title: 'Tambah Proyek Baru',
@@ -121,7 +182,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 icon: PlusCircle,
                 group: 'Aksi Cepat',
                 keywords: ['tambah', 'buat', 'new', 'project', 'proyek'],
-                action: () => router.visit('/admin/projects/create'),
+                action: () => router.visit('/studio/projects/create'),
             },
             {
                 id: 'action-new-cert',
@@ -130,7 +191,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 icon: PlusCircle,
                 group: 'Aksi Cepat',
                 keywords: ['tambah', 'sertifikat', 'certificate', 'lisensi'],
-                action: () => router.visit('/admin/certificates/create'),
+                action: () => router.visit('/studio/certificates/create'),
             },
             {
                 id: 'action-view-public',
@@ -211,27 +272,25 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogPortal>
-                <DialogOverlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-                <DialogContent className="fixed top-[20%] left-[50%] z-50 w-full max-w-2xl translate-x-[-50%] p-0 rounded-2xl border border-sidebar-border/80 bg-card/95 backdrop-blur-2xl shadow-2xl overflow-hidden focus:outline-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95">
-                    {/* Header search bar */}
-                    <div className="flex items-center px-4 py-3.5 border-b border-sidebar-border/60 bg-muted/20 gap-3">
-                        <Search className="size-5 text-muted-foreground shrink-0" />
-                        <input
-                            ref={inputRef}
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Ketik perintah, nama halaman, atau aksi cepat..."
-                            className="flex-1 bg-transparent text-sm sm:text-base outline-none placeholder:text-muted-foreground text-foreground"
-                            autoFocus
-                        />
-                        <kbd className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-mono font-medium rounded-md bg-muted border border-sidebar-border text-muted-foreground">
-                            ESC
-                        </kbd>
-                    </div>
+            <DialogContent className="w-full max-w-2xl p-0 rounded-2xl border border-sidebar-border/80 bg-card/95 backdrop-blur-2xl shadow-2xl overflow-hidden focus:outline-hidden">
+                {/* Header search bar */}
+                <div className="flex items-center px-4 py-3.5 border-b border-sidebar-border/60 bg-muted/20 gap-3">
+                    <Search className="size-5 text-muted-foreground shrink-0" />
+                    <input
+                        ref={inputRef}
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Ketik perintah, nama halaman, atau aksi cepat..."
+                        className="flex-1 bg-transparent text-sm sm:text-base outline-none placeholder:text-muted-foreground text-foreground"
+                        autoFocus
+                    />
+                    <kbd className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-mono font-medium rounded-md bg-muted border border-sidebar-border text-muted-foreground">
+                        ESC
+                    </kbd>
+                </div>
 
-                    {/* Results list */}
-                    <div className="max-h-[380px] overflow-y-auto p-2 divide-y divide-sidebar-border/40">
+                {/* Results list */}
+                <div className="max-h-[380px] overflow-y-auto scrollbar-sleek p-2 divide-y divide-sidebar-border/40">
                         {filteredItems.length === 0 ? (
                             <div className="py-12 text-center text-sm text-muted-foreground">
                                 Tidak ada perintah atau modul yang cocok dengan "{search}".
@@ -327,7 +386,6 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                         </div>
                     </div>
                 </DialogContent>
-            </DialogPortal>
         </Dialog>
     );
 }

@@ -76,10 +76,12 @@ export default function QuestShow({ quest, authUserId, availableBanks }: Props) 
         }).format(Number(val));
     };
 
-    const handleTakeQuest = () => {
-        if (confirm('Apakah Anda yakin ingin mengambil quest ini?')) {
-            router.post(`/quests/${quest.id}/take`);
-        }
+    const [takeDialogOpen, setTakeDialogOpen] = useState(false);
+    const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+
+    const handleConfirmTakeQuest = () => {
+        setTakeDialogOpen(false);
+        router.post(`/quests/${quest.id}/take`);
     };
 
     const handleSubmitWork = (e: React.FormEvent) => {
@@ -94,10 +96,9 @@ export default function QuestShow({ quest, authUserId, availableBanks }: Props) 
         });
     };
 
-    const handleCancelQuest = () => {
-        if (confirm('Apakah Anda yakin ingin membatalkan quest dan mengembalikan dana rekber?')) {
-            router.post(`/quests/${quest.id}/cancel`);
-        }
+    const handleConfirmCancelQuest = () => {
+        setCancelDialogOpen(false);
+        router.post(`/quests/${quest.id}/cancel`);
     };
 
     const handleDispute = (e: React.FormEvent) => {
@@ -240,7 +241,7 @@ export default function QuestShow({ quest, authUserId, availableBanks }: Props) 
                                                 Dana hadiah telah aman dipegang oleh Rekening Bersama (Escrow). Anda dapat mengambil quest ini untuk mulai mengerjakan.
                                             </p>
                                         </div>
-                                        <Button onClick={handleTakeQuest} className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white w-full sm:w-auto">
+                                        <Button onClick={() => setTakeDialogOpen(true)} className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white w-full sm:w-auto cursor-pointer">
                                             <ShieldCheck className="size-4" />
                                             Ambil Quest Ini Sekarang
                                         </Button>
@@ -368,7 +369,7 @@ export default function QuestShow({ quest, authUserId, availableBanks }: Props) 
                                         <div className="text-xs text-muted-foreground">
                                             Belum ada worker yang mengambil? Anda dapat membatalkan dan me-refund dana.
                                         </div>
-                                        <Button onClick={handleCancelQuest} variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10">
+                                        <Button onClick={() => setCancelDialogOpen(true)} variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10 cursor-pointer">
                                             Batalkan & Refund
                                         </Button>
                                     </div>
@@ -502,6 +503,52 @@ export default function QuestShow({ quest, authUserId, availableBanks }: Props) 
                         </Card>
                     </div>
                 </div>
+
+                {/* Modal Konfirmasi Ambil Quest (Tanpa Browser Alert!) */}
+                <Dialog open={takeDialogOpen} onOpenChange={setTakeDialogOpen}>
+                    <DialogContent className="max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-6">
+                        <DialogHeader>
+                            <DialogTitle className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                <ShieldCheck className="size-5 text-emerald-500" />
+                                Ambil Quest Ini?
+                            </DialogTitle>
+                            <DialogDescription className="text-xs text-slate-500 mt-1 leading-relaxed">
+                                Anda akan ditugaskan sebagai worker untuk quest ini. Dana rekber telah dipegang aman di sistem dan akan dicairkan setelah hasil kerja Anda disetujui.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter className="gap-2 mt-4">
+                            <Button type="button" variant="outline" onClick={() => setTakeDialogOpen(false)} className="rounded-xl h-9 text-xs">
+                                Batal
+                            </Button>
+                            <Button type="button" onClick={handleConfirmTakeQuest} className="rounded-xl h-9 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white">
+                                Ya, Ambil Quest
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Modal Konfirmasi Batal & Refund Quest (Tanpa Browser Alert!) */}
+                <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+                    <DialogContent className="max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-6">
+                        <DialogHeader>
+                            <DialogTitle className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 text-destructive">
+                                <ShieldAlert className="size-5 text-rose-500" />
+                                Batalkan Quest & Kembalikan Dana?
+                            </DialogTitle>
+                            <DialogDescription className="text-xs text-slate-500 mt-1 leading-relaxed">
+                                Apakah Anda yakin ingin membatalkan quest ini dan mengembalikan dana rekber ke akun Anda? Tindakan ini akan menutup quest secara permanen.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter className="gap-2 mt-4">
+                            <Button type="button" variant="outline" onClick={() => setCancelDialogOpen(false)} className="rounded-xl h-9 text-xs">
+                                Tutup
+                            </Button>
+                            <Button type="button" variant="destructive" onClick={handleConfirmCancelQuest} className="rounded-xl h-9 text-xs font-bold">
+                                Batalkan & Refund Dana
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
         </>
     );

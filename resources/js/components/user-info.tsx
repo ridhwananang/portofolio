@@ -25,7 +25,7 @@ export function UserInfo({
             <div className="grid flex-1 text-left text-xs leading-tight overflow-hidden">
                 <span className="truncate font-semibold text-slate-900 dark:text-white">{user.name}</span>
                 <span className="truncate text-[10.5px] text-muted-foreground">
-                    {showEmail ? user.email : (user.is_admin ? 'Administrator' : 'Klien')}
+                    {showEmail ? user.email : (user.is_admin ? 'Administrator' : ((user.role_title as string) || 'Anggota Tim'))}
                 </span>
             </div>
         </div>

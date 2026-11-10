@@ -15,12 +15,7 @@ class LoginResponse implements LoginResponseContract, TwoFactorLoginResponseCont
      */
     public function toResponse($request)
     {
-        $user = $request->user();
-
-        if ($user && $user->isAdmin()) {
-            return redirect()->intended('/admin/dashboard');
-        }
-
-        return redirect()->intended('/dashboard');
+        // All roles (admin or non-admin) enter /studio directly after login
+        return redirect()->intended('/studio');
     }
 }

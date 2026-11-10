@@ -23,10 +23,12 @@ export default function AppSidebarLayout({
                 <div className="absolute -top-20 left-10 h-[550px] w-[550px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(20,184,166,0.16),transparent_70%)] dark:bg-[radial-gradient(ellipse_at_center,rgba(20,184,166,0.20),transparent_70%)] blur-[120px] pointer-events-none" />
                 <div className="absolute bottom-0 right-1/4 h-[600px] w-[700px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(244,63,94,0.12),transparent_70%)] dark:bg-[radial-gradient(ellipse_at_center,rgba(244,63,94,0.16),transparent_70%)] blur-[140px] pointer-events-none" />
 
-                {/* 2. Organic Topographic Contour Waves SVG */}
+                {/* 2. Organic Topographic Contour Waves SVG (Fully Responsive with ViewBox) */}
                 <svg
-                    className="absolute inset-0 h-full w-full opacity-40 dark:opacity-25"
+                    className="absolute inset-0 h-full w-full opacity-40 dark:opacity-25 hidden sm:block pointer-events-none"
                     xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 1440 900"
+                    preserveAspectRatio="xMidYMid slice"
                 >
                     <defs>
                         <linearGradient id="topo-grad-1" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -138,9 +140,9 @@ export default function AppSidebarLayout({
             </div>
 
             <AppSidebar />
-            <AppContent variant="sidebar" className="relative z-10 overflow-x-hidden pb-12">
+            <AppContent variant="sidebar" className="relative z-10 flex-1 min-w-0 max-w-full overflow-x-hidden pb-12">
                 <AppSidebarHeader breadcrumbs={breadcrumbs} />
-                <div className="mt-2">
+                <div className="mt-2 min-w-0 max-w-full">
                     {children}
                 </div>
             </AppContent>

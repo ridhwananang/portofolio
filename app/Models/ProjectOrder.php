@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Models\Pms\PmsProject;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 
 class ProjectOrder extends Model
@@ -125,6 +127,11 @@ class ProjectOrder extends Model
     public function finalTransaction(): BelongsTo
     {
         return $this->belongsTo(Transaction::class, 'final_transaction_id');
+    }
+
+    public function pmsProject(): HasOne
+    {
+        return $this->hasOne(PmsProject::class, 'project_order_id');
     }
 
     public function isPendingPayment(): bool

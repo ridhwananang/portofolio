@@ -22,7 +22,7 @@ Route::inertia('/terms-and-conditions', 'terms')->name('terms');
 Route::inertia('/privacy-policy', 'privacy')->name('privacy');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'dashboard')->name('dashboard');
+    Route::get('dashboard', fn () => redirect('/studio'))->name('dashboard');
 
     Route::resource('quests', QuestController::class);
     Route::post('/quests/{quest}/take', [QuestController::class, 'take'])->name('quests.take');
@@ -33,5 +33,5 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 require __DIR__.'/settings.php';
-require __DIR__.'/admin.php';
+require __DIR__.'/studio.php';
 
