@@ -42,9 +42,16 @@ export function AppSidebarHeader({
     breadcrumbs?: BreadcrumbItemType[];
 }) {
     const { resolvedAppearance, updateAppearance } = useAppearance();
-    const isDark = resolvedAppearance === 'dark';
+    const [mounted, setMounted] = useState(false);
     const [commandOpen, setCommandOpen] = useState(false);
     const { toggleSidebar } = useSidebar();
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    // Ensure SSR and initial client hydration match identically by deferring dark state until mounted
+    const isDark = mounted ? resolvedAppearance === 'dark' : false;
 
     const toggleTheme = () => {
         updateAppearance(isDark ? 'light' : 'dark');
@@ -194,6 +201,7 @@ export function AppSidebarHeader({
                         <TooltipTrigger asChild>
                             <button
                                 type="button"
+                                suppressHydrationWarning
                                 onClick={toggleTheme}
                                 className={`relative h-8 sm:h-9 w-15 sm:w-16 rounded-full p-1 cursor-pointer transition-all duration-300 border flex items-center justify-between shadow-inner select-none shrink-0 group ${
                                     isDark
@@ -224,6 +232,7 @@ export function AppSidebarHeader({
 
                                 {/* Sliding Glowing Knob */}
                                 <span
+                                    suppressHydrationWarning
                                     className={`absolute top-1 sm:top-1.5 size-6 rounded-full flex items-center justify-center transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] shadow-md ${
                                         isDark
                                             ? 'translate-x-7 sm:translate-x-8 bg-gradient-to-tr from-violet-600 to-indigo-500 text-white shadow-indigo-500/40 ring-1 ring-indigo-400/40'

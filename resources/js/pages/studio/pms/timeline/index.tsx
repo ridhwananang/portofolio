@@ -293,7 +293,7 @@ export default function TimelineIndex({
                                                             left: `${coords.left}px`,
                                                             width: `${coords.width}px`,
                                                         }}
-                                                        title={`${item.name} (${item.start_date} s/d ${item.end_date})`}
+                                                        title={`${item.name} (${item.start_date ? String(item.start_date).split('T')[0] : '-'} s/d ${item.end_date ? String(item.end_date).split('T')[0] : '-'})`}
                                                         className={`absolute h-7 rounded-xl ${barColor} shadow-sm px-2.5 flex items-center justify-between text-[11px] font-bold overflow-hidden transition-all hover:scale-[1.01] hover:shadow-md cursor-pointer`}
                                                     >
                                                         <span className="truncate">{item.name}</span>

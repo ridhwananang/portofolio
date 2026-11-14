@@ -489,19 +489,22 @@ export default function UsersIndex({ users, existingRoles, filters }: Props) {
                                                         <div className="size-10 rounded-full p-[1.5px] bg-gradient-to-tr from-violet-600 via-indigo-500 to-cyan-400 shadow-sm shrink-0">
                                                             <div className="size-full rounded-full bg-white dark:bg-slate-950 p-[1px]">
                                                                 <div className="size-full rounded-full overflow-hidden bg-gradient-to-br from-violet-900 via-indigo-900 to-slate-900 flex items-center justify-center text-white text-xs font-bold shadow-inner">
-                                                                    {user.avatar ? (
-                                                                        <img
-                                                                            src={
-                                                                                user.avatar.startsWith('http')
+                                                                    <img
+                                                                        src={
+                                                                            user.avatar
+                                                                                ? (user.avatar.startsWith('http') || user.avatar.startsWith('/')
                                                                                     ? user.avatar
-                                                                                    : `/storage/${user.avatar}`
-                                                                            }
-                                                                            alt={user.name}
-                                                                            className="size-full object-cover"
-                                                                        />
-                                                                    ) : (
-                                                                        user.name.charAt(0).toUpperCase()
-                                                                    )}
+                                                                                    : `/storage/${user.avatar}`)
+                                                                                : (user.is_admin || user.email === 'ridhwananang@gmail.com'
+                                                                                    ? '/images/me.webp'
+                                                                                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=6366f1&color=ffffff&bold=true`)
+                                                                        }
+                                                                        alt={user.name || 'Avatar'}
+                                                                        className="size-full object-cover"
+                                                                        onError={(e) => {
+                                                                            (e.currentTarget as HTMLImageElement).src = '/images/me.webp';
+                                                                        }}
+                                                                    />
                                                                 </div>
                                                             </div>
                                                         </div>

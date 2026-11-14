@@ -52,6 +52,26 @@ class User extends Authenticatable implements PasskeyUser
     }
 
     /**
+     * Accessor for user's avatar with intelligent default fallback.
+     */
+    public function getAvatarAttribute(?string $value): ?string
+    {
+        if (! empty($value)) {
+            if (str_starts_with($value, 'http://') || str_starts_with($value, 'https://') || str_starts_with($value, '/')) {
+                return $value;
+            }
+            return '/storage/' . ltrim($value, '/');
+        }
+
+        if ($this->isAdmin() || $this->email === 'ridhwananang@gmail.com') {
+            return '/images/me.webp';
+        }
+
+        $name = ! empty($this->name) ? $this->name : 'User';
+        return 'https://ui-avatars.com/api/?name=' . urlencode($name) . '&background=6366f1&color=ffffff&bold=true&size=128';
+    }
+
+    /**
      * PMS Relationships
      */
     public function pmsMemberships(): HasMany

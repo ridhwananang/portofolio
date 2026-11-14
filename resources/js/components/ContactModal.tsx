@@ -49,15 +49,26 @@ export default function ContactModal({
     const [errorMessage, setErrorMessage] = useState('');
     const [copiedEmail, setCopiedEmail] = useState(false);
 
-    const handleClose = () => {
+    const resetForm = () => {
+        setFormName('');
+        setFormEmail('');
+        setFormSubject('');
+        setFormMessage('');
         setIsSubmitted(false);
         setErrorMessage('');
+    };
+
+    const handleClose = () => {
+        resetForm();
         onClose();
     };
 
     // Lock document scroll and handle Escape key without inducing body layout shifts
     useEffect(() => {
-        if (!isOpen) return;
+        if (!isOpen) {
+            resetForm();
+            return;
+        }
 
         const originalOverflow = document.body.style.overflow;
         document.body.style.overflow = 'hidden';

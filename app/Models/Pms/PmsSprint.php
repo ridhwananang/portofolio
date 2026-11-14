@@ -30,6 +30,7 @@ class PmsSprint extends Model
     protected $appends = [
         'tasks_count',
         'completed_tasks_count',
+        'progress_percentage',
     ];
 
     public function project(): BelongsTo
@@ -50,5 +51,15 @@ class PmsSprint extends Model
     public function getCompletedTasksCountAttribute(): int
     {
         return $this->tasks()->where('status', 'done')->count();
+    }
+
+    public function getProgressPercentageAttribute(): int
+    {
+        $total = $this->tasks_count;
+        if ($total === 0) {
+            return $this->status === 'completed' ? 100 : 0;
+        }
+
+        return (int) round(($this->completed_tasks_count / $total) * 100);
     }
 }

@@ -976,19 +976,22 @@ export default function PmsProjectCreate({
                                                 <div className="relative p-[2px] rounded-full bg-gradient-to-tr from-violet-600 via-indigo-500 to-cyan-400 shadow-sm shadow-violet-500/30">
                                                     <div className="p-[1.5px] rounded-full bg-white dark:bg-slate-900">
                                                         <div className="size-10 rounded-full overflow-hidden bg-gradient-to-tr from-violet-600 to-indigo-600 text-white font-bold flex items-center justify-center text-xs">
-                                                            {selectedU?.avatar ? (
-                                                                <img
-                                                                    src={
-                                                                        selectedU.avatar.startsWith('http')
+                                                            <img
+                                                                src={
+                                                                    selectedU?.avatar
+                                                                        ? (selectedU.avatar.startsWith('http') || selectedU.avatar.startsWith('/')
                                                                             ? selectedU.avatar
-                                                                            : `/storage/${selectedU.avatar}`
-                                                                    }
-                                                                    alt={selectedU.name}
-                                                                    className="size-full object-cover"
-                                                                />
-                                                            ) : (
-                                                                selectedU?.name?.charAt(0).toUpperCase() || '?'
-                                                            )}
+                                                                            : `/storage/${selectedU.avatar}`)
+                                                                        : (selectedU?.is_admin || selectedU?.email === 'ridhwananang@gmail.com'
+                                                                            ? '/images/me.webp'
+                                                                            : `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedU?.name || 'User')}&background=6366f1&color=ffffff&bold=true`)
+                                                                }
+                                                                alt={selectedU?.name || 'Avatar'}
+                                                                className="size-full object-cover"
+                                                                onError={(e) => {
+                                                                    (e.currentTarget as HTMLImageElement).src = '/images/me.webp';
+                                                                }}
+                                                            />
                                                         </div>
                                                     </div>
                                                 </div>

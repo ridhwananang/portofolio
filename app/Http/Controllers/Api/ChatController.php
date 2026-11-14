@@ -70,7 +70,7 @@ class ChatController extends Controller
             ]);
         }
 
-        $records = \App\Models\Message::where('email', $email)
+        $records = \App\Models\Message::whereRaw('LOWER(TRIM(email)) = ?', [strtolower(trim($email))])
             ->whereNotNull('reply_content')
             ->where('reply_content', '!=', '')
             ->orderBy('replied_at', 'asc')
@@ -82,8 +82,8 @@ class ChatController extends Controller
                 'id' => 'reply_' . $r->id,
                 'sender' => 'ridhwan',
                 'text' => $r->reply_content,
-                'time' => $time->format('H.i'),
-                'created_at' => $time->toISOString(),
+                'time' => $time ? $time->format('H.i') : now()->format('H.i'),
+                'created_at' => $time ? $time->toISOString() : now()->toISOString(),
             ];
         })->values();
 

@@ -38,14 +38,17 @@ import {
     ArrowLeft,
     ArrowRight,
     ArrowUpRight,
+    BarChart3,
     Calendar,
     CalendarDays,
     Check,
     CheckCircle2,
+    CheckSquare,
     ChevronLeft,
     ChevronRight,
     Clock,
     Coins,
+    Copy,
     DollarSign,
     Download,
     ExternalLink,
@@ -60,9 +63,12 @@ import {
     Paperclip,
     Pencil,
     PenLine,
+    PieChart,
     Play,
     Plus,
+    Printer,
     Receipt,
+    Share2,
     Shield,
     Sparkles,
     Tag,
@@ -137,8 +143,118 @@ export default function ProjectShow({
     user_role_in_project = null,
     current_user_id,
 }: Props) {
-    const [activeTab, setActiveTab] = useState<'blueprint' | 'sprints' | 'tasks' | 'team' | 'finances' | 'attachments' | 'logs'>('blueprint');
+    const [activeTab, setActiveTab] = useState<'blueprint' | 'sprints' | 'tasks' | 'reports' | 'team' | 'finances' | 'attachments' | 'logs'>(() => {
+        if (typeof window !== 'undefined') {
+            const tabParam = new URLSearchParams(window.location.search).get('tab');
+            if (tabParam === 'reports' || tabParam === 'sprints' || tabParam === 'tasks' || tabParam === 'team' || tabParam === 'finances' || tabParam === 'attachments' || tabParam === 'logs') {
+                return tabParam;
+            }
+        }
+        return 'blueprint';
+    });
     const [taskFilter, setTaskFilter] = useState<'all' | 'my_tasks'>('all');
+
+    // ----------------------------------------------------
+    // PROJECT PERCENTAGE & DETAILED BREAKDOWN METRICS
+    // ----------------------------------------------------
+    const allTasks = project.tasks || [];
+    const totalTasksCount = allTasks.length;
+    const doneTasksCount = allTasks.filter((t) => t.status === 'done').length;
+    const inProgressTasksCount = allTasks.filter((t) => t.status === 'in_progress').length;
+    const reviewTasksCount = allTasks.filter((t) => t.status === 'review').length;
+    const todoTasksCount = allTasks.filter((t) => t.status === 'todo').length;
+
+    const doneRatio = totalTasksCount > 0 ? Math.round((doneTasksCount / totalTasksCount) * 100) : (project.status === 'completed' ? 100 : 0);
+    const inProgressRatio = totalTasksCount > 0 ? Math.round((inProgressTasksCount / totalTasksCount) * 100) : 0;
+    const reviewRatio = totalTasksCount > 0 ? Math.round((reviewTasksCount / totalTasksCount) * 100) : 0;
+    const todoRatio = totalTasksCount > 0 ? Math.round((todoTasksCount / totalTasksCount) * 100) : 0;
+
+    const allSubtasks = allTasks.flatMap((t) => t.subtasks || []);
+    const totalSubtasksCount = allSubtasks.length;
+    const doneSubtasksCount = allSubtasks.filter((s) => s.is_done).length;
+    const subtaskRatio = totalSubtasksCount > 0 ? Math.round((doneSubtasksCount / totalSubtasksCount) * 100) : 100;
+
+
+
+    const [copiedReport, setCopiedReport] = useState(false);
+
+    const getMemberAvatar = (user?: PmsUser | null) => {
+        if (!user) return '/images/me.webp';
+        if (user.avatar) {
+            return user.avatar.startsWith('http') || user.avatar.startsWith('/')
+                ? user.avatar
+                : `/storage/${user.avatar}`;
+        }
+        if (user.is_admin || user.email === 'ridhwananang@gmail.com') {
+            return '/images/me.webp';
+        }
+        return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=6366f1&color=ffffff&bold=true&size=80`;
+    };
+
+    const handleCopyReportSummary = () => {
+        const sprintLines = (project.sprints || []).map((sprint, idx) => {
+            const sprintTasks = allTasks.filter((t) => t.sprint_id === sprint.id);
+            const spTotal = sprintTasks.length;
+            const spDone = sprintTasks.filter((t) => t.status === 'done').length;
+            const spPercent = spTotal > 0 ? Math.round((spDone / spTotal) * 100) : (sprint.status === 'completed' ? 100 : 0);
+            return `  ${idx + 1}. ${sprint.name} [${sprint.status.toUpperCase()}]: ${spPercent}% Selesai (${spDone}/${spTotal} Tugas)`;
+        }).join('\n');
+
+        const memberLines = (project.members || []).map((m) => {
+            const mTasks = allTasks.filter((t) => t.assigned_to === m.user_id);
+            const mTotal = mTasks.length;
+            const mDone = mTasks.filter((t) => t.status === 'done').length;
+            const mPercent = mTotal > 0 ? Math.round((mDone / mTotal) * 100) : 0;
+            return `  • ${m.user?.name || 'Anggota'} (${m.role_in_project}): ${mPercent}% (${mDone}/${mTotal} Tugas)`;
+        }).join('\n');
+
+        const tasksWithSubtasks = allTasks.filter((t) => t.subtasks && t.subtasks.length > 0);
+        const subtaskSummaryLines = tasksWithSubtasks.map((t) => {
+            const sDone = t.subtasks?.filter((s) => s.is_done).length || 0;
+            const sTotal = t.subtasks?.length || 0;
+            const sPercent = sTotal > 0 ? Math.round((sDone / sTotal) * 100) : 0;
+            const items = (t.subtasks || []).map((s) => `    [${s.is_done ? '✓' : ' '}] ${s.title}`).join('\n');
+            return `  • ${t.title} (${sDone}/${sTotal} Selesai - ${sPercent}%):\n${items}`;
+        }).join('\n\n');
+
+        const textReport = `=========================================
+📊 LAPORAN PROGRESS PROYEK PMS
+=========================================
+Proyek        : ${project.name} (${project.code})
+Klien         : ${project.client}
+Status        : ${project.status.toUpperCase()} (Prioritas: ${project.priority.toUpperCase()})
+Progress Total: ${project.progress_percentage}% (${doneTasksCount}/${totalTasksCount} Tugas Selesai)
+Subtask Check : ${doneSubtasksCount}/${totalSubtasksCount} Selesai (${subtaskRatio}%)
+Target Waktu  : ${project.end_date ? new Date(project.end_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Fleksibel'}
+
+📌 RINCIAN TAHAPAN STATUS TUGAS:
+  • Selesai (Done)      : ${doneTasksCount} tiket (${doneRatio}%)
+  • Review / QA         : ${reviewTasksCount} tiket (${reviewRatio}%)
+  • Dalam Pengerjaan    : ${inProgressTasksCount} tiket (${inProgressRatio}%)
+  • Antrean (To Do)     : ${todoTasksCount} tiket (${todoRatio}%)
+
+🚀 RINCIAN SIKLUS SPRINT (BAGIAN PER BAGIAN):
+${sprintLines || '  (Belum ada siklus sprint)'}
+
+👥 DISTRIBUSI & KONTRIBUSI TIM:
+${memberLines || '  (Belum ada penugasan tim spesifik)'}
+
+📋 RINCIAN DETAIL SUBTASK & DELIVERABLES:
+${subtaskSummaryLines || '  (Belum ada checklist subtask)'}
+=========================================
+Dibuat otomatis dari Ridhwan Studio PMS Cockpit
+Waktu Laporan: ${new Date().toLocaleString('id-ID')}
+`;
+
+        navigator.clipboard.writeText(textReport);
+        setCopiedReport(true);
+        toast.success('Ringkasan laporan teks berhasil disalin! Siap dikirim ke WhatsApp klien.');
+        setTimeout(() => setCopiedReport(false), 2500);
+    };
+
+    const handlePrintReport = () => {
+        window.print();
+    };
 
     // Horizontal Scroll Tracking for Workspace Tabs
     const tabsTrackRef = useRef<HTMLDivElement>(null);
@@ -659,15 +775,27 @@ export default function ProjectShow({
                     {/* Progress & Overview Ribbon (Financial for Admin, Task Scoped for Members) */}
                     <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800/80 grid grid-cols-2 lg:grid-cols-4 gap-4">
                         <div>
-                            <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Progress Keseluruhan</div>
+                            <div className="flex items-center justify-between">
+                                <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Progress Keseluruhan</div>
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveTab('reports')}
+                                    className="text-[10.5px] font-bold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 hover:underline flex items-center gap-0.5 cursor-pointer"
+                                >
+                                    Rincian <ArrowUpRight className="size-3" />
+                                </button>
+                            </div>
                             <div className="mt-1 flex items-baseline gap-2">
                                 <span className="text-2xl font-bold text-slate-900 dark:text-white">
                                     {project.progress_percentage}%
                                 </span>
+                                <span className="text-xs text-slate-500">
+                                    ({doneTasksCount}/{totalTasksCount} Tugas)
+                                </span>
                             </div>
                             <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mt-1.5">
                                 <div
-                                    className="h-full bg-violet-600 rounded-full"
+                                    className="h-full bg-violet-600 rounded-full transition-all duration-500"
                                     style={{ width: `${project.progress_percentage}%` }}
                                 />
                             </div>
@@ -767,6 +895,7 @@ export default function ProjectShow({
                             { id: 'blueprint', label: 'Cetak Biru Teknis', icon: FileText, count: null },
                             { id: 'sprints', label: 'Sprint Cycles', icon: Zap, count: project.sprints?.length ?? 0 },
                             { id: 'tasks', label: 'Daftar Tugas', icon: ListTodo, count: project.tasks?.length ?? 0 },
+                            { id: 'reports', label: 'Laporan Progres', icon: BarChart3, count: `${project.progress_percentage}%` },
                             { id: 'team', label: 'Tim & Anggota', icon: Users, count: project.members?.length ?? 0 },
                             ...(is_admin ? [{ id: 'finances', label: 'Keuangan & Struk', icon: Coins, count: null }] : []),
                             { id: 'attachments', label: 'Lampiran', icon: Paperclip, count: project.attachments?.length ?? 0 },
@@ -1026,6 +1155,586 @@ export default function ProjectShow({
                                     )}
                                 </div>
                             </Card>
+                        </div>
+                    </div>
+                )}
+
+                {/* TAB: REPORTS & DETAILED PROGRESS BREAKDOWN (BAGIAN PER BAGIAN) */}
+                {activeTab === 'reports' && (
+                    <div className="space-y-6 min-w-0 max-w-full">
+                        {/* Header & Export Actions */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-xs">
+                            <div className="flex items-center gap-3">
+                                <span className="p-2.5 rounded-2xl bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20 shrink-0">
+                                    <BarChart3 className="size-5" />
+                                </span>
+                                <div>
+                                    <h3 className="font-black text-lg sm:text-xl text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                                        Laporan Rinci Persentase & Status Pengembangan
+                                    </h3>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                        Rincian progres bagian per bagian: siklus sprint, tahapan workflow, deliverables checklist, dan kontribusi tim
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleCopyReportSummary}
+                                    className="rounded-xl border-slate-200 dark:border-slate-800 gap-1.5 h-9 text-xs font-bold cursor-pointer hover:border-violet-500/40"
+                                >
+                                    {copiedReport ? <Check className="size-3.5 text-emerald-500" /> : <Copy className="size-3.5 text-violet-600 dark:text-violet-400" />}
+                                    <span>{copiedReport ? 'Tersalin' : 'Salin Format WA/Klien'}</span>
+                                </Button>
+
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handlePrintReport}
+                                    className="rounded-xl border-slate-200 dark:border-slate-800 gap-1.5 h-9 text-xs font-bold cursor-pointer hover:border-violet-500/40"
+                                >
+                                    <Printer className="size-3.5 text-slate-600 dark:text-slate-300" />
+                                    <span className="hidden sm:inline">Cetak / PDF</span>
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* 1. Executive Metric Summary Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {/* Progress Card */}
+                            <div className="p-5 rounded-2xl border border-violet-500/30 bg-gradient-to-br from-violet-500/5 via-transparent to-indigo-500/5 dark:bg-slate-900/80 shadow-xs relative overflow-hidden">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400">Total Progres</span>
+                                    <TrendingUp className="size-4 text-violet-500" />
+                                </div>
+                                <div className="mt-2 flex items-baseline gap-2">
+                                    <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+                                        {project.progress_percentage}%
+                                    </span>
+                                    <Badge variant="outline" className="border-violet-500/30 text-violet-600 dark:text-violet-400 text-[10px] font-bold">
+                                        {project.status === 'completed' ? 'Selesai Penuh' : (project.progress_percentage >= 50 ? 'On Track' : 'In Progress')}
+                                    </Badge>
+                                </div>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2">
+                                    {doneTasksCount} dari {totalTasksCount} tugas tereksekusi tuntas
+                                </p>
+                                <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mt-3">
+                                    <div className="h-full bg-violet-600 rounded-full transition-all duration-700" style={{ width: `${project.progress_percentage}%` }} />
+                                </div>
+                            </div>
+
+                            {/* Sprints Health */}
+                            <div className="p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 shadow-xs">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Siklus Sprint</span>
+                                    <Zap className="size-4 text-amber-500" />
+                                </div>
+                                <div className="mt-2 flex items-baseline gap-2">
+                                    <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+                                        {project.sprints?.length ?? 0}
+                                    </span>
+                                    <span className="text-xs text-slate-500">Siklus</span>
+                                </div>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2">
+                                    {project.sprints?.filter((s) => s.status === 'completed').length ?? 0} Selesai • {project.sprints?.filter((s) => s.status === 'active').length ?? 0} Aktif
+                                </p>
+                                <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mt-3">
+                                    <div
+                                        className="h-full bg-amber-500 rounded-full"
+                                        style={{
+                                            width: `${(project.sprints?.length ?? 0) > 0 ? Math.round(((project.sprints?.filter((s) => s.status === 'completed').length ?? 0) / (project.sprints?.length ?? 1)) * 100) : 0}%`,
+                                        }}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Subtask Delivery */}
+                            <div className="p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 shadow-xs">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Checklist Subtask</span>
+                                    <CheckSquare className="size-4 text-emerald-500" />
+                                </div>
+                                <div className="mt-2 flex items-baseline gap-2">
+                                    <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+                                        {subtaskRatio}%
+                                    </span>
+                                    <span className="text-xs text-slate-500">Ketercapaian</span>
+                                </div>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2">
+                                    {doneSubtasksCount} dari {totalSubtasksCount} item micro-deliverables dicentang
+                                </p>
+                                <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mt-3">
+                                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${subtaskRatio}%` }} />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 2. Visual Segmented Progress Bar (Tahapan Workflow) */}
+                        <div className="p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-sm space-y-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <div>
+                                    <h4 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center gap-2">
+                                        <PieChart className="size-4 text-violet-500" />
+                                        Rincian Distribusi Status & Tahapan Pekerjaan
+                                    </h4>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                        Proporsi tiket tugas di setiap stage kanban workflow
+                                    </p>
+                                </div>
+                                <span className="text-xs font-mono font-bold text-slate-400">
+                                    Total {totalTasksCount} Tiket Tugas
+                                </span>
+                            </div>
+
+                            {/* Segmented Multi-Color Progress Bar */}
+                            <div className="h-4 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex shadow-inner">
+                                {doneRatio > 0 && (
+                                    <div
+                                        title={`Selesai (Done): ${doneTasksCount} tiket (${doneRatio}%)`}
+                                        className="h-full bg-emerald-500 transition-all duration-500 hover:brightness-110"
+                                        style={{ width: `${doneRatio}%` }}
+                                    />
+                                )}
+                                {reviewRatio > 0 && (
+                                    <div
+                                        title={`Review / QA: ${reviewTasksCount} tiket (${reviewRatio}%)`}
+                                        className="h-full bg-purple-500 transition-all duration-500 hover:brightness-110"
+                                        style={{ width: `${reviewRatio}%` }}
+                                    />
+                                )}
+                                {inProgressRatio > 0 && (
+                                    <div
+                                        title={`Dalam Pengerjaan (In Progress): ${inProgressTasksCount} tiket (${inProgressRatio}%)`}
+                                        className="h-full bg-amber-500 transition-all duration-500 hover:brightness-110"
+                                        style={{ width: `${inProgressRatio}%` }}
+                                    />
+                                )}
+                                {todoRatio > 0 && (
+                                    <div
+                                        title={`Antrean (To Do): ${todoTasksCount} tiket (${todoRatio}%)`}
+                                        className="h-full bg-slate-300 dark:bg-slate-700 transition-all duration-500 hover:brightness-110"
+                                        style={{ width: `${todoRatio}%` }}
+                                    />
+                                )}
+                            </div>
+
+                            {/* Status Pills Grid */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                                <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
+                                    <div className="flex items-center justify-between text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                                        <span className="flex items-center gap-1.5">
+                                            <span className="size-2 rounded-full bg-emerald-500" /> Selesai (Done)
+                                        </span>
+                                        <span>{doneRatio}%</span>
+                                    </div>
+                                    <div className="text-lg font-black text-emerald-800 dark:text-emerald-300 mt-1">
+                                        {doneTasksCount} <span className="text-xs font-normal text-slate-500">Tugas</span>
+                                    </div>
+                                </div>
+
+                                <div className="p-3 rounded-2xl bg-purple-500/10 border border-purple-500/20">
+                                    <div className="flex items-center justify-between text-xs font-bold text-purple-700 dark:text-purple-400">
+                                        <span className="flex items-center gap-1.5">
+                                            <span className="size-2 rounded-full bg-purple-500" /> Review / QA
+                                        </span>
+                                        <span>{reviewRatio}%</span>
+                                    </div>
+                                    <div className="text-lg font-black text-purple-800 dark:text-purple-300 mt-1">
+                                        {reviewTasksCount} <span className="text-xs font-normal text-slate-500">Tugas</span>
+                                    </div>
+                                </div>
+
+                                <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20">
+                                    <div className="flex items-center justify-between text-xs font-bold text-amber-700 dark:text-amber-400">
+                                        <span className="flex items-center gap-1.5">
+                                            <span className="size-2 rounded-full bg-amber-500 animate-pulse" /> In Progress
+                                        </span>
+                                        <span>{inProgressRatio}%</span>
+                                    </div>
+                                    <div className="text-lg font-black text-amber-800 dark:text-amber-300 mt-1">
+                                        {inProgressTasksCount} <span className="text-xs font-normal text-slate-500">Tugas</span>
+                                    </div>
+                                </div>
+
+                                <div className="p-3 rounded-2xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                                    <div className="flex items-center justify-between text-xs font-bold text-slate-600 dark:text-slate-400">
+                                        <span className="flex items-center gap-1.5">
+                                            <span className="size-2 rounded-full bg-slate-400" /> Antrean (To Do)
+                                        </span>
+                                        <span>{todoRatio}%</span>
+                                    </div>
+                                    <div className="text-lg font-black text-slate-800 dark:text-slate-200 mt-1">
+                                        {todoTasksCount} <span className="text-xs font-normal text-slate-500">Tugas</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 3. RINCIAN BAGIAN PER BAGIAN: SPRINT CYCLES BREAKDOWN */}
+                        <div className="p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-sm space-y-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-3">
+                                <div>
+                                    <h4 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center gap-2">
+                                        <Zap className="size-4 text-amber-500" />
+                                        Rincian Persentase per Bagian / Siklus Sprint
+                                    </h4>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                        Tingkat penyelesaian dan output deliverable tiap sprint iterasi proyek
+                                    </p>
+                                </div>
+
+                            </div>
+
+                            {project.sprints?.length === 0 ? (
+                                <div className="py-12 text-center text-xs text-slate-400">
+                                    Belum ada siklus sprint yang dibuat. Buat sprint di tab "Sprint Cycles" untuk membagi pengerjaan ke dalam tahapan berkala.
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {project.sprints?.map((sprint, idx) => {
+                                        const spTasks = allTasks.filter((t) => t.sprint_id === sprint.id);
+                                        const spTotal = spTasks.length;
+                                        const spDone = spTasks.filter((t) => t.status === 'done').length;
+                                        const spProgress = spTotal > 0 ? Math.round((spDone / spTotal) * 100) : (sprint.status === 'completed' ? 100 : 0);
+                                        const isDone = spProgress === 100 || sprint.status === 'completed';
+
+                                        return (
+                                            <div
+                                                key={sprint.id}
+                                                className="p-4.5 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-950/40 space-y-3 transition-all hover:border-violet-500/30"
+                                            >
+                                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                                    <div className="flex items-center gap-2.5 min-w-0">
+                                                        <div className={`size-8 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
+                                                            isDone
+                                                                ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
+                                                                : 'bg-violet-500/15 text-violet-600 dark:text-violet-400 border border-violet-500/30'
+                                                        }`}>
+                                                            #{idx + 1}
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <div className="font-bold text-sm text-slate-900 dark:text-white truncate">
+                                                                {sprint.name}
+                                                            </div>
+                                                            {sprint.goal && (
+                                                                <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+                                                                    Sasaran: {sprint.goal}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-3 shrink-0 text-xs">
+                                                        <div className="text-right">
+                                                            <span className="font-black text-base text-slate-900 dark:text-white">
+                                                                {spProgress}%
+                                                            </span>
+                                                            <span className="text-[11px] text-slate-500 block">
+                                                                {spDone} dari {spTotal} Tugas
+                                                            </span>
+                                                        </div>
+                                                        <Badge
+                                                            variant="outline"
+                                                            className={`capitalize text-[10px] font-bold ${
+                                                                sprint.status === 'completed'
+                                                                    ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                                                                    : sprint.status === 'active'
+                                                                      ? 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+                                                                      : 'bg-slate-100 text-slate-600'
+                                                            }`}
+                                                        >
+                                                            {sprint.status}
+                                                        </Badge>
+                                                    </div>
+                                                </div>
+
+                                                {/* Progress bar for individual sprint */}
+                                                <div className="h-2 w-full bg-slate-200/80 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                    <div
+                                                        className={`h-full rounded-full transition-all duration-700 ${
+                                                            isDone ? 'bg-emerald-500' : spProgress >= 50 ? 'bg-violet-600' : 'bg-amber-500'
+                                                        }`}
+                                                        style={{ width: `${spProgress}%` }}
+                                                    />
+                                                </div>
+
+                                                <div className="flex items-center justify-between text-[11px] text-slate-400">
+                                                    <span className="flex items-center gap-1">
+                                                        <Calendar className="size-3 text-slate-400" />
+                                                        {sprint.start_date ? new Date(sprint.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : 'Mulai'}
+                                                        {' - '}
+                                                        {sprint.end_date ? new Date(sprint.end_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Target'}
+                                                    </span>
+                                                    <span>
+                                                        {spTasks.filter(t => t.status === 'in_progress').length} In Progress • {spTasks.filter(t => t.status === 'todo').length} To Do
+                                                    </span>
+                                                </div>
+
+                                                {/* Daftar Tiket & Detail Subtask Deliverables dalam Bagian Ini */}
+                                                {spTasks.length > 0 && (
+                                                    <div className="mt-3 pt-3 border-t border-slate-200/70 dark:border-slate-800/70 space-y-2.5">
+                                                        <div className="text-[10.5px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center justify-between px-1">
+                                                            <span>Deliverables &amp; Fitur ({spTasks.length} Tiket)</span>
+                                                            <span>{spDone}/{spTotal} Selesai</span>
+                                                        </div>
+
+                                                        <div className="space-y-2">
+                                                            {spTasks.map((task) => {
+                                                                const subtasks = task.subtasks || [];
+                                                                const tDone = subtasks.filter((s) => s.is_done).length;
+                                                                const tTotal = subtasks.length;
+                                                                const tRatio = tTotal > 0 ? Math.round((tDone / tTotal) * 100) : (task.status === 'done' ? 100 : 0);
+
+                                                                return (
+                                                                    <div
+                                                                        key={task.id}
+                                                                        className="rounded-xl border border-slate-200/70 dark:border-slate-800/80 bg-white dark:bg-slate-900 p-3.5 space-y-2.5 shadow-2xs"
+                                                                    >
+                                                                        {/* Header Tiket Tugas */}
+                                                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                                                            <div className="flex items-center gap-2 min-w-0">
+                                                                                <span className={`size-2 rounded-full shrink-0 ${
+                                                                                    task.status === 'done'
+                                                                                        ? 'bg-emerald-500'
+                                                                                        : task.status === 'in_progress'
+                                                                                        ? 'bg-amber-500 animate-pulse'
+                                                                                        : task.status === 'review'
+                                                                                        ? 'bg-purple-500'
+                                                                                        : 'bg-slate-400'
+                                                                                }`} />
+                                                                                <span className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                                                                                    {task.title}
+                                                                                </span>
+                                                                                <Badge
+                                                                                    variant="outline"
+                                                                                    className="text-[9px] capitalize py-0 px-1.5 h-4 font-semibold shrink-0"
+                                                                                >
+                                                                                    {task.status.replace('_', ' ')}
+                                                                                </Badge>
+                                                                            </div>
+
+                                                                            <div className="flex items-center gap-2 shrink-0">
+                                                                                {tTotal > 0 ? (
+                                                                                    <span className="text-[10.5px] font-bold text-slate-600 dark:text-slate-300">
+                                                                                        {tDone}/{tTotal} Subtask ({tRatio}%)
+                                                                                    </span>
+                                                                                ) : (
+                                                                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                                                                        task.status === 'done'
+                                                                                            ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 border border-emerald-500/20'
+                                                                                            : 'text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800'
+                                                                                    }`}>
+                                                                                        {task.status === 'done' ? 'Tuntas' : 'Dalam Proses'}
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+
+                                                                        {/* Detail Subtasks: Bersih, Jelas, Tanpa Coretan (No line-through) */}
+                                                                        {tTotal > 0 && (
+                                                                            <div className="pl-2 sm:pl-3 space-y-1.5 pt-1 border-l-2 border-slate-200 dark:border-slate-800 ml-1">
+                                                                                {subtasks.map((st) => (
+                                                                                    <div
+                                                                                        key={st.id}
+                                                                                        className="flex items-center justify-between gap-3 py-1.5 px-2.5 rounded-lg bg-slate-50/80 dark:bg-slate-950/50 text-xs border border-slate-100 dark:border-slate-800/60"
+                                                                                    >
+                                                                                        <div className="flex items-center gap-2.5 min-w-0">
+                                                                                            {st.is_done ? (
+                                                                                                <div className="size-4.5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                                                                                                    <Check className="size-3 stroke-[3]" />
+                                                                                                </div>
+                                                                                            ) : (
+                                                                                                <div className="size-4.5 rounded-full border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0 text-[10px] text-slate-400">
+                                                                                                    ○
+                                                                                                </div>
+                                                                                            )}
+
+                                                                                            {/* Teks Subtask: Jelas & Terbaca, Tanpa Coretan */}
+                                                                                            <span className="font-semibold text-xs text-slate-900 dark:text-slate-100 truncate">
+                                                                                                {st.title}
+                                                                                            </span>
+                                                                                        </div>
+
+                                                                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                                                                                            st.is_done
+                                                                                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                                                                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700'
+                                                                                        }`}>
+                                                                                            {st.is_done ? 'Selesai' : 'Pending'}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                ))}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+
+                                    {/* Tugas Tambahan & Backlog Tanpa Sprint */}
+                                    {(() => {
+                                        const unassignedTasks = allTasks.filter((t) => !t.sprint_id);
+                                        if (unassignedTasks.length === 0) return null;
+
+                                        const unTotal = unassignedTasks.length;
+                                        const unDone = unassignedTasks.filter((t) => t.status === 'done').length;
+                                        const unProgress = unTotal > 0 ? Math.round((unDone / unTotal) * 100) : 0;
+
+                                        return (
+                                            <div className="p-4.5 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-950/40 space-y-3">
+                                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                                    <div className="flex items-center gap-2.5 min-w-0">
+                                                        <div className="size-8 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 bg-slate-500/15 text-slate-600 dark:text-slate-400 border border-slate-500/30">
+                                                            <FolderKanban className="size-4" />
+                                                        </div>
+                                                        <div>
+                                                            <div className="font-bold text-sm text-slate-900 dark:text-white">
+                                                                Tugas &amp; Deliverables Tambahan (Di Luar Sprint)
+                                                            </div>
+                                                            <p className="text-xs text-slate-500">Tiket dan checklist yang dikerjakan di luar siklus sprint terjadwal</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className="font-black text-base text-slate-900 dark:text-white">{unProgress}%</span>
+                                                        <span className="text-[11px] text-slate-500 block">{unDone} dari {unTotal} Tugas</span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="h-2 w-full bg-slate-200/80 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                    <div className="h-full bg-slate-500 rounded-full" style={{ width: `${unProgress}%` }} />
+                                                </div>
+
+                                                <div className="mt-3 pt-3 border-t border-slate-200/70 dark:border-slate-800/70 space-y-2">
+                                                    {unassignedTasks.map((task) => {
+                                                        const subtasks = task.subtasks || [];
+                                                        const tDone = subtasks.filter((s) => s.is_done).length;
+                                                        const tTotal = subtasks.length;
+                                                        const tRatio = tTotal > 0 ? Math.round((tDone / tTotal) * 100) : (task.status === 'done' ? 100 : 0);
+
+                                                        return (
+                                                            <div key={task.id} className="rounded-xl border border-slate-200/70 dark:border-slate-800/80 bg-white dark:bg-slate-900 p-3.5 space-y-2.5 shadow-2xs">
+                                                                <div className="flex items-center justify-between gap-2">
+                                                                    <div className="flex items-center gap-2 min-w-0">
+                                                                        <span className="font-bold text-xs text-slate-900 dark:text-white truncate">{task.title}</span>
+                                                                        <Badge variant="outline" className="text-[9px] capitalize py-0 px-1.5 h-4 font-semibold">{task.status.replace('_', ' ')}</Badge>
+                                                                    </div>
+                                                                    {tTotal > 0 && <span className="text-[10.5px] font-bold text-slate-600 dark:text-slate-300">{tDone}/{tTotal} Subtask ({tRatio}%)</span>}
+                                                                </div>
+                                                                {tTotal > 0 && (
+                                                                    <div className="pl-2 sm:pl-3 space-y-1.5 pt-1 border-l-2 border-slate-200 dark:border-slate-800 ml-1">
+                                                                        {subtasks.map((st) => (
+                                                                            <div key={st.id} className="flex items-center justify-between gap-3 py-1.5 px-2.5 rounded-lg bg-slate-50/80 dark:bg-slate-950/50 text-xs border border-slate-100 dark:border-slate-800/60">
+                                                                                <div className="flex items-center gap-2.5 min-w-0">
+                                                                                    {st.is_done ? (
+                                                                                        <div className="size-4.5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                                                                                            <Check className="size-3 stroke-[3]" />
+                                                                                        </div>
+                                                                                    ) : (
+                                                                                        <div className="size-4.5 rounded-full border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0 text-[10px] text-slate-400">○</div>
+                                                                                    )}
+                                                                                    <span className="font-semibold text-xs text-slate-900 dark:text-slate-100 truncate">{st.title}</span>
+                                                                                </div>
+                                                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${st.is_done ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700'}`}>
+                                                                                    {st.is_done ? 'Selesai' : 'Pending'}
+                                                                                </span>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* 4. KONTRIBUSI & BEBAN KERJA ANGGOTA TIM */}
+                        <div className="p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-sm space-y-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-3">
+                                <div>
+                                    <h4 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center gap-2">
+                                        <Users className="size-4 text-indigo-500" />
+                                        Persentase Penyelesaian per Anggota Tim
+                                    </h4>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                        Tingkat kontribusi dan penyelesaian jobdesk masing-masing person-in-charge (PIC)
+                                    </p>
+                                </div>
+                            </div>
+
+                            {project.members?.length === 0 ? (
+                                <div className="py-8 text-center text-xs text-slate-400">
+                                    Belum ada anggota tim yang ditugaskan secara spesifik ke proyek ini.
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {project.members?.map((m) => {
+                                        const mTasks = allTasks.filter((t) => t.assigned_to === m.user_id);
+                                        const mTotal = mTasks.length;
+                                        const mDone = mTasks.filter((t) => t.status === 'done').length;
+                                        const mProgress = mTotal > 0 ? Math.round((mDone / mTotal) * 100) : 0;
+                                        const avatarUrl = getMemberAvatar(m.user);
+
+                                        return (
+                                            <div
+                                                key={m.id}
+                                                className="p-4 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 flex flex-col justify-between space-y-3"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="size-10 rounded-full ring-2 ring-violet-500/30 overflow-hidden shrink-0 bg-slate-100 dark:bg-slate-800">
+                                                        <img
+                                                            src={avatarUrl}
+                                                            alt={m.user?.name || 'Avatar'}
+                                                            className="size-full object-cover"
+                                                            onError={(e) => {
+                                                                (e.currentTarget as HTMLImageElement).src = '/images/me.webp';
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="font-bold text-sm text-slate-900 dark:text-white truncate">
+                                                            {m.user?.name || 'Anggota Tim'}
+                                                        </div>
+                                                        <div className="text-[11px] text-violet-600 dark:text-violet-400 font-semibold truncate">
+                                                            {m.role_in_project}
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className="font-black text-sm text-slate-900 dark:text-white">
+                                                            {mProgress}%
+                                                        </span>
+                                                        <span className="text-[10px] text-slate-400 block">
+                                                            {mDone}/{mTotal} Tiket
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-1">
+                                                    <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                        <div
+                                                            className="h-full bg-indigo-500 rounded-full transition-all duration-500"
+                                                            style={{ width: `${mProgress}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
@@ -1463,19 +2172,22 @@ export default function ProjectShow({
                                                 <div className="relative p-[2px] rounded-full bg-gradient-to-tr from-violet-600 via-indigo-500 to-cyan-400 shadow-sm shadow-violet-500/30">
                                                     <div className="p-[1.5px] rounded-full bg-white dark:bg-slate-900">
                                                         <div className="size-11 rounded-full overflow-hidden bg-gradient-to-tr from-violet-600 to-indigo-600 text-white font-bold flex items-center justify-center text-xs">
-                                                            {member.user?.avatar ? (
-                                                                <img
-                                                                    src={
-                                                                        member.user.avatar.startsWith('http')
+                                                            <img
+                                                                src={
+                                                                    member.user?.avatar
+                                                                        ? (member.user.avatar.startsWith('http') || member.user.avatar.startsWith('/')
                                                                             ? member.user.avatar
-                                                                            : `/storage/${member.user.avatar}`
-                                                                    }
-                                                                    alt={member.user?.name}
-                                                                    className="size-full object-cover"
-                                                                />
-                                                            ) : (
-                                                                member.user?.name.charAt(0).toUpperCase()
-                                                            )}
+                                                                            : `/storage/${member.user.avatar}`)
+                                                                        : (member.user?.is_admin || member.user?.email === 'ridhwananang@gmail.com'
+                                                                            ? '/images/me.webp'
+                                                                            : `https://ui-avatars.com/api/?name=${encodeURIComponent(member.user?.name || 'User')}&background=6366f1&color=ffffff&bold=true`)
+                                                                }
+                                                                alt={member.user?.name || 'Avatar'}
+                                                                className="size-full object-cover"
+                                                                onError={(e) => {
+                                                                    (e.currentTarget as HTMLImageElement).src = '/images/me.webp';
+                                                                }}
+                                                            />
                                                         </div>
                                                     </div>
                                                 </div>

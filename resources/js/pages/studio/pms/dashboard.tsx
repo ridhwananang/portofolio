@@ -232,8 +232,13 @@ export default function PmsDashboard({
 
                                             {/* Progress Bar */}
                                             <div className="mt-4 space-y-1.5">
-                                                <div className="flex justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
-                                                    <span>Penyelesaian</span>
+                                                <div className="flex justify-between items-center text-xs font-medium text-slate-600 dark:text-slate-400">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span>Penyelesaian</span>
+                                                        <span className="text-[10px] text-violet-600 dark:text-violet-400 font-bold group-hover:underline">
+                                                            (Rincian ↗)
+                                                        </span>
+                                                    </div>
                                                     <span className="font-bold text-slate-900 dark:text-white">
                                                         {proj.progress}%
                                                     </span>

@@ -99,6 +99,7 @@ export interface PmsSprint {
     tasks?: PmsTask[];
     tasks_count?: number;
     completed_tasks_count?: number;
+    progress_percentage?: number;
     project?: {
         id: number;
         name: string;

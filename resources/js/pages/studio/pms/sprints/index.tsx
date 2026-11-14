@@ -23,6 +23,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import {
+    ArrowRight,
     Calendar,
     CalendarDays,
     CheckCircle2,
@@ -46,6 +47,64 @@ interface Props {
     selectedProjectId: number | null;
     is_admin?: boolean;
 }
+
+const formatSprintDate = (val?: string | null) => {
+    if (!val) return '';
+    try {
+        const cleanStr = String(val).split('T')[0];
+        const parts = cleanStr.split('-');
+        if (parts.length === 3) {
+            const y = parseInt(parts[0], 10);
+            const m = parseInt(parts[1], 10);
+            const d = parseInt(parts[2], 10);
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+            if (m >= 1 && m <= 12) {
+                return `${String(d).padStart(2, '0')} ${months[m - 1]} ${y}`;
+            }
+        }
+        return cleanStr;
+    } catch {
+        return String(val).split('T')[0];
+    }
+};
+
+const formatSprintDateRange = (start?: string | null, end?: string | null) => {
+    if (!start && !end) return 'Jadwal belum diatur';
+    if (start && !end) return `Mulai ${formatSprintDate(start)}`;
+    if (!start && end) return `Selesai ${formatSprintDate(end)}`;
+
+    try {
+        const cleanStart = String(start).split('T')[0];
+        const cleanEnd = String(end).split('T')[0];
+        const p1 = cleanStart.split('-');
+        const p2 = cleanEnd.split('-');
+
+        if (p1.length === 3 && p2.length === 3) {
+            const y1 = parseInt(p1[0], 10);
+            const m1 = parseInt(p1[1], 10);
+            const d1 = parseInt(p1[2], 10);
+            const y2 = parseInt(p2[0], 10);
+            const m2 = parseInt(p2[1], 10);
+            const d2 = parseInt(p2[2], 10);
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+            const day1 = String(d1).padStart(2, '0');
+            const day2 = String(d2).padStart(2, '0');
+
+            if (y1 === y2 && m1 === m2) {
+                return `${day1} - ${day2} ${months[m1 - 1]} ${y1}`;
+            }
+            if (y1 === y2) {
+                return `${day1} ${months[m1 - 1]} - ${day2} ${months[m2 - 1]} ${y1}`;
+            }
+            return `${day1} ${months[m1 - 1]} ${y1} - ${day2} ${months[m2 - 1]} ${y2}`;
+        }
+    } catch {
+        // fallback
+    }
+
+    return `${formatSprintDate(start)} - ${formatSprintDate(end)}`;
+};
 
 export default function SprintsIndex({
     sprints,
@@ -182,17 +241,17 @@ export default function SprintsIndex({
                                         <div className="flex items-start justify-between gap-2">
                                             <div>
                                                 <Badge
-                                                    className={`text-[10px] uppercase font-bold ${
+                                                    className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md border ${
                                                         sprint.status === 'active'
-                                                            ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                                                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25'
                                                             : sprint.status === 'completed'
-                                                            ? 'bg-blue-500/10 text-blue-600 border-blue-500/20'
-                                                            : 'bg-slate-100 text-slate-600 dark:bg-slate-800'
+                                                            ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/25'
+                                                            : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700'
                                                     }`}
                                                 >
                                                     {sprint.status}
                                                 </Badge>
-                                                <h3 className="font-bold text-lg text-slate-900 dark:text-white mt-1.5">
+                                                <h3 className="font-bold text-lg text-slate-900 dark:text-white mt-1.5 leading-snug">
                                                     {sprint.name}
                                                 </h3>
                                             </div>
@@ -202,14 +261,15 @@ export default function SprintsIndex({
                                                     size="icon"
                                                     variant="ghost"
                                                     onClick={() => setDeletingSprint(sprint)}
-                                                    className="size-7 rounded-lg text-rose-500 hover:text-rose-600 cursor-pointer"
+                                                    title="Hapus Sprint"
+                                                    className="size-7 rounded-lg text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 cursor-pointer shrink-0"
                                                 >
                                                     <Trash2 className="size-3.5" />
                                                 </Button>
                                             )}
                                         </div>
 
-                                        <div className="text-xs text-violet-600 font-semibold mt-1">
+                                        <div className="text-xs text-violet-600 dark:text-violet-400 font-semibold mt-1">
                                             {sprint.project?.name ?? 'Proyek'} ({sprint.project?.code})
                                         </div>
 
@@ -220,31 +280,50 @@ export default function SprintsIndex({
                                         )}
 
                                         {/* Progress Bar */}
-                                        <div className="mt-4 space-y-1">
-                                            <div className="flex justify-between text-xs text-slate-500 font-medium">
-                                                <span>Penyelesaian ({doneTasks}/{totalTasks} tugas)</span>
-                                                <span className="font-bold text-slate-900 dark:text-white">{progress}%</span>
+                                        <div className="mt-4 space-y-1.5">
+                                            <div className="flex justify-between items-center text-xs font-medium">
+                                                <span className="text-slate-500 dark:text-slate-400">
+                                                    Penyelesaian ({doneTasks}/{totalTasks} tugas)
+                                                </span>
+                                                <span
+                                                    className={`font-bold ${
+                                                        progress === 100
+                                                            ? 'text-emerald-600 dark:text-emerald-400'
+                                                            : 'text-slate-900 dark:text-white'
+                                                    }`}
+                                                >
+                                                    {progress}%
+                                                </span>
                                             </div>
                                             <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                                                 <div
-                                                    className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full"
+                                                    className={`h-full rounded-full transition-all duration-300 ${
+                                                        progress === 100
+                                                            ? 'bg-gradient-to-r from-emerald-500 to-teal-500'
+                                                            : progress >= 50
+                                                            ? 'bg-gradient-to-r from-violet-600 to-indigo-600'
+                                                            : progress > 0
+                                                            ? 'bg-gradient-to-r from-amber-500 to-orange-500'
+                                                            : 'bg-slate-200 dark:bg-slate-700'
+                                                    }`}
                                                     style={{ width: `${progress}%` }}
                                                 />
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500">
-                                        <span className="flex items-center gap-1">
-                                            <CalendarDays className="size-3 text-slate-400" />
-                                            {sprint.start_date ?? '-'} s/d {sprint.end_date ?? '-'}
+                                    <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-3 text-xs">
+                                        <span className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 min-w-0 font-medium">
+                                            <CalendarDays className="size-3.5 text-slate-400 shrink-0" />
+                                            <span className="truncate">{formatSprintDateRange(sprint.start_date, sprint.end_date)}</span>
                                         </span>
 
                                         <Link
                                             href={`/studio/pms/projects/${sprint.project_id}`}
-                                            className="text-violet-600 font-semibold hover:underline"
+                                            className="inline-flex items-center gap-1 font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 hover:underline shrink-0"
                                         >
-                                            Buka Workspace →
+                                            <span>Buka Workspace</span>
+                                            <ArrowRight className="size-3" />
                                         </Link>
                                     </div>
                                 </div>

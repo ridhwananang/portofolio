@@ -17,6 +17,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { SiWhatsapp } from 'react-icons/si';
 
 interface ChatMessage {
+    id?: number | string;
     sender: 'user' | 'bot' | 'ridhwan' | 'system';
     text: string;
     time: string;
@@ -53,13 +54,21 @@ export default function AIChatWidget() {
     const [isTyping, setIsTyping] = useState(false);
     const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
     const [forcedAIMode, setForcedAIMode] = useState(false);
+    const [userChatEmail, setUserChatEmail] = useState<string | null>(() => {
+        try {
+            return localStorage.getItem('user_contact_email');
+        } catch {
+            return null;
+        }
+    });
+    const [isHumanTakeoverActive, setIsHumanTakeoverActive] = useState<boolean>(false);
 
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const isSendingRef = useRef(false);
 
     const hasRidhwanReply = messages.some((m) => m.sender === 'ridhwan');
-    const isHumanMode = hasRidhwanReply && !forcedAIMode;
+    const isHumanMode = (hasRidhwanReply || isHumanTakeoverActive) && !forcedAIMode;
 
     // Initial technical welcome greeting
     const createInitialMessage = (): ChatMessage => ({
@@ -98,23 +107,29 @@ export default function AIChatWidget() {
     useEffect(() => {
         if (!isOpen) return;
 
-        let email: string | null = null;
-        try {
-            email = localStorage.getItem('user_contact_email');
-        } catch {
-            // Safe guard against restricted localStorage
-        }
+        const getTargetEmail = () => {
+            if (userChatEmail && userChatEmail.trim()) return userChatEmail.trim();
+            try {
+                return localStorage.getItem('user_contact_email')?.trim() || null;
+            } catch {
+                return null;
+            }
+        };
 
+        const email = getTargetEmail();
         if (!email) return;
 
         let isPolling = false;
 
         const syncReplies = async () => {
             if (isPolling || document.hidden) return;
+            const currentEmail = getTargetEmail();
+            if (!currentEmail) return;
+
             isPolling = true;
 
             try {
-                const res = await fetch(`/api/chat/sync?email=${encodeURIComponent(email!)}`, {
+                const res = await fetch(`/api/chat/sync?email=${encodeURIComponent(currentEmail)}`, {
                     headers: { Accept: 'application/json' },
                 });
 
@@ -127,11 +142,15 @@ export default function AIChatWidget() {
 
                             for (const reply of data.replies) {
                                 const exists = next.some(
-                                    (m) => m.sender === 'ridhwan' && m.text === reply.text
+                                    (m) =>
+                                        (m.sender === 'ridhwan' && m.text === reply.text) ||
+                                        (m.id !== undefined && m.id === reply.id)
                                 );
                                 if (!exists) {
                                     hasNew = true;
+                                    setIsHumanTakeoverActive(true);
                                     next.push({
+                                        id: reply.id,
                                         sender: 'ridhwan',
                                         text: reply.text,
                                         time: reply.time || new Date().toLocaleTimeString('id-ID', {
@@ -153,7 +172,7 @@ export default function AIChatWidget() {
             }
         };
 
-        // Immediate check on open
+        // Immediate check on open or when email is acquired
         syncReplies();
 
         // 2.5-second live heartbeat for real-time responsiveness
@@ -168,7 +187,7 @@ export default function AIChatWidget() {
             clearInterval(pollTimer);
             document.removeEventListener('visibilitychange', handleVisibilityChange);
         };
-    }, [isOpen]);
+    }, [isOpen, userChatEmail]);
 
     const handleResetChat = () => {
         setMessages([createInitialMessage()]);
@@ -244,6 +263,10 @@ export default function AIChatWidget() {
             }
         }
 
+        if (userEmail && userEmail !== userChatEmail) {
+            setUserChatEmail(userEmail);
+        }
+
         try {
             const response = await fetch('/api/chat', {
                 method: 'POST',
@@ -266,13 +289,16 @@ export default function AIChatWidget() {
             const newMsgs: ChatMessage[] = [];
 
             if (data.human_takeover) {
-                // Prevent duplicate system takeover cards: only display once in the chat history
-                const alreadyNotified = updatedMessages.some(
-                    (m) =>
-                        m.sender === 'system' &&
-                        (m.text.includes('Asisten AI dijeda') ||
-                            m.text.includes('Pesan Diteruskan')),
-                );
+                setIsHumanTakeoverActive(true);
+                // Prevent duplicate system takeover cards: only display once ever
+                const alreadyNotified =
+                    isHumanTakeoverActive ||
+                    updatedMessages.some(
+                        (m) =>
+                            m.sender === 'system' &&
+                            (m.text.includes('Asisten AI dijeda') ||
+                                m.text.includes('Pesan Diteruskan')),
+                    );
 
                 if (!alreadyNotified) {
                     newMsgs.push({
@@ -539,6 +565,28 @@ export default function AIChatWidget() {
                                 </button>
                             </div>
                         </div>
+
+                        {/* Live Takeover Mode Bar: Sleek indicator that AI is paused and direct human chat is active */}
+                        {isHumanMode && (
+                            <div className="relative z-10 border-b border-emerald-500/20 bg-emerald-500/10 px-4 py-2 backdrop-blur-md dark:bg-emerald-500/15 flex items-center justify-between text-[11px] font-bold text-emerald-700 dark:text-emerald-300">
+                                <div className="flex items-center gap-2">
+                                    <span className="relative flex size-2">
+                                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                                        <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
+                                    </span>
+                                    <span>Live Chat • Terhubung dengan Mas Ridhwan</span>
+                                </div>
+                                <a
+                                    href="https://wa.me/6281298502177?text=Halo%20Mas%20Ridhwan,%20saya%20ingin%20melanjutkan%20diskusi%20dari%20website"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-1 font-semibold text-[10.5px] text-emerald-800 dark:text-emerald-200 hover:underline"
+                                >
+                                    <SiWhatsapp size={11} />
+                                    <span>WhatsApp ↗</span>
+                                </a>
+                            </div>
+                        )}
 
                         {/* Chat Messages List (Container Scrolled Independently, Zero Window Shift) */}
                         <div
