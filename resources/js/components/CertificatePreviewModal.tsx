@@ -5,6 +5,7 @@ interface CertificatePreviewModalProps {
     isOpen: boolean;
     onClose: () => void;
     fileUrl: string | null;
+    downloadUrl?: string | null;
     thumbnailUrl: string | null;
     title: string | null;
 }
@@ -13,6 +14,7 @@ export default function CertificatePreviewModal({
     isOpen,
     onClose,
     fileUrl,
+    downloadUrl,
     thumbnailUrl,
     title,
 }: CertificatePreviewModalProps) {
@@ -21,7 +23,7 @@ export default function CertificatePreviewModal({
     }
 
     // Detect if the file is a PDF
-    const isPdf = fileUrl.toLowerCase().endsWith('.pdf');
+    const isPdf = fileUrl.toLowerCase().endsWith('.pdf') || fileUrl.includes('/view');
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -43,7 +45,7 @@ export default function CertificatePreviewModal({
                     {/* Action buttons (Download, Open in New Tab) */}
                     <div className="mr-8 flex items-center gap-2">
                         <a
-                            href={fileUrl}
+                            href={downloadUrl || fileUrl}
                             download
                             className="hover:bg-slate-150/60 flex items-center justify-center rounded-lg p-2 text-slate-500 transition-colors hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
                             title="Unduh Sertifikat"

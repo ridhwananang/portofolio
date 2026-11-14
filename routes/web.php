@@ -21,6 +21,17 @@ Route::post('/track-project/{tracking_code}/revision', [ProjectOrderController::
 Route::inertia('/terms-and-conditions', 'terms')->name('terms');
 Route::inertia('/privacy-policy', 'privacy')->name('privacy');
 
+// Secure Public Certificate Media Streaming (Masks & Protects Object Storage Bucket URLs)
+Route::get('/certificates/{certificate}/view', [App\Http\Controllers\CertificateStreamController::class, 'view'])
+    ->middleware('throttle:60,1')
+    ->name('certificates.view');
+Route::get('/certificates/{certificate}/download', [App\Http\Controllers\CertificateStreamController::class, 'download'])
+    ->middleware('throttle:30,1')
+    ->name('certificates.download');
+Route::get('/certificates/{certificate}/thumbnail', [App\Http\Controllers\CertificateStreamController::class, 'thumbnail'])
+    ->middleware('throttle:120,1')
+    ->name('certificates.thumbnail');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', fn () => redirect('/studio'))->name('dashboard');
 

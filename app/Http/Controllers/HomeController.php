@@ -67,37 +67,22 @@ class HomeController extends Controller
                 ];
             })->values()->toArray();
 
-            // 4. Sertifikasi & Kelulusan (Cloud Bucket / Asset Storage Ready)
-            $certificatesData = Certificate::orderBy('id', 'asc')->get()->map(function ($cert) use ($disk) {
+            // 4. Sertifikasi & Kelulusan (Secure Masked URLs - Hides Raw Object Storage Bucket)
+            $certificatesData = Certificate::orderBy('id', 'asc')->get()->map(function ($cert) {
                 $path = $cert->file_path;
                 $fileUrl = null;
+                $downloadUrl = null;
                 $thumbnailUrl = null;
 
                 if ($path) {
-                    $filename = basename($path);
-                    $thumbnailName = pathinfo($filename, PATHINFO_FILENAME) . '.webp';
-
-                    // 1. Storage disk certificates/thumbnails (Cloud Storage / S3 ready)
-                    if (Storage::disk($disk)->exists('certificates/thumbnails/' . $thumbnailName)) {
-                        $thumbnailUrl = Storage::disk($disk)->url('certificates/thumbnails/' . $thumbnailName);
-                    } elseif (!str_starts_with($path, '/') && !str_starts_with($path, 'http')) {
-                        $extension = pathinfo($path, PATHINFO_EXTENSION);
-                        $thumbPathStorage = str_replace('.' . $extension, '_thumb.webp', $path);
-                        if (Storage::disk($disk)->exists($thumbPathStorage)) {
-                            $thumbnailUrl = Storage::disk($disk)->url($thumbPathStorage);
-                        }
-                    } elseif (file_exists(public_path('images/Sertifikat/thumbnails/' . $thumbnailName))) {
-                        $thumbnailUrl = '/images/Sertifikat/thumbnails/' . $thumbnailName;
-                    }
-
-                    if (str_starts_with($path, '/') || str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+                    if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
                         $fileUrl = $path;
+                        $downloadUrl = $path;
+                        $thumbnailUrl = $path;
                     } else {
-                        $fileUrl = Storage::disk($disk)->url($path);
-                    }
-
-                    if (! $thumbnailUrl) {
-                        $thumbnailUrl = $fileUrl;
+                        $fileUrl = route('certificates.view', $cert->id);
+                        $downloadUrl = route('certificates.download', $cert->id);
+                        $thumbnailUrl = route('certificates.thumbnail', $cert->id);
                     }
                 }
 
@@ -116,6 +101,7 @@ class HomeController extends Controller
                     'skills' => $skills,
                     'file_path' => $cert->file_path,
                     'file_url' => $fileUrl,
+                    'download_url' => $downloadUrl,
                     'thumbnail_url' => $thumbnailUrl,
                 ];
             })->values()->toArray();

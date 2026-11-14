@@ -27,6 +27,7 @@ interface CertificateItem {
     skills: string[];
     file_path: string;
     file_url: string;
+    download_url?: string;
     thumbnail_url?: string;
 }
 
@@ -45,6 +46,7 @@ const CATEGORY_TABS = [
 
 export default function Certificates({ certificates, loading }: CertificatesProps) {
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [previewDownloadUrl, setPreviewDownloadUrl] = useState<string | null>(null);
     const [previewThumbnailUrl, setPreviewThumbnailUrl] = useState<string | null>(null);
     const [previewTitle, setPreviewTitle] = useState<string | null>(null);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -101,6 +103,7 @@ export default function Certificates({ certificates, loading }: CertificatesProp
 
     const handlePreview = (cert: CertificateItem) => {
         setPreviewUrl(cert.file_url);
+        setPreviewDownloadUrl(cert.download_url || cert.file_url);
         setPreviewThumbnailUrl(cert.thumbnail_url || null);
         setPreviewTitle(cert.title);
         setIsPreviewOpen(true);
@@ -477,6 +480,7 @@ export default function Certificates({ certificates, loading }: CertificatesProp
                 onClose={() => setIsPreviewOpen(false)}
                 title={previewTitle || ''}
                 fileUrl={previewUrl || ''}
+                downloadUrl={previewDownloadUrl || undefined}
                 thumbnailUrl={previewThumbnailUrl || undefined}
             />
         </section>
