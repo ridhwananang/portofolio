@@ -74,19 +74,30 @@ class HomeController extends Controller
                 $thumbnailUrl = null;
 
                 if ($path) {
-                    if (str_starts_with($path, '/') || str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
-                        $fileUrl = $path;
-                        $filename = basename($path);
-                        $thumbnailName = pathinfo($filename, PATHINFO_FILENAME) . '.webp';
-                        $thumbnailPath = 'images/Sertifikat/thumbnails/' . $thumbnailName;
-                        $thumbnailUrl = file_exists(public_path($thumbnailPath)) ? '/' . $thumbnailPath : $fileUrl;
-                    } else {
-                        $fileUrl = Storage::disk($disk)->url($path);
+                    $filename = basename($path);
+                    $thumbnailName = pathinfo($filename, PATHINFO_FILENAME) . '.webp';
+
+                    // 1. Storage disk certificates/thumbnails (Cloud Storage / S3 ready)
+                    if (Storage::disk($disk)->exists('certificates/thumbnails/' . $thumbnailName)) {
+                        $thumbnailUrl = Storage::disk($disk)->url('certificates/thumbnails/' . $thumbnailName);
+                    } elseif (!str_starts_with($path, '/') && !str_starts_with($path, 'http')) {
                         $extension = pathinfo($path, PATHINFO_EXTENSION);
                         $thumbPathStorage = str_replace('.' . $extension, '_thumb.webp', $path);
-                        $thumbnailUrl = Storage::disk($disk)->exists($thumbPathStorage)
-                            ? Storage::disk($disk)->url($thumbPathStorage)
-                            : $fileUrl;
+                        if (Storage::disk($disk)->exists($thumbPathStorage)) {
+                            $thumbnailUrl = Storage::disk($disk)->url($thumbPathStorage);
+                        }
+                    } elseif (file_exists(public_path('images/Sertifikat/thumbnails/' . $thumbnailName))) {
+                        $thumbnailUrl = '/images/Sertifikat/thumbnails/' . $thumbnailName;
+                    }
+
+                    if (str_starts_with($path, '/') || str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+                        $fileUrl = $path;
+                    } else {
+                        $fileUrl = Storage::disk($disk)->url($path);
+                    }
+
+                    if (! $thumbnailUrl) {
+                        $thumbnailUrl = $fileUrl;
                     }
                 }
 

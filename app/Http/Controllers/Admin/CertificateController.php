@@ -19,19 +19,30 @@ class CertificateController extends Controller
         $certificates = Certificate::orderBy('id', 'desc')->get()->map(function ($cert) use ($disk) {
             $path = $cert->file_path;
             if ($path) {
-                if (str_starts_with($path, '/') || str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
-                    $cert->file_url = $path;
-                    $filename = basename($path);
-                    $thumbnailName = pathinfo($filename, PATHINFO_FILENAME) . '.webp';
-                    $thumbnailPath = 'images/Sertifikat/thumbnails/' . $thumbnailName;
-                    $cert->thumbnail_url = file_exists(public_path($thumbnailPath)) ? '/' . $thumbnailPath : $cert->file_url;
-                } else {
-                    $cert->file_url = Storage::disk($disk)->url($path);
+                $filename = basename($path);
+                $thumbnailName = pathinfo($filename, PATHINFO_FILENAME) . '.webp';
+
+                // 1. Storage disk certificates/thumbnails (Cloud Storage / S3 ready)
+                if (Storage::disk($disk)->exists('certificates/thumbnails/' . $thumbnailName)) {
+                    $cert->thumbnail_url = Storage::disk($disk)->url('certificates/thumbnails/' . $thumbnailName);
+                } elseif (!str_starts_with($path, '/') && !str_starts_with($path, 'http')) {
                     $extension = pathinfo($path, PATHINFO_EXTENSION);
                     $thumbPathStorage = str_replace('.' . $extension, '_thumb.webp', $path);
-                    $cert->thumbnail_url = Storage::disk($disk)->exists($thumbPathStorage)
-                        ? Storage::disk($disk)->url($thumbPathStorage)
-                        : $cert->file_url;
+                    if (Storage::disk($disk)->exists($thumbPathStorage)) {
+                        $cert->thumbnail_url = Storage::disk($disk)->url($thumbPathStorage);
+                    }
+                } elseif (file_exists(public_path('images/Sertifikat/thumbnails/' . $thumbnailName))) {
+                    $cert->thumbnail_url = '/images/Sertifikat/thumbnails/' . $thumbnailName;
+                }
+
+                if (str_starts_with($path, '/') || str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+                    $cert->file_url = $path;
+                } else {
+                    $cert->file_url = Storage::disk($disk)->url($path);
+                }
+
+                if (! $cert->thumbnail_url) {
+                    $cert->thumbnail_url = $cert->file_url;
                 }
             } else {
                 $cert->file_url = null;
