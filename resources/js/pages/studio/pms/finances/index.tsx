@@ -312,9 +312,9 @@ export default function FinancesIndex({
                                                 {formatCurrency(fin.amount)}
                                             </td>
                                             <td className="py-3 px-4 text-center">
-                                                {fin.receipt_file ? (
+                                                {fin.receipt_file || fin.receipt_url ? (
                                                     <a
-                                                        href={`/storage/${fin.receipt_file}`}
+                                                        href={fin.receipt_url ?? (fin.receipt_file?.startsWith('http') || fin.receipt_file?.startsWith('/') ? fin.receipt_file : `/storage/${fin.receipt_file}`)}
                                                         target="_blank"
                                                         rel="noreferrer"
                                                         className="inline-flex items-center gap-1 text-violet-600 hover:underline"

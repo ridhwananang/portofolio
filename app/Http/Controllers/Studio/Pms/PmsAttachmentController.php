@@ -39,7 +39,8 @@ class PmsAttachmentController extends Controller
         $fileName = $file->getClientOriginalName();
         $fileSize = $file->getSize();
         $fileType = $file->getClientOriginalExtension();
-        $filePath = $file->store('pms_attachments', 'public');
+        $disk = config('filesystems.default');
+        $filePath = $file->store('pms_attachments', $disk);
 
         $attachment = PmsAttachment::create([
             'project_id' => $validated['project_id'] ?? null,
@@ -73,9 +74,10 @@ class PmsAttachmentController extends Controller
 
         $fileName = $attachment->file_name;
         $projectId = $attachment->project_id;
+        $disk = config('filesystems.default');
 
-        if ($attachment->file_path) {
-            Storage::disk('public')->delete($attachment->file_path);
+        if ($attachment->file_path && !str_starts_with($attachment->file_path, '/') && !str_starts_with($attachment->file_path, 'http') && Storage::disk($disk)->exists($attachment->file_path)) {
+            Storage::disk($disk)->delete($attachment->file_path);
         }
 
         $attachment->delete();

@@ -283,7 +283,7 @@ export default function UsersIndex({ users, existingRoles, filters }: Props) {
         setEditingUser(user);
         setShowEditPassword(false);
         const avatarUrl = user.avatar
-            ? (user.avatar.startsWith('http') ? user.avatar : `/storage/${user.avatar}`)
+            ? (user.avatar.startsWith('http') || user.avatar.startsWith('/') ? user.avatar : `/storage/${user.avatar}`)
             : null;
         setEditAvatarPreview(avatarUrl);
         editForm.setData({

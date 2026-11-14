@@ -2277,9 +2277,9 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
                                                     {formatCurrency(fin.amount)}
                                                 </td>
                                                 <td className="py-3 px-4 text-center">
-                                                    {fin.receipt_file ? (
+                                                    {fin.receipt_file || fin.receipt_url ? (
                                                         <a
-                                                            href={`/storage/${fin.receipt_file}`}
+                                                            href={fin.receipt_url ?? (fin.receipt_file?.startsWith('http') || fin.receipt_file?.startsWith('/') ? fin.receipt_file : `/storage/${fin.receipt_file}`)}
                                                             target="_blank"
                                                             rel="noreferrer"
                                                             className="text-violet-600 dark:text-violet-400 hover:underline inline-flex items-center justify-center gap-1 font-semibold"
@@ -2340,8 +2340,10 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
                                         </div>
 
                                         <a
-                                            href={`/storage/${att.file_path}`}
+                                            href={att.file_url ?? (att.file_path?.startsWith('http') || att.file_path?.startsWith('/') ? att.file_path : `/storage/${att.file_path}`)}
                                             download
+                                            target="_blank"
+                                            rel="noreferrer"
                                             className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-violet-600 dark:text-violet-400 shrink-0 transition-colors"
                                         >
                                             <Download className="size-3.5" />
@@ -2915,7 +2917,7 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
                                         <div className="size-6 rounded-full bg-violet-600 text-white font-bold text-[10px] flex items-center justify-center shrink-0">
                                             {assignee.avatar ? (
                                                 <img
-                                                    src={assignee.avatar.startsWith('http') ? assignee.avatar : `/storage/${assignee.avatar}`}
+                                                    src={assignee.avatar.startsWith('http') || assignee.avatar.startsWith('/') ? assignee.avatar : `/storage/${assignee.avatar}`}
                                                     alt={assignee.name}
                                                     className="size-full rounded-full object-cover"
                                                 />
@@ -2993,7 +2995,7 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
                                         <div className="relative size-12 rounded-full overflow-hidden bg-violet-900 flex items-center justify-center text-white shrink-0 border-2 border-violet-500/40">
                                             {selectedAssignUser.avatar ? (
                                                 <img
-                                                    src={selectedAssignUser.avatar.startsWith('http') ? selectedAssignUser.avatar : `/storage/${selectedAssignUser.avatar}`}
+                                                    src={selectedAssignUser.avatar.startsWith('http') || selectedAssignUser.avatar.startsWith('/') ? selectedAssignUser.avatar : `/storage/${selectedAssignUser.avatar}`}
                                                     alt={selectedAssignUser.name}
                                                     className="size-full object-cover"
                                                 />
@@ -3175,7 +3177,7 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
                                             {memberToDelete.user?.avatar ? (
                                                 <img
                                                     src={
-                                                        memberToDelete.user.avatar.startsWith('http')
+                                                        memberToDelete.user.avatar.startsWith('http') || memberToDelete.user.avatar.startsWith('/')
                                                             ? memberToDelete.user.avatar
                                                             : `/storage/${memberToDelete.user.avatar}`
                                                     }

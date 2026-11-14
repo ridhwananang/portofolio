@@ -84,7 +84,8 @@ class UserController extends Controller
 
         $avatarPath = null;
         if ($request->hasFile('avatar')) {
-            $avatarPath = $request->file('avatar')->store('avatars', 'public');
+            $disk = config('filesystems.default');
+            $avatarPath = $request->file('avatar')->store('avatars', $disk);
         }
 
         $user = User::create([
@@ -126,10 +127,12 @@ class UserController extends Controller
         ]);
 
         if ($request->hasFile('avatar')) {
-            if ($user->avatar) {
-                Storage::disk('public')->delete($user->avatar);
+            $disk = config('filesystems.default');
+            $rawAvatar = $user->getRawOriginal('avatar');
+            if ($rawAvatar && !str_starts_with($rawAvatar, '/') && !str_starts_with($rawAvatar, 'http') && Storage::disk($disk)->exists($rawAvatar)) {
+                Storage::disk($disk)->delete($rawAvatar);
             }
-            $user->avatar = $request->file('avatar')->store('avatars', 'public');
+            $user->avatar = $request->file('avatar')->store('avatars', $disk);
         }
 
         $user->name = $validated['name'];
@@ -173,9 +176,11 @@ class UserController extends Controller
         }
 
         $userName = $user->name;
+        $disk = config('filesystems.default');
+        $rawAvatar = $user->getRawOriginal('avatar');
 
-        if ($user->avatar) {
-            Storage::disk('public')->delete($user->avatar);
+        if ($rawAvatar && !str_starts_with($rawAvatar, '/') && !str_starts_with($rawAvatar, 'http') && Storage::disk($disk)->exists($rawAvatar)) {
+            Storage::disk($disk)->delete($rawAvatar);
         }
 
         $user->delete();

@@ -52,6 +52,7 @@ export interface PmsAttachment {
     task_id?: number | null;
     file_name: string;
     file_path: string;
+    file_url?: string | null;
     file_size: number;
     file_type?: string | null;
     uploaded_by: number;
@@ -118,6 +119,7 @@ export interface PmsFinance {
     transaction_date: string;
     notes?: string | null;
     receipt_file?: string | null;
+    receipt_url?: string | null;
     created_by: number;
     project?: {
         id: number;

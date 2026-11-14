@@ -99,7 +99,8 @@ class PmsFinanceController extends Controller
 
         $receiptPath = null;
         if ($request->hasFile('receipt')) {
-            $receiptPath = $request->file('receipt')->store('pms_receipts', 'public');
+            $disk = config('filesystems.default');
+            $receiptPath = $request->file('receipt')->store('pms_receipts', $disk);
         }
 
         $finance = PmsFinance::create([
@@ -135,9 +136,10 @@ class PmsFinanceController extends Controller
 
         $title = $finance->title;
         $projectId = $finance->project_id;
+        $disk = config('filesystems.default');
 
-        if ($finance->receipt_file) {
-            Storage::disk('public')->delete($finance->receipt_file);
+        if ($finance->receipt_file && !str_starts_with($finance->receipt_file, '/') && !str_starts_with($finance->receipt_file, 'http') && Storage::disk($disk)->exists($finance->receipt_file)) {
+            Storage::disk($disk)->delete($finance->receipt_file);
         }
 
         $finance->delete();

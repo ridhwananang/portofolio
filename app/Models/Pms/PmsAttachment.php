@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 class PmsAttachment extends Model
 {
@@ -22,6 +23,23 @@ class PmsAttachment extends Model
         'file_type',
         'uploaded_by',
     ];
+
+    protected $appends = [
+        'file_url',
+    ];
+
+    public function getFileUrlAttribute(): ?string
+    {
+        if (! $this->file_path) {
+            return null;
+        }
+
+        if (str_starts_with($this->file_path, 'http://') || str_starts_with($this->file_path, 'https://') || str_starts_with($this->file_path, '/')) {
+            return $this->file_path;
+        }
+
+        return Storage::disk(config('filesystems.default'))->url($this->file_path);
+    }
 
     public function project(): BelongsTo
     {

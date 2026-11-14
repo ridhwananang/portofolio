@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -60,7 +61,7 @@ class User extends Authenticatable implements PasskeyUser
             if (str_starts_with($value, 'http://') || str_starts_with($value, 'https://') || str_starts_with($value, '/')) {
                 return $value;
             }
-            return '/storage/' . ltrim($value, '/');
+            return Storage::disk(config('filesystems.default'))->url($value);
         }
 
         if ($this->isAdmin() || $this->email === 'ridhwananang@gmail.com') {
