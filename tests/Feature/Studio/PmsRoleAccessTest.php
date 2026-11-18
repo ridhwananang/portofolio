@@ -178,3 +178,142 @@ test('non-admin can update task status and toggle subtasks in assigned project',
 
     expect($subtask->fresh()->is_done)->toBeTrue();
 });
+
+test('pms cockpit returns integer days_left, actionableTasks, activeSprints, and omits recentLogs', function () {
+    $this->assignedProject->update([
+        'start_date' => now()->subDays(3)->toDateString(),
+        'end_date' => now()->addDays(27)->toDateString(),
+    ]);
+
+    $sprint = PmsSprint::create([
+        'project_id' => $this->assignedProject->id,
+        'name' => 'Sprint 1 - Core Engine',
+        'status' => 'active',
+        'start_date' => now()->subDays(2)->toDateString(),
+        'end_date' => now()->addDays(12)->toDateString(),
+    ]);
+
+    PmsTask::create([
+        'project_id' => $this->assignedProject->id,
+        'sprint_id' => $sprint->id,
+        'title' => 'Slicing UI Cockpit',
+        'status' => 'in_progress',
+        'priority' => 'high',
+        'assigned_to' => $this->developer->id,
+        'due_date' => now()->addDays(2)->toDateString(),
+        'created_by' => $this->admin->id,
+    ]);
+
+    $response = $this->actingAs($this->developer)->get('/studio/pms');
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('studio/pms/dashboard')
+        ->where('is_admin', false)
+        ->where('projectHealth.0.days_left', 27)
+        ->where('projectHealth.0.days_left', fn ($val) => is_int($val))
+        ->where('stats.in_progress_tasks', 1)
+        ->where('stats.completion_rate', 0)
+        ->has('activeSprints', 1)
+        ->has('actionableTasks', 1)
+        ->has('upcomingDeadlines', 1)
+        ->missing('recentLogs')
+    );
+});
+
+test('non-admin creating task cannot delegate to other user and is forced to assign to self', function () {
+    // Attempt to assign to admin or another user
+    $this->actingAs($this->developer)->post('/studio/pms/tasks', [
+        'project_id' => $this->assignedProject->id,
+        'title' => 'Personal Subsystem Task',
+        'status' => 'todo',
+        'priority' => 'medium',
+        'assigned_to' => $this->admin->id, // Trying to assign to admin
+    ])->assertRedirect();
+
+    $task = PmsTask::where('title', 'Personal Subsystem Task')->first();
+    expect($task)->not->toBeNull();
+    // Must be assigned to the developer himself, not admin!
+    expect($task->assigned_to)->toBe($this->developer->id);
+    expect($task->created_by)->toBe($this->developer->id);
+});
+
+test('non-admin cannot edit, update status, or delete task assigned to other user (read-only)', function () {
+    $adminTask = PmsTask::create([
+        'project_id' => $this->assignedProject->id,
+        'title' => 'Admin Leadership Task',
+        'status' => 'todo',
+        'priority' => 'urgent',
+        'assigned_to' => $this->admin->id,
+        'created_by' => $this->admin->id,
+    ]);
+
+    $subtask = PmsSubtask::create([
+        'task_id' => $adminTask->id,
+        'title' => 'Admin Subtask Step',
+        'is_done' => false,
+    ]);
+
+    // 1. Edit attempt by developer -> Forbidden
+    $this->actingAs($this->developer)
+        ->put("/studio/pms/tasks/{$adminTask->id}", [
+            'title' => 'Hijacked Admin Task',
+            'status' => 'done',
+            'priority' => 'low',
+        ])
+        ->assertForbidden();
+
+    // 2. Status change attempt by developer -> Forbidden
+    $this->actingAs($this->developer)
+        ->patch("/studio/pms/tasks/{$adminTask->id}/status", [
+            'status' => 'in_progress',
+        ])
+        ->assertForbidden();
+
+    // 3. Delete attempt by developer -> Forbidden
+    $this->actingAs($this->developer)
+        ->delete("/studio/pms/tasks/{$adminTask->id}")
+        ->assertForbidden();
+
+    // 4. Subtask toggle attempt by developer -> Forbidden
+    $this->actingAs($this->developer)
+        ->patch("/studio/pms/subtasks/{$subtask->id}/toggle")
+        ->assertForbidden();
+
+    // 5. Add subtask attempt by developer -> Forbidden
+    $this->actingAs($this->developer)
+        ->post("/studio/pms/tasks/{$adminTask->id}/subtasks", [
+            'title' => 'Unauthorized Subtask',
+        ])
+        ->assertForbidden();
+});
+
+test('admin has full access to create, assign to anyone, edit, and delete any task', function () {
+    // Admin creates task assigned to developer
+    $this->actingAs($this->admin)->post('/studio/pms/tasks', [
+        'project_id' => $this->assignedProject->id,
+        'title' => 'Task Delegated by Admin',
+        'status' => 'todo',
+        'priority' => 'high',
+        'assigned_to' => $this->developer->id,
+    ])->assertRedirect();
+
+    $task = PmsTask::where('title', 'Task Delegated by Admin')->first();
+    expect($task->assigned_to)->toBe($this->developer->id);
+
+    // Admin updates developer task
+    $this->actingAs($this->admin)->put("/studio/pms/tasks/{$task->id}", [
+        'title' => 'Task Delegated by Admin (Updated)',
+        'status' => 'in_progress',
+        'priority' => 'urgent',
+        'assigned_to' => $this->developer->id,
+    ])->assertRedirect();
+
+    // Admin changes status
+    $this->actingAs($this->admin)->patch("/studio/pms/tasks/{$task->id}/status", [
+        'status' => 'done',
+    ])->assertRedirect();
+
+    // Admin deletes task
+    $this->actingAs($this->admin)->delete("/studio/pms/tasks/{$task->id}")->assertRedirect();
+    expect(PmsTask::find($task->id))->toBeNull();
+});

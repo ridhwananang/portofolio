@@ -104,6 +104,10 @@ class PmsTaskController extends Controller
             if (! $isMember) {
                 abort(403, 'Akses ditolak. Anda hanya dapat membuat tugas pada proyek yang ditugaskan kepada Anda.');
             }
+
+            // WORKFLOW RULE: Anggota tim (non-admin) hanya dapat membuat tugas untuk dirinya sendiri.
+            // Tidak dapat mendelegasikan / assign tugas kepada user lain demi mencegah konflik peran.
+            $validated['assigned_to'] = $user->id;
         }
 
         $highestOrder = PmsTask::where('project_id', $validated['project_id'])
@@ -141,6 +145,12 @@ class PmsTaskController extends Controller
             if (! $isMember) {
                 abort(403, 'Akses ditolak. Anda tidak berhak mengubah tugas pada proyek ini.');
             }
+
+            // WORKFLOW RULE: Tugas user lain hanya bisa Read-Only.
+            // Non-admin tidak boleh mengedit tugas milik anggota lain.
+            if ($task->assigned_to !== $user->id) {
+                abort(403, 'Akses ditolak. Tugas milik anggota tim lain bersifat Read-Only dan tidak dapat diedit.');
+            }
         }
 
         $validated = $request->validate([
@@ -154,6 +164,11 @@ class PmsTaskController extends Controller
             'estimated_hours' => ['nullable', 'numeric', 'min:0'],
             'actual_hours' => ['nullable', 'numeric', 'min:0'],
         ]);
+
+        if (! $isAdmin && $user) {
+            // Non-admin tidak dapat memindahkan penugasan ke user lain
+            $validated['assigned_to'] = $user->id;
+        }
 
         $task->update([
             ...$validated,
@@ -183,6 +198,11 @@ class PmsTaskController extends Controller
             $isMember = $task->project->members()->where('user_id', $user->id)->exists();
             if (! $isMember) {
                 abort(403, 'Akses ditolak. Anda tidak berhak mengubah status tugas pada proyek ini.');
+            }
+
+            // WORKFLOW RULE: Non-admin hanya dapat mengubah status tugas yang ditugaskan kepada dirinya sendiri.
+            if ($task->assigned_to !== $user->id) {
+                abort(403, 'Akses ditolak. Tugas milik anggota tim lain bersifat Read-Only dan statusnya tidak dapat Anda ubah.');
             }
         }
 
@@ -222,8 +242,14 @@ class PmsTaskController extends Controller
         $user = $request->user();
         $isAdmin = $user ? $user->isAdmin() : false;
 
-        if (! $isAdmin && $user && $task->created_by !== $user->id) {
-            abort(403, 'Akses ditolak. Hanya Administrator atau pembuat tugas yang dapat menghapus tugas ini.');
+        if (! $isAdmin && $user) {
+            // WORKFLOW RULE: Non-admin tidak dapat menghapus tugas milik anggota tim lain.
+            if ($task->assigned_to !== null && $task->assigned_to !== $user->id) {
+                abort(403, 'Akses ditolak. Tugas milik anggota tim lain bersifat Read-Only dan tidak dapat dihapus.');
+            }
+            if ($task->created_by !== $user->id && $task->assigned_to !== $user->id) {
+                abort(403, 'Akses ditolak. Hanya Administrator atau penanggung jawab tugas yang dapat menghapus tugas ini.');
+            }
         }
 
         $title = $task->title;
@@ -253,6 +279,11 @@ class PmsTaskController extends Controller
             if (! $isMember) {
                 abort(403, 'Akses ditolak. Anda tidak berhak menambahkan subtask pada proyek ini.');
             }
+
+            // WORKFLOW RULE: Non-admin hanya dapat mengelola subtask tugasnya sendiri.
+            if ($task->assigned_to !== $user->id) {
+                abort(403, 'Akses ditolak. Tugas anggota lain bersifat Read-Only. Anda hanya dapat menambahkan subtask pada tugas Anda sendiri.');
+            }
         }
 
         $validated = $request->validate([
@@ -280,6 +311,11 @@ class PmsTaskController extends Controller
             if (! $isMember) {
                 abort(403, 'Akses ditolak. Anda tidak berhak mengubah subtask ini.');
             }
+
+            // WORKFLOW RULE: Non-admin hanya dapat menandai subtask pada tugasnya sendiri.
+            if ($subtask->task->assigned_to !== $user->id) {
+                abort(403, 'Akses ditolak. Tugas anggota lain bersifat Read-Only. Anda hanya dapat mengubah subtask pada tugas Anda sendiri.');
+            }
         }
 
         $subtask->is_done = ! $subtask->is_done;
@@ -297,8 +333,10 @@ class PmsTaskController extends Controller
         $user = $request->user();
         $isAdmin = $user ? $user->isAdmin() : false;
 
-        if (! $isAdmin && $user && $subtask->task->created_by !== $user->id) {
-            abort(403, 'Akses ditolak. Hanya Administrator atau pembuat tugas yang dapat menghapus subtask ini.');
+        if (! $isAdmin && $user) {
+            if ($subtask->task->assigned_to !== $user->id && $subtask->task->created_by !== $user->id) {
+                abort(403, 'Akses ditolak. Hanya Administrator atau penanggung jawab tugas yang dapat menghapus subtask ini.');
+            }
         }
 
         $subtask->delete();

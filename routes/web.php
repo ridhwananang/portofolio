@@ -3,6 +3,7 @@
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProjectOrderController;
 use App\Http\Controllers\QuestController;
+use App\Http\Controllers\Studio\Pms\PmsClientPortalController;
 use Illuminate\Support\Facades\Route;
 
 // Showcase Portofolio Publik (Cached High-Performance Engine)
@@ -16,6 +17,10 @@ Route::post('/track-project/{tracking_code}/approve', [ProjectOrderController::c
 Route::post('/track-project/{tracking_code}/settle', [ProjectOrderController::class, 'requestSettlement'])->middleware('throttle:10,1')->name('project.tracker.settle');
 Route::post('/track-project/{tracking_code}/staging', [ProjectOrderController::class, 'updateStaging'])->middleware(['auth', 'admin'])->name('project.tracker.staging');
 Route::post('/track-project/{tracking_code}/revision', [ProjectOrderController::class, 'submitRevision'])->middleware('throttle:10,1')->name('project.tracker.revision');
+
+// Confidential Client Portal (Public & Token-protected)
+Route::get('/portal/pms/{token}', [PmsClientPortalController::class, 'show'])->middleware('throttle:60,1')->name('portal.pms.show');
+Route::post('/portal/pms/{token}/verify-pin', [PmsClientPortalController::class, 'verifyPin'])->middleware('throttle:15,1')->name('portal.pms.verify-pin');
 
 // Legal & Compliance Pages (Midtrans Requirements)
 Route::inertia('/terms-and-conditions', 'terms')->name('terms');

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Str;
 
 class PmsProject extends Model
 {
@@ -21,12 +22,18 @@ class PmsProject extends Model
         'name',
         'code',
         'client',
+        'client_email',
         'description',
         'budget',
         'status',
         'priority',
         'start_date',
         'end_date',
+        'portal_token',
+        'portal_pin',
+        'is_portal_active',
+        'portal_last_accessed_at',
+        'portal_last_email_sent_at',
         'project_order_id',
         'created_by',
     ];
@@ -35,7 +42,19 @@ class PmsProject extends Model
         'budget' => 'decimal:2',
         'start_date' => 'date',
         'end_date' => 'date',
+        'is_portal_active' => 'boolean',
+        'portal_last_accessed_at' => 'datetime',
+        'portal_last_email_sent_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function ($project) {
+            if (empty($project->portal_token)) {
+                $project->portal_token = Str::random(32);
+            }
+        });
+    }
 
     protected $appends = [
         'progress_percentage',

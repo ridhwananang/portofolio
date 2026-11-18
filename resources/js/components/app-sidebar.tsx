@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import {
     Award,
@@ -10,7 +9,6 @@ import {
     Code2,
     Coins,
     FolderKanban,
-    Globe,
     History,
     LayoutDashboard,
     Mail,
@@ -19,8 +17,8 @@ import {
     Users,
     Zap,
 } from 'lucide-react';
+import React from 'react';
 import AppLogo from '@/components/app-logo';
-import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -157,21 +155,6 @@ const memberPmsNavItems: NavItem[] = [
         title: 'Audit & Log Aktivitas',
         href: '/studio/pms/activity-logs',
         icon: History,
-    },
-];
-
-
-// Quick Public Tools in Footer
-const quickToolsItems: NavItem[] = [
-    {
-        title: 'Kalkulator Layanan',
-        href: '/layanan',
-        icon: Calculator,
-    },
-    {
-        title: 'Web Portofolio Publik',
-        href: '/',
-        icon: Globe,
     },
 ];
 
@@ -314,14 +297,13 @@ export function AppSidebar() {
                                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                                 <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
                             </span>
-                            Payment Gateway
+                            {isAdmin ? 'Payment Gateway' : 'Workspace Sync'}
                         </span>
                         <span className="font-mono text-[9.5px] uppercase tracking-wider bg-emerald-500/15 px-1.5 py-0.5 rounded">
                             Active
                         </span>
                     </div>
                 </div>
-                <NavFooter items={quickToolsItems} className="mt-auto mb-1" />
                 <NavUser />
             </SidebarFooter>
         </Sidebar>

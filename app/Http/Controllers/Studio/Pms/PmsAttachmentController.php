@@ -23,14 +23,30 @@ class PmsAttachmentController extends Controller
             'file' => ['required', 'file', 'max:20480'], // max 20MB
         ]);
 
+        $projectId = $validated['project_id'] ?? null;
+        $taskId = $validated['task_id'] ?? null;
+        if (! $projectId && $taskId) {
+            $task = \App\Models\Pms\PmsTask::find($taskId);
+            $projectId = $task?->project_id;
+            $validated['project_id'] = $projectId;
+        }
+
         if ($user && !$user->isAdmin()) {
-            $projectId = $validated['project_id'] ?? null;
             if ($projectId) {
                 $isMember = \App\Models\Pms\PmsProjectMember::where('project_id', $projectId)
                     ->where('user_id', $user->id)
                     ->exists();
                 if (!$isMember) {
                     abort(403, 'Akses ditolak. Anda bukan anggota dari proyek ini.');
+                }
+            }
+
+            // WORKFLOW RULE: Tugas anggota tim lain bersifat Read-Only.
+            // Bukti pengerjaan / deliverable hanya dapat diunggah oleh penanggung jawab tugas terkait.
+            if ($taskId) {
+                $task = \App\Models\Pms\PmsTask::find($taskId);
+                if ($task && $task->assigned_to !== null && $task->assigned_to !== $user->id) {
+                    abort(403, 'Akses ditolak. Tugas milik anggota tim lain bersifat Read-Only dan bukti pengerjaan hanya dapat diunggah oleh penanggung jawab tugas.');
                 }
             }
         }
@@ -52,10 +68,15 @@ class PmsAttachmentController extends Controller
             'uploaded_by' => auth()->id(),
         ]);
 
+        $taskTitle = $attachment->task?->title;
+        $description = $taskTitle
+            ? "Mengunggah berkas bukti tugas #{$attachment->task_id} ({$taskTitle}): {$fileName}"
+            : "Mengunggah lampiran berkas proyek: {$fileName}";
+
         PmsActivityLog::log(
             action: 'created',
             entityType: 'attachment',
-            description: "Mengunggah lampiran berkas: {$fileName}",
+            description: $description,
             projectId: $attachment->project_id
         );
 

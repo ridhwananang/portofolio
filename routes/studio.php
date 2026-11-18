@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\ServiceManagementController;
 use App\Http\Controllers\Admin\TechStackController;
 use App\Http\Controllers\Studio\Pms\PmsActivityLogController;
 use App\Http\Controllers\Studio\Pms\PmsAttachmentController;
+use App\Http\Controllers\Studio\Pms\PmsClientPortalController;
 use App\Http\Controllers\Studio\Pms\PmsDashboardController;
 use App\Http\Controllers\Studio\Pms\PmsFinanceController;
 use App\Http\Controllers\Studio\Pms\PmsProjectController;
@@ -86,6 +87,11 @@ $registerPmsRoutes = function () {
         Route::resource('projects', PmsProjectController::class);
         Route::put('projects/{project}/detail', [PmsProjectController::class, 'updateDetail'])->name('projects.detail.update');
         Route::post('projects/import-order', [PmsProjectController::class, 'importFromOrder'])->name('projects.import-order');
+        Route::post('projects/{project}/portal/toggle', [PmsClientPortalController::class, 'toggle'])->name('projects.portal.toggle');
+        Route::post('projects/{project}/portal/regenerate', [PmsClientPortalController::class, 'regenerate'])->name('projects.portal.regenerate');
+        Route::put('projects/{project}/portal/settings', [PmsClientPortalController::class, 'updateSettings'])->name('projects.portal.settings');
+        Route::post('projects/{project}/portal/send-invite', [PmsClientPortalController::class, 'sendInvite'])->name('projects.portal.send-invite');
+        Route::post('projects/{project}/portal/send-report', [PmsClientPortalController::class, 'sendReport'])->name('projects.portal.send-report');
 
         // Sprints
         Route::resource('sprints', PmsSprintController::class)->only(['index', 'store', 'update', 'destroy']);

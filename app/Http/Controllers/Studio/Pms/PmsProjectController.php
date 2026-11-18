@@ -236,10 +236,11 @@ class PmsProjectController extends Controller
             'detail',
             'members.user',
             'sprints' => fn ($q) => $q->orderBy('start_date', 'asc'),
-            'sprints.tasks' => fn ($q) => $q->orderBy('order_index', 'asc')->with(['assignee', 'subtasks']),
+            'sprints.tasks' => fn ($q) => $q->orderBy('order_index', 'asc')->with(['assignee', 'subtasks', 'attachments']),
             'tasks' => fn ($q) => $q->orderBy('order_index', 'asc')->with(['assignee', 'sprint', 'subtasks', 'attachments']),
             'finances' => $isAdmin ? fn ($q) => $q->latest('transaction_date') : fn ($q) => $q->whereRaw('1 = 0'),
             'attachments.uploader',
+            'attachments.task',
             'activityLogs.user' => fn ($q) => $q->latest('created_at')->limit(20),
             'projectOrder',
         ]);
@@ -253,6 +254,7 @@ class PmsProjectController extends Controller
             'is_admin' => $isAdmin,
             'user_role_in_project' => $userRoleInProject,
             'current_user_id' => $user?->id,
+            'currentUserMembership' => $currentUserMembership ? $currentUserMembership->load('user') : null,
             'project' => $project,
             'availableUsers' => $availableUsers,
         ]);

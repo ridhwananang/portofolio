@@ -154,6 +154,12 @@ export interface PmsProject {
     name: string;
     code: string;
     client: string;
+    client_email?: string | null;
+    portal_token?: string | null;
+    portal_pin?: string | null;
+    is_portal_active?: boolean;
+    portal_last_accessed_at?: string | null;
+    portal_last_email_sent_at?: string | null;
     description?: string | null;
     budget: number | string;
     status: 'planning' | 'in_progress' | 'review' | 'completed' | 'on_hold';
@@ -190,7 +196,20 @@ export interface PmsStats {
     total_tasks: number;
     open_tasks: number;
     completed_tasks: number;
+    todo_tasks?: number;
+    in_progress_tasks?: number;
+    review_tasks?: number;
+    completion_rate?: number;
     active_sprints: number;
+    total_sprints?: number;
+}
+
+export interface PmsProjectHealthMember {
+    id: number;
+    user_id: number;
+    name: string;
+    avatar?: string | null;
+    role_in_project: string;
 }
 
 export interface PmsProjectHealth {
@@ -201,13 +220,56 @@ export interface PmsProjectHealth {
     status: string;
     priority: string;
     progress: number;
+    start_date?: string | null;
+    end_date?: string | null;
     active_sprints: number;
+    total_sprints?: number;
+    active_sprint_name?: string | null;
+    todo_tasks?: number;
+    in_progress_tasks?: number;
+    review_tasks?: number;
+    completed_tasks?: number;
     open_tasks: number;
     total_tasks: number;
     days_left: number | null;
+    members?: PmsProjectHealthMember[];
     budget: number;
     spent: number;
     burn_rate: number;
+}
+
+export interface PmsCockpitTask {
+    id: number;
+    title: string;
+    status: 'todo' | 'in_progress' | 'review' | 'done';
+    priority: 'low' | 'medium' | 'high' | 'urgent';
+    due_date?: string | null;
+    days_until_due?: number | null;
+    project_id: number;
+    project_name: string;
+    project_code: string;
+    sprint_name?: string | null;
+    assignee?: {
+        id: number;
+        name: string;
+        avatar?: string | null;
+    } | null;
+}
+
+export interface PmsCockpitSprint {
+    id: number;
+    project_id: number;
+    project_name: string;
+    project_code: string;
+    name: string;
+    goal?: string | null;
+    status: 'planned' | 'active' | 'completed';
+    start_date?: string | null;
+    end_date?: string | null;
+    days_left?: number | null;
+    tasks_count: number;
+    completed_tasks_count: number;
+    progress_percentage: number;
 }
 
 export interface PmsTimelineItem {

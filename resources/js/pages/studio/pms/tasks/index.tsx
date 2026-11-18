@@ -32,7 +32,9 @@ import {
     FolderKanban,
     Layers,
     ListTodo,
+    Lock,
     MoreHorizontal,
+    Pencil,
     Plus,
     Search,
     Trash2,
@@ -84,10 +86,25 @@ export default function TasksIndex({
         description: '',
         status: 'todo',
         priority: 'medium',
-        assigned_to: '' as string | number,
+        assigned_to: is_admin ? '' : (current_user_id ? String(current_user_id) : ''),
         due_date: '',
         estimated_hours: 0,
     });
+
+    const openCreateModal = (statusCol?: 'todo' | 'in_progress' | 'review' | 'done') => {
+        createForm.setData({
+            project_id: (projects[0]?.id ? String(projects[0].id) : '') as string | number,
+            sprint_id: '',
+            title: '',
+            description: '',
+            status: statusCol || 'todo',
+            priority: 'medium',
+            assigned_to: is_admin ? '' : (current_user_id ? String(current_user_id) : ''),
+            due_date: '',
+            estimated_hours: 0,
+        });
+        setIsCreateOpen(true);
+    };
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -174,8 +191,8 @@ export default function TasksIndex({
                     </div>
 
                     <Button
-                        onClick={() => setIsCreateOpen(true)}
-                        className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white rounded-xl shadow-lg shadow-violet-500/20 gap-2 h-10 px-4"
+                        onClick={() => openCreateModal('todo')}
+                        className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white rounded-xl shadow-lg shadow-violet-500/20 gap-2 h-10 px-4 cursor-pointer"
                     >
                         <Plus className="size-4" />
                         Tambah Tugas Baru
@@ -314,11 +331,8 @@ export default function TasksIndex({
                                     <Button
                                         size="icon"
                                         variant="ghost"
-                                        onClick={() => {
-                                            createForm.setData('status', col.id);
-                                            setIsCreateOpen(true);
-                                        }}
-                                        className="size-7 rounded-lg"
+                                        onClick={() => openCreateModal(col.id)}
+                                        className="size-7 rounded-lg cursor-pointer"
                                     >
                                         <Plus className="size-3.5" />
                                     </Button>
@@ -343,11 +357,15 @@ export default function TasksIndex({
                                                     </span>
 
                                                     <div className="flex items-center gap-1.5">
-                                                        {task.assigned_to === current_user_id && (
+                                                        {task.assigned_to === current_user_id ? (
                                                             <Badge className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold text-[8.5px] px-1.5 py-0.2 border-0 shadow-xs">
                                                                 Jobdesk Anda
                                                             </Badge>
-                                                        )}
+                                                        ) : !is_admin ? (
+                                                            <Badge variant="outline" className="text-[8.5px] border-slate-300 dark:border-slate-700 text-slate-500 gap-0.5 px-1.5 py-0.2 bg-slate-50 dark:bg-slate-800/50">
+                                                                <Lock className="size-2" /> Read Only
+                                                            </Badge>
+                                                        ) : null}
                                                         <Badge
                                                             className={`text-[9px] capitalize ${
                                                                 task.priority === 'urgent'
@@ -359,7 +377,7 @@ export default function TasksIndex({
                                                         >
                                                             {task.priority}
                                                         </Badge>
-                                                        {(is_admin || task.created_by === current_user_id) && (
+                                                        {(is_admin || task.assigned_to === current_user_id) && (
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setDeletingTask(task)}
@@ -412,21 +430,31 @@ export default function TasksIndex({
                                                         <span className="text-[10px] text-slate-400 italic">Unassigned</span>
                                                     )}
 
-                                                    {/* Move column quick dropdown */}
-                                                    <Select
-                                                        value={task.status}
-                                                        onValueChange={(val) => handleUpdateStatus(task.id, val)}
-                                                    >
-                                                        <SelectTrigger className="h-7 text-[10px] px-2 rounded-md font-semibold w-24">
-                                                            <SelectValue />
-                                                        </SelectTrigger>
-                                                        <SelectContent className="rounded-xl">
-                                                            <SelectItem value="todo">To Do</SelectItem>
-                                                            <SelectItem value="in_progress">In Progress</SelectItem>
-                                                            <SelectItem value="review">Review</SelectItem>
-                                                            <SelectItem value="done">Done</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
+                                                    {/* Move column quick dropdown or Read-Only indicator */}
+                                                    {is_admin || task.assigned_to === current_user_id ? (
+                                                        <Select
+                                                            value={task.status}
+                                                            onValueChange={(val) => handleUpdateStatus(task.id, val)}
+                                                        >
+                                                            <SelectTrigger className="h-7 text-[10px] px-2 rounded-md font-semibold w-24">
+                                                                <SelectValue />
+                                                            </SelectTrigger>
+                                                            <SelectContent className="rounded-xl">
+                                                                <SelectItem value="todo">To Do</SelectItem>
+                                                                <SelectItem value="in_progress">In Progress</SelectItem>
+                                                                <SelectItem value="review">Review</SelectItem>
+                                                                <SelectItem value="done">Done</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    ) : (
+                                                        <div 
+                                                            title="Tugas milik anggota tim lain bersifat Read-Only"
+                                                            className="h-7 text-[10px] px-2 rounded-md font-semibold bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700/60 flex items-center gap-1 cursor-not-allowed select-none"
+                                                        >
+                                                            <Lock className="size-2.5 text-slate-400" />
+                                                            <span className="capitalize">{task.status.replace('_', ' ')}</span>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         ))
@@ -530,22 +558,38 @@ export default function TasksIndex({
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-1">
                                     <Label className="text-xs font-semibold">Tugaskan Kepada</Label>
-                                    <Select
-                                        value={createForm.data.assigned_to ? String(createForm.data.assigned_to) : 'none'}
-                                        onValueChange={(val) => createForm.setData('assigned_to', val === 'none' ? '' : val)}
-                                    >
-                                        <SelectTrigger className="rounded-xl h-9 text-xs">
-                                            <SelectValue placeholder="Pilih Developer" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="none">Belum Ditugaskan</SelectItem>
-                                            {users.map((u) => (
-                                                <SelectItem key={u.id} value={String(u.id)}>
-                                                    {u.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    {is_admin ? (
+                                        <Select
+                                            value={createForm.data.assigned_to ? String(createForm.data.assigned_to) : 'none'}
+                                            onValueChange={(val) => createForm.setData('assigned_to', val === 'none' ? '' : val)}
+                                        >
+                                            <SelectTrigger className="rounded-xl h-9 text-xs">
+                                                <SelectValue placeholder="Pilih Developer" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="none">Belum Ditugaskan</SelectItem>
+                                                {users.map((u) => (
+                                                    <SelectItem key={u.id} value={String(u.id)}>
+                                                        {u.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    ) : (
+                                        <div className="p-2 rounded-xl bg-violet-50/70 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-800/60 flex items-center justify-between gap-2 h-9">
+                                            <div className="flex items-center gap-1.5 min-w-0">
+                                                <div className="size-5 rounded-full bg-violet-600 text-white text-[9px] flex items-center justify-center font-bold shrink-0">
+                                                    {users.find(u => u.id === current_user_id)?.name.charAt(0) || 'U'}
+                                                </div>
+                                                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
+                                                    {users.find(u => u.id === current_user_id)?.name || 'Anda Sendiri'}
+                                                </span>
+                                            </div>
+                                            <span className="inline-flex items-center gap-1 text-[8.5px] font-bold text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-900/60 px-1.5 py-0.5 rounded shrink-0">
+                                                <Lock className="size-2" /> Terkunci
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="space-y-1">

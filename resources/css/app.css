@@ -421,8 +421,20 @@ html.dark * {
     }
 
     #print-invoice-sheet,
-    #print-invoice-sheet * {
+    #print-invoice-sheet *,
+    #portal-print-sheet,
+    #portal-print-sheet * {
         visibility: visible !important;
+    }
+
+    #portal-print-sheet {
+        position: relative !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        color: #0f172a !important;
     }
 
     #print-invoice-sheet {

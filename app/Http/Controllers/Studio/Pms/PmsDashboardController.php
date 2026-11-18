@@ -3,11 +3,12 @@
 namespace App\Http\Controllers\Studio\Pms;
 
 use App\Http\Controllers\Controller;
-use App\Models\Pms\PmsActivityLog;
 use App\Models\Pms\PmsFinance;
 use App\Models\Pms\PmsProject;
+use App\Models\Pms\PmsProjectMember;
 use App\Models\Pms\PmsSprint;
 use App\Models\Pms\PmsTask;
+use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -41,26 +42,24 @@ class PmsDashboardController extends Controller
         $totalExpenses = $isAdmin ? (float) PmsFinance::whereIn('type', ['project_expense', 'general_expense'])->sum('amount') : 0;
         $remainingBudget = max(0, $totalBudget - $totalExpenses);
 
-        // Tasks Scoping:
-        if ($isAdmin) {
-            $totalTasks = PmsTask::count();
-            $openTasks = PmsTask::whereIn('status', ['todo', 'in_progress', 'review'])->count();
-            $completedTasks = PmsTask::where('status', 'done')->count();
-            $activeSprints = PmsSprint::where('status', 'active')->count();
-        } else {
-            // For member: focus on their assigned jobdesk tasks
-            $totalTasks = $user ? PmsTask::where('assigned_to', $user->id)->count() : 0;
-            $openTasks = $user ? PmsTask::where('assigned_to', $user->id)->whereIn('status', ['todo', 'in_progress', 'review'])->count() : 0;
-            $completedTasks = $user ? PmsTask::where('assigned_to', $user->id)->where('status', 'done')->count() : 0;
-            $activeSprints = PmsSprint::whereIn('project_id', $projectIds)->where('status', 'active')->count();
-        }
+        // Tasks & Sprints Scoping:
+        $taskBaseQuery = PmsTask::query()->when(! $isAdmin, fn ($q) => $q->whereIn('project_id', $projectIds));
+        $totalTasks = (clone $taskBaseQuery)->count();
+        $todoTasks = (clone $taskBaseQuery)->where('status', 'todo')->count();
+        $inProgressTasks = (clone $taskBaseQuery)->where('status', 'in_progress')->count();
+        $reviewTasks = (clone $taskBaseQuery)->where('status', 'review')->count();
+        $completedTasks = (clone $taskBaseQuery)->where('status', 'done')->count();
+        $openTasks = $todoTasks + $inProgressTasks + $reviewTasks;
+        $completionRate = $totalTasks > 0 ? (int) round(($completedTasks / $totalTasks) * 100) : 0;
+
+        $sprintBaseQuery = PmsSprint::query()->when(! $isAdmin, fn ($q) => $q->whereIn('project_id', $projectIds));
+        $activeSprintsCount = (clone $sprintBaseQuery)->where('status', 'active')->count();
+        $totalSprintsCount = (clone $sprintBaseQuery)->count();
 
         // 3. Project Health Array
         $projectHealth = $projects->map(function (PmsProject $project) use ($isAdmin) {
-            $daysLeft = null;
-            if ($project->end_date) {
-                $daysLeft = now()->diffInDays($project->end_date, false);
-            }
+            $daysLeft = $project->end_date ? $this->calculateDaysLeft($project->end_date) : null;
+            $activeSprint = $project->sprints->where('status', 'active')->first();
 
             return [
                 'id' => $project->id,
@@ -70,10 +69,29 @@ class PmsDashboardController extends Controller
                 'status' => $project->status,
                 'priority' => $project->priority,
                 'progress' => $project->progress_percentage,
+                'start_date' => $project->start_date?->format('Y-m-d'),
+                'end_date' => $project->end_date?->format('Y-m-d'),
                 'active_sprints' => $project->sprints->where('status', 'active')->count(),
+                'total_sprints' => $project->sprints->count(),
+                'active_sprint_name' => $activeSprint?->name,
+                'todo_tasks' => $project->tasks->where('status', 'todo')->count(),
+                'in_progress_tasks' => $project->tasks->where('status', 'in_progress')->count(),
+                'review_tasks' => $project->tasks->where('status', 'review')->count(),
+                'completed_tasks' => $project->tasks->where('status', 'done')->count(),
                 'open_tasks' => $project->tasks->whereIn('status', ['todo', 'in_progress', 'review'])->count(),
                 'total_tasks' => $project->tasks->count(),
                 'days_left' => $daysLeft,
+                'members' => $project->members
+                    ->take(5)
+                    ->map(fn (PmsProjectMember $member) => [
+                        'id' => $member->id,
+                        'user_id' => $member->user_id,
+                        'name' => $member->user?->name ?? 'Anggota Tim',
+                        'avatar' => $member->user?->avatar,
+                        'role_in_project' => $member->role_in_project,
+                    ])
+                    ->values()
+                    ->all(),
                 'budget' => $isAdmin ? (float) $project->budget : 0,
                 'spent' => $isAdmin ? $project->total_expense : 0,
                 'burn_rate' => $isAdmin ? $project->budget_burn_rate : 0,
@@ -108,38 +126,52 @@ class PmsDashboardController extends Controller
                 ];
             });
 
-        // 5. Upcoming Deadlines
-        $deadlinesQuery = PmsTask::with(['project', 'assignee'])
+        // 5. Upcoming Deadlines (Next 14 Days + up to 7 Days Overdue)
+        $deadlinesQuery = PmsTask::with(['project', 'sprint', 'assignee'])
             ->where('status', '!=', 'done')
             ->whereNotNull('due_date')
-            ->whereBetween('due_date', [now()->subDays(1), now()->addDays(14)]);
-        if (! $isAdmin && $user) {
-            $deadlinesQuery->where('assigned_to', $user->id);
-        }
+            ->whereBetween('due_date', [now()->copy()->subDays(7)->startOfDay(), now()->copy()->addDays(14)->endOfDay()])
+            ->when(! $isAdmin, fn ($q) => $q->whereIn('project_id', $projectIds));
+
         $upcomingDeadlines = $deadlinesQuery->orderBy('due_date', 'asc')
-            ->limit(8)
+            ->limit(10)
             ->get()
-            ->map(function (PmsTask $task) {
+            ->map(fn (PmsTask $task) => $this->formatCockpitTask($task));
+
+        // 6. Actionable Tasks for Interactive Cockpit Radar
+        $actionableTasks = PmsTask::with(['project', 'sprint', 'assignee'])
+            ->when(! $isAdmin, fn ($q) => $q->whereIn('project_id', $projectIds))
+            ->where('status', '!=', 'done')
+            ->orderByRaw("CASE WHEN status = 'in_progress' THEN 1 WHEN status = 'review' THEN 2 WHEN status = 'todo' THEN 3 ELSE 4 END")
+            ->orderByRaw('CASE WHEN due_date IS NULL THEN 1 ELSE 0 END, due_date ASC')
+            ->limit(15)
+            ->get()
+            ->map(fn (PmsTask $task) => $this->formatCockpitTask($task));
+
+        // 7. Active & Planned Sprints Spotlight
+        $activeSprints = PmsSprint::with(['project'])
+            ->when(! $isAdmin, fn ($q) => $q->whereIn('project_id', $projectIds))
+            ->orderByRaw("CASE WHEN status = 'active' THEN 1 WHEN status = 'planned' THEN 2 ELSE 3 END")
+            ->latest('start_date')
+            ->limit(6)
+            ->get()
+            ->map(function (PmsSprint $sprint) {
                 return [
-                    'id' => $task->id,
-                    'title' => $task->title,
-                    'project_name' => $task->project->name ?? '-',
-                    'due_date' => $task->due_date?->format('Y-m-d'),
-                    'priority' => $task->priority,
-                    'status' => $task->status,
-                    'assignee' => $task->assignee ? [
-                        'name' => $task->assignee->name,
-                        'avatar' => $task->assignee->avatar,
-                    ] : null,
+                    'id' => $sprint->id,
+                    'project_id' => $sprint->project_id,
+                    'project_name' => $sprint->project->name ?? '-',
+                    'project_code' => $sprint->project->code ?? '',
+                    'name' => $sprint->name,
+                    'goal' => $sprint->goal,
+                    'status' => $sprint->status,
+                    'start_date' => $sprint->start_date?->format('Y-m-d'),
+                    'end_date' => $sprint->end_date?->format('Y-m-d'),
+                    'days_left' => $sprint->end_date ? $this->calculateDaysLeft($sprint->end_date) : null,
+                    'tasks_count' => $sprint->tasks_count,
+                    'completed_tasks_count' => $sprint->completed_tasks_count,
+                    'progress_percentage' => $sprint->progress_percentage,
                 ];
             });
-
-        // 6. Recent Activity Logs
-        $logsQuery = PmsActivityLog::with(['user', 'project']);
-        if (! $isAdmin) {
-            $logsQuery->whereIn('project_id', $projectIds);
-        }
-        $recentLogs = $logsQuery->latest('created_at')->limit(10)->get();
 
         return Inertia::render('studio/pms/dashboard', [
             'is_admin' => $isAdmin,
@@ -154,13 +186,51 @@ class PmsDashboardController extends Controller
                 'total_tasks' => $totalTasks,
                 'open_tasks' => $openTasks,
                 'completed_tasks' => $completedTasks,
-                'active_sprints' => $activeSprints,
+                'todo_tasks' => $todoTasks,
+                'in_progress_tasks' => $inProgressTasks,
+                'review_tasks' => $reviewTasks,
+                'completion_rate' => $completionRate,
+                'active_sprints' => $activeSprintsCount,
+                'total_sprints' => $totalSprintsCount,
             ],
             'projectHealth' => $projectHealth,
             'timelineTasks' => $timelineTasks,
             'upcomingDeadlines' => $upcomingDeadlines,
-            'recentLogs' => $recentLogs,
+            'actionableTasks' => $actionableTasks,
+            'activeSprints' => $activeSprints,
             'projects' => $projects,
         ]);
+    }
+
+    /**
+     * Calculate whole calendar days remaining relative to today.
+     */
+    private function calculateDaysLeft(CarbonInterface $targetDate): int
+    {
+        return (int) round(now()->startOfDay()->diffInDays($targetDate->copy()->startOfDay(), false));
+    }
+
+    /**
+     * Format a task record for the interactive Cockpit task radar.
+     */
+    private function formatCockpitTask(PmsTask $task): array
+    {
+        return [
+            'id' => $task->id,
+            'title' => $task->title,
+            'status' => $task->status,
+            'priority' => $task->priority,
+            'due_date' => $task->due_date?->format('Y-m-d'),
+            'days_until_due' => $task->due_date ? $this->calculateDaysLeft($task->due_date) : null,
+            'project_id' => $task->project_id,
+            'project_name' => $task->project->name ?? '-',
+            'project_code' => $task->project->code ?? '',
+            'sprint_name' => $task->sprint?->name,
+            'assignee' => $task->assignee ? [
+                'id' => $task->assignee->id,
+                'name' => $task->assignee->name,
+                'avatar' => $task->assignee->avatar,
+            ] : null,
+        ];
     }
 }

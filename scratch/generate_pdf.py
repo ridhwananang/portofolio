@@ -6,48 +6,63 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
 def generate_pdf():
     pdf_path = r"c:\Users\An\Herd\portofolio\public\images\Profile.pdf"
-    
-    # Page setup - A4 size
-    # Width: 595.27, Height: 841.89
+    os.makedirs(os.path.dirname(pdf_path), exist_ok=True)
+
+    # Page setup - A4 size (595.2756 x 841.8898 pt)
+    # Note: ReportLab SimpleDocTemplate Frame adds 6pt leftPadding and 6pt rightPadding by default.
+    margin_x = 36
+    margin_top = 24
+    margin_bottom = 22
+    content_width = A4[0] - (margin_x * 2) - 12  # Exact usable frame width (511.2756 pt -> x=42.0 to x=553.3)
+
     doc = SimpleDocTemplate(
         pdf_path,
         pagesize=A4,
-        leftMargin=36,
-        rightMargin=36,
-        topMargin=24,
-        bottomMargin=24
+        leftMargin=margin_x,
+        rightMargin=margin_x,
+        topMargin=margin_top,
+        bottomMargin=margin_bottom,
+        title="Ridhwan Anang Ma'ruf - Full Stack Developer Resume",
+        author="Ridhwan Anang Ma'ruf",
+        subject="Full Stack Software Engineer Curriculum Vitae (ATS Optimized)",
+        keywords=(
+            "Full Stack Developer, Software Engineer, Laravel, PHP, React.js, TypeScript, "
+            "JavaScript, Node.js, Python, FastAPI, PostgreSQL, MongoDB, MySQL, Redis, "
+            "RabbitMQ, AWS S3, Cloudflare R2, RESTful API, Clean Architecture"
+        ),
+        creator="Ridhwan Anang Ma'ruf"
     )
 
     styles = getSampleStyleSheet()
 
-    # Custom styles
+    # Typography Styles (Standard ATS-Safe Helvetica Type1 Family)
     name_style = ParagraphStyle(
         'NameStyle',
         parent=styles['Normal'],
         fontName='Helvetica-Bold',
-        fontSize=18,
-        leading=22,
-        alignment=1, # Center
+        fontSize=17.5,
+        leading=21,
+        alignment=1,  # Center
         textColor=colors.HexColor('#0F172A')
     )
 
-    sub_style = ParagraphStyle(
-        'SubStyle',
+    role_style = ParagraphStyle(
+        'RoleStyle',
         parent=styles['Normal'],
         fontName='Helvetica-Bold',
         fontSize=10,
         leading=13,
-        alignment=1, # Center
-        textColor=colors.HexColor('#4F46E5')
+        alignment=1,  # Center
+        textColor=colors.HexColor('#3730A3')
     )
 
     contact_style = ParagraphStyle(
         'ContactStyle',
         parent=styles['Normal'],
         fontName='Helvetica',
-        fontSize=8,
-        leading=11,
-        alignment=1, # Center
+        fontSize=8.3,
+        leading=11.5,
+        alignment=1,  # Center
         textColor=colors.HexColor('#334155')
     )
 
@@ -55,8 +70,8 @@ def generate_pdf():
         'HeadingStyle',
         parent=styles['Normal'],
         fontName='Helvetica-Bold',
-        fontSize=9.5,
-        leading=11,
+        fontSize=9.3,
+        leading=11.5,
         textColor=colors.HexColor('#0F172A')
     )
 
@@ -64,218 +79,215 @@ def generate_pdf():
         'BodyStyle',
         parent=styles['Normal'],
         fontName='Helvetica',
-        fontSize=8.5,
-        leading=12,
-        textColor=colors.HexColor('#334155')
+        fontSize=8.4,
+        leading=11.6,
+        textColor=colors.HexColor('#1E293B')
     )
 
-    job_title_style = ParagraphStyle(
-        'JobTitleStyle',
-        parent=styles['Normal'],
-        fontName='Helvetica-Bold',
-        fontSize=9,
-        leading=12,
-        textColor=colors.HexColor('#0F172A')
-    )
-
-    job_desc_style = ParagraphStyle(
-        'JobDescStyle',
+    skill_style = ParagraphStyle(
+        'SkillStyle',
         parent=styles['Normal'],
         fontName='Helvetica',
-        fontSize=8.5,
-        leading=11.5,
-        leftIndent=12,
-        firstLineIndent=-8,
-        textColor=colors.HexColor('#334155')
+        fontSize=8.3,
+        leading=11.3,
+        textColor=colors.HexColor('#1E293B')
     )
 
-    edu_title_style = ParagraphStyle(
-        'EduTitleStyle',
+    entry_title_style = ParagraphStyle(
+        'EntryTitleStyle',
         parent=styles['Normal'],
         fontName='Helvetica-Bold',
-        fontSize=9,
-        leading=12,
+        fontSize=8.8,
+        leading=11.5,
         textColor=colors.HexColor('#0F172A')
     )
 
-    edu_sub_style = ParagraphStyle(
-        'EduSubStyle',
+    entry_date_style = ParagraphStyle(
+        'EntryDateStyle',
         parent=styles['Normal'],
         fontName='Helvetica-Oblique',
-        fontSize=8.5,
-        leading=11,
+        fontSize=8.3,
+        leading=11.5,
+        alignment=2,  # Right
         textColor=colors.HexColor('#475569')
+    )
+
+    entry_sub_style = ParagraphStyle(
+        'EntrySubStyle',
+        parent=styles['Normal'],
+        fontName='Helvetica-Oblique',
+        fontSize=8.2,
+        leading=10.8,
+        textColor=colors.HexColor('#475569')
+    )
+
+    bullet_style = ParagraphStyle(
+        'BulletStyle',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=8.3,
+        leading=11.2,
+        leftIndent=10,
+        firstLineIndent=-7,
+        textColor=colors.HexColor('#1E293B')
     )
 
     story = []
 
-    # Title section
+    # ==================== HEADER ====================
     story.append(Paragraph("RIDHWAN ANANG MA'RUF", name_style))
-    story.append(Spacer(1, 2))
-    story.append(Paragraph("Full Stack Developer", sub_style))
-    story.append(Spacer(1, 2))
-    
-    contact_text = (
-        "Tangerang Selatan, Indonesia &bull; +62 812-9850-2177 &bull; "
-        "<a href='mailto:ridhwananang@gmail.com'>ridhwananang@gmail.com</a> &bull; "
-        "<a href='https://ridhwananang.id/'>https://ridhwananang.id/</a> &bull; "
-        "<a href='https://github.com/ridhwananang'>github.com/ridhwananang</a> &bull; "
-        "<a href='https://linkedin.com/in/ridhwan-anang-ma-ruf/'>linkedin.com/in/ridhwan-anang-ma-ruf/</a>"
-    )
-    story.append(Paragraph(contact_text, contact_style))
-    story.append(Spacer(1, 6))
+    story.append(Spacer(1, 1.5))
+    story.append(Paragraph("Full Stack Developer", role_style))
+    story.append(Spacer(1, 2.5))
 
-    # Helper function for section headings with a bottom border line
+    contact_line_1 = (
+        "Tangerang Selatan, Indonesia &bull; +62 812-9850-2177 &bull; "
+        "<a href='mailto:ridhwananang@gmail.com'>ridhwananang@gmail.com</a>"
+    )
+    contact_line_2 = (
+        "<a href='https://ridhwananang.id'>ridhwananang.id</a> &bull; "
+        "<a href='https://github.com/ridhwananang'>github.com/ridhwananang</a> &bull; "
+        "<a href='https://www.linkedin.com/in/ridhwan-anang-ma-ruf/'>linkedin.com/in/ridhwan-anang-ma-ruf</a>"
+    )
+    story.append(Paragraph(contact_line_1, contact_style))
+    story.append(Paragraph(contact_line_2, contact_style))
+    story.append(Spacer(1, 5))
+
+    # Helper for Section Headings (100% aligned to content_width)
     def add_section_heading(title_text):
         p = Paragraph(title_text, heading_style)
-        t = Table([[p]], colWidths=[A4[0] - 72])
+        t = Table([[p]], colWidths=[content_width])
         t.setStyle(TableStyle([
-            ('LINEBELOW', (0,0), (-1,-1), 0.75, colors.HexColor('#CBD5E1')), # Slate-300 line
-            ('BOTTOMPADDING', (0,0), (-1,-1), 1),
-            ('TOPPADDING', (0,0), (-1,-1), 2),
-            ('LEFTPADDING', (0,0), (-1,-1), 0),
-            ('RIGHTPADDING', (0,0), (-1,-1), 0),
+            ('LINEBELOW', (0, 0), (-1, -1), 0.75, colors.HexColor('#CBD5E1')),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 1.5),
+            ('TOPPADDING', (0, 0), (-1, -1), 2),
+            ('LEFTPADDING', (0, 0), (-1, -1), 0),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 0),
         ]))
         story.append(t)
+        story.append(Spacer(1, 3.5))
+
+    # Helper for Entry Header Row (Title on left, Date on right, zero margin overhang)
+    def add_entry_header(title_html, date_text, subtitle_text=None):
+        date_col_width = 115
+        title_col_width = content_width - date_col_width
+        p_title = Paragraph(title_html, entry_title_style)
+        p_date = Paragraph(date_text, entry_date_style)
+        t = Table([[p_title, p_date]], colWidths=[title_col_width, date_col_width])
+        t.setStyle(TableStyle([
+            ('VALIGN', (0, 0), (-1, -1), 'BOTTOM'),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 0.5),
+            ('TOPPADDING', (0, 0), (-1, -1), 0.5),
+            ('LEFTPADDING', (0, 0), (-1, -1), 0),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+        ]))
+        story.append(t)
+        if subtitle_text:
+            story.append(Spacer(1, 1))
+            story.append(Paragraph(subtitle_text, entry_sub_style))
+        story.append(Spacer(1, 1.5))
+
+    def add_bullets(bullets):
+        for b in bullets:
+            story.append(Paragraph(f"&bull; {b}", bullet_style))
         story.append(Spacer(1, 4))
 
-    # 1. Summary
-    add_section_heading("SUMMARY")
+    # ==================== 1. PROFESSIONAL SUMMARY ====================
+    add_section_heading("PROFESSIONAL SUMMARY")
     summary_text = (
-        "Dedicated Full Stack Developer focused on engineering reliable, "
-        "scalable, and secure end-to-end software applications. Experienced in developing backend "
-        "architectures using Laravel, designing secure RESTful APIs, and integrating interactive modern "
-        "frontends with React and TypeScript. Skilled in database optimization (PostgreSQL, MySQL, MongoDB) "
-        "and implementing organized DevOps workflows to deploy production-ready applications in real-scale environments."
+        "Results-driven Full Stack Developer with end-to-end experience engineering scalable, production-ready web applications "
+        "from concept to deployment. Proficient in designing robust backend architectures using Laravel, Node.js, and Python (FastAPI), "
+        "alongside responsive single-page interfaces with React.js and TypeScript, backed by relational and NoSQL databases "
+        "(PostgreSQL, MySQL, MongoDB). Adept at applying Clean Architecture principles, asynchronous queue pipelines, cloud object "
+        "storage (AWS S3, Cloudflare R2), and WebAuthn biometric authentication to deliver high-reliability software systems."
     )
     story.append(Paragraph(summary_text, body_style))
-    story.append(Spacer(1, 6))
+    story.append(Spacer(1, 5))
 
-    # 2. Professional Experience
-    add_section_heading("PROFESSIONAL EXPERIENCE")
+    # ==================== 2. WORK EXPERIENCE ====================
+    add_section_heading("WORK EXPERIENCE")
 
-    def add_job(title, date, bullets):
-        if date:
-            p_title = Paragraph(title, job_title_style)
-            p_date = Paragraph(date, ParagraphStyle('JobDate', parent=styles['Normal'], fontName='Helvetica-Oblique', fontSize=8.5, alignment=2, textColor=colors.HexColor('#475569')))
-            t = Table([[p_title, p_date]], colWidths=[A4[0] - 72 - 150, 150])
-            t.setStyle(TableStyle([
-                ('VALIGN', (0,0), (-1,-1), 'BOTTOM'),
-                ('BOTTOMPADDING', (0,0), (-1,-1), 1),
-                ('TOPPADDING', (0,0), (-1,-1), 1),
-                ('LEFTPADDING', (0,0), (-1,-1), 0),
-                ('RIGHTPADDING', (0,0), (-1,-1), 0),
-            ]))
-            story.append(t)
-        else:
-            p_title = Paragraph(title, job_title_style)
-            story.append(p_title)
-        story.append(Spacer(1, 2))
-        for bullet in bullets:
-            story.append(Paragraph(f"&bull; {bullet}", job_desc_style))
-        story.append(Spacer(1, 4))
-
-    # Job 1
-    add_job(
-        "Full Stack Developer &ndash; SkillVentura (RPG Gamified LMS)",
-        "",
-        [
-            "Engineered a gamified Learning Management System (LMS) with RPG elements, boosting student engagement metrics by 25%.",
-            "Structured database systems using MongoDB and integrated 15+ secure RESTful APIs via Inertia.js.",
-            "Deployed 4 core interactive features (character selection, leveling, XP, and certification), increasing student course completion rates by 15%."
-        ]
+    # Job 1 (Most recent completion: Jun 2026)
+    add_entry_header(
+        "Full Stack Developer &ndash; SiPresens (Integrated School Attendance &amp; Academic System)",
+        "Apr 2026 &ndash; Jun 2026"
     )
+    add_bullets([
+        "Engineered an end-to-end academic attendance ecosystem serving 100+ active daily users across 4 role-based portals (Admin, Teachers, Parents, and Students) with 100% access control compliance.",
+        "Built an asynchronous WhatsApp notification pipeline via Laravel Queue Jobs, dispatching real-time attendance alerts and absence reports directly to parents within seconds.",
+        "Integrated Cloudflare R2 object storage for medical leave documentation and deployed passwordless biometric authentication using WebAuthn Passkeys.",
+        "Automated a multi-format reporting engine delivering streaming CSV/Excel exports and print-ready PDF summaries, reducing administrative processing time by 50%."
+    ])
 
-    # Job 2
-    add_job(
-        "Full Stack Developer &ndash; SIPresensi (Attendance Management System)",
-        "",
-        [
-            "Created a real-time employee and school attendance system, reducing monthly reporting processing time by 50% via automated generation.",
-            "Programmed backend services with Laravel and PostgreSQL, combined with a React frontend supporting 100+ active daily users.",
-            "Implemented granular user role management and 12+ secure API endpoints, guaranteeing 100% data access compliance."
-        ]
+    # Job 2 (Nov 2025 - May 2026)
+    add_entry_header(
+        "Full Stack Developer &ndash; SkillVentura (RPG Gamified LMS &amp; P2P Quest Marketplace)",
+        "Nov 2025 &ndash; May 2026"
     )
+    add_bullets([
+        "Designed and developed a gamified Learning Management System (LMS) and P2P Quest Marketplace using Laravel, React.js, and TypeScript, boosting student course completion rates by 15%.",
+        "Orchestrated core marketplace workflows from scratch, including P2P freelance bidding, escrow down-payment validation, multi-stage revision cycles, and an automated dispute arbitration engine.",
+        "Modeled scalable NoSQL data schemas in MongoDB to manage stateful user progression, dynamic character leveling, and real-time XP calculation, increasing student engagement metrics by 25%.",
+        "Delivered an automated digital credential pipeline utilizing DomPDF, dynamic canvas signatures, and direct AWS S3 storage with unique cryptographic verification IDs."
+    ])
 
-    # Job 3
-    add_job(
-        "Full Stack Developer &ndash; NutriVision (AI-Powered Nutrition Assistant)",
-        "",
-        [
-            "Collaborated in a 4-member development team to build an AI-powered instant nutrition analysis and calorie detection application.",
-            "Architected backend services using Laravel and PostgreSQL, optimizing AI model API response times to under 500ms.",
-            "Designed 8+ responsive dashboard interfaces using React and TypeScript, enhancing mobile layout usability score by 40%."
-        ]
+    # ==================== 3. FEATURED TECHNICAL PROJECTS ====================
+    add_section_heading("FEATURED TECHNICAL PROJECTS")
+
+    add_entry_header(
+        "Full Stack Developer &amp; System Architect &ndash; NutriVision (AI Dietary &amp; Nutrition Platform)",
+        "Jan 2026 &ndash; Jun 2026",
+        "DBS Foundation Coding Camp &ndash; Capstone Project (4-Member Team &bull; Cohort ID: CC26-PSU071)"
     )
+    add_bullets([
+        "Developed a full-stack AI dietary intelligence platform in a 4-person agile team, synchronizing client interfaces, relational database schemas, and external AI inference services.",
+        "Implemented Clean Architecture using the Repository Pattern with dynamic driver binding to decouple core business logic from Supabase PostgreSQL data persistence.",
+        "Streamlined a multi-modal AI integration pipeline combining Python FastAPI Computer Vision microservices for meal detection with Groq LLaMA 3.3 LLMs, achieving sub-500ms API response times.",
+        "Crafted 8+ responsive React.js and TypeScript dashboard interfaces featuring real-time camera streaming via browser MediaDevices, dynamic macro tracking, and an interactive AI chatbot, improving mobile usability scores by 40%."
+    ])
 
-    # Job 4
-    add_job(
-        "Full Stack Developer &ndash; MTs Baitis Salmah Academic Portal",
-        "",
-        [
-            "Delivered an integrated academic information portal and official news CMS serving 300+ students and staff.",
-            "Built automated grading modules, reducing teachers' report card preparation time by 30%.",
-            "Utilized Laravel, MySQL, React, and TypeScript to sustain 99.9% system uptime and operational stability for administrative workflows."
-        ]
-    )
-    story.append(Spacer(1, 2))
-
-    # 3. Skills
+    # ==================== 4. SKILLS ====================
     add_section_heading("SKILLS")
     skills_data = [
-        ("Programming Languages", "JavaScript, TypeScript, PHP, SQL, HTML5, CSS3, Python"),
-        ("Frameworks & Libraries", "Laravel, React.js, Tailwind CSS, Inertia.js, FastAPI, Bootstrap"),
-        ("Databases", "PostgreSQL, MongoDB, MySQL, SQLite, Relational Database Design"),
-        ("Tools & DevOps", "Git, GitHub, RESTful API, Postman, DevOps Workflow, Clean Architecture"),
-        ("Soft Skills", "Problem Solving, Team Collaboration, Analytical Thinking, Adaptability")
+        ("Programming Languages", "JavaScript (ES6+), TypeScript, PHP, Python, SQL, HTML5, CSS3"),
+        ("Frameworks &amp; Libraries", "Laravel, React.js, Node.js (Hapi/Express), FastAPI, Inertia.js, Tailwind CSS, Bootstrap"),
+        ("Databases &amp; Cloud Storage", "PostgreSQL (Supabase), MySQL, MongoDB, Redis, SQLite, AWS (S3, EC2, RDS, IAM), Cloudflare R2"),
+        ("Tools &amp; Architecture", "Git, GitHub, RESTful API Design, RabbitMQ, Queue Jobs, WebAuthn Passkeys, Postman, Clean Architecture"),
+        ("Soft Skills", "Critical Thinking, Analytical Problem Solving, Structured Execution, End-to-End Ownership, Team Collaboration")
     ]
     for label, items in skills_data:
-        p = Paragraph(f"<b>{label}:</b> {items}", body_style)
-        story.append(p)
-        story.append(Spacer(1, 1))
-    story.append(Spacer(1, 4))
+        story.append(Paragraph(f"<b>{label}:</b> {items}", skill_style))
+        story.append(Spacer(1, 1.5))
+    story.append(Spacer(1, 4.5))
 
-    # 4. Certifications
+    # ==================== 5. CERTIFICATIONS ====================
     add_section_heading("CERTIFICATIONS")
-    cert_text = (
-        "<b>Dicoding Indonesia & DBS Foundation:</b> "
-        "Coding Camp 2026 powered by DBS Foundation &ndash; Full-Stack Web Developer"
-    )
-    story.append(Paragraph(cert_text, body_style))
-    story.append(Spacer(1, 6))
 
-    # 5. Education
+    add_entry_header(
+        "Coding Camp 2026 Powered by DBS Foundation &ndash; Full-Stack Web Developer",
+        "Issued Jul 2026",
+        "Dicoding Indonesia &amp; DBS Foundation &bull; Credential ID: CC26/GRAD/XXVI-07/CFCC288D6Y1198 (943 Learning Hours)"
+    )
+    story.append(Spacer(1, 2.5))
+
+    add_entry_header(
+        "Back-End Development, React, Cloud Computing &amp; AI Specializations",
+        "2024 &ndash; 2026",
+        "Dicoding Indonesia &amp; AWS &bull; Back-End JS (L4PQ9L2Q4PO1), React Web Apps (KEXLQW78YPG2), AWS Cloud &amp; Gen AI (L4PQ9MY0OPO1), SQL (6RPN1JQO8X2M), JavaScript ES6+ (JLX1VD7NNZ72), AI Fundamentals (QLZ97EME9P5D)"
+    )
+    story.append(Spacer(1, 4.5))
+
+    # ==================== 6. EDUCATION ====================
     add_section_heading("EDUCATION")
 
-    def add_edu(school, date, degree):
-        p_school = Paragraph(school, edu_title_style)
-        p_date = Paragraph(date, ParagraphStyle('EduDate', parent=styles['Normal'], fontName='Helvetica-Oblique', fontSize=8.5, alignment=2, textColor=colors.HexColor('#475569')))
-        t = Table([[p_school, p_date]], colWidths=[A4[0] - 72 - 150, 150])
-        t.setStyle(TableStyle([
-            ('VALIGN', (0,0), (-1,-1), 'BOTTOM'),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 1),
-            ('TOPPADDING', (0,0), (-1,-1), 1),
-            ('LEFTPADDING', (0,0), (-1,-1), 0),
-            ('RIGHTPADDING', (0,0), (-1,-1), 0),
-        ]))
-        story.append(t)
-        story.append(Spacer(1, 1))
-        story.append(Paragraph(degree, edu_sub_style))
-        story.append(Spacer(1, 4))
-
-    add_edu(
-        "Coding Camp 2026 - Powered by DBS Foundation",
-        "February 2026 - July 2026",
-        "Full-Stack Web Developer"
-    )
-    add_edu(
-        "Universitas Pamulang",
-        "March 2024 &ndash; Present",
-        "B.S. in Informatics Engineering &ndash; Software Engineering Focus"
+    add_entry_header(
+        "Universitas Pamulang &ndash; B.S. in Informatics Engineering (Software Engineering Focus)",
+        "Mar 2024 &ndash; Present",
+        "Expected Graduation: 2028 &bull; Tangerang Selatan, Indonesia &bull; Coursework: Software Engineering, Data Structures, Relational Databases"
     )
 
     doc.build(story)
-    print(f"Successfully generated PDF at: {pdf_path}")
+    print(f"Successfully generated ATS-optimized PDF at: {pdf_path}")
 
 if __name__ == "__main__":
     generate_pdf()

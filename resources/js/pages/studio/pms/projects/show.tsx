@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,13 +52,17 @@ import {
     DollarSign,
     Download,
     ExternalLink,
+    Eye,
     FileText,
     FileUp,
     FolderKanban,
     GitBranch,
     Globe,
+    KeyRound,
     Layers,
     ListTodo,
+    Lock,
+    Mail,
     MoreVertical,
     Paperclip,
     Pencil,
@@ -68,8 +72,11 @@ import {
     Plus,
     Printer,
     Receipt,
+    RefreshCw,
+    Send,
     Share2,
     Shield,
+    ShieldCheck,
     Sparkles,
     Tag,
     Target,
@@ -92,6 +99,7 @@ interface Props {
     is_admin?: boolean;
     user_role_in_project?: string | null;
     current_user_id?: number;
+    currentUserMembership?: PmsProjectMember | null;
 }
 
 const DYNAMIC_ROLE_PRESETS = [
@@ -142,11 +150,16 @@ export default function ProjectShow({
     is_admin = true,
     user_role_in_project = null,
     current_user_id,
+    currentUserMembership: initialUserMembership = null,
 }: Props) {
-    const [activeTab, setActiveTab] = useState<'blueprint' | 'sprints' | 'tasks' | 'reports' | 'team' | 'finances' | 'attachments' | 'logs'>(() => {
+    const pageProps = usePage<{ auth?: { user?: { id: number; name: string } } }>().props;
+    const currentUserMembership = initialUserMembership || (project.members || []).find((m) => m.user_id === current_user_id) || null;
+    const currentUserName = currentUserMembership?.user?.name || pageProps?.auth?.user?.name || 'Anda Sendiri';
+
+    const [activeTab, setActiveTab] = useState<'blueprint' | 'sprints' | 'tasks' | 'reports' | 'team' | 'finances' | 'attachments' | 'logs' | 'portal'>(() => {
         if (typeof window !== 'undefined') {
             const tabParam = new URLSearchParams(window.location.search).get('tab');
-            if (tabParam === 'reports' || tabParam === 'sprints' || tabParam === 'tasks' || tabParam === 'team' || tabParam === 'finances' || tabParam === 'attachments' || tabParam === 'logs') {
+            if (tabParam === 'reports' || tabParam === 'sprints' || tabParam === 'tasks' || tabParam === 'team' || tabParam === 'finances' || tabParam === 'attachments' || tabParam === 'logs' || tabParam === 'portal') {
                 return tabParam;
             }
         }
@@ -301,6 +314,132 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
     const [isAssignMemberOpen, setIsAssignMemberOpen] = useState(false);
     const [isFinanceModalOpen, setIsFinanceModalOpen] = useState(false);
     const [isAttachmentModalOpen, setIsAttachmentModalOpen] = useState(false);
+    const [attachmentFilter, setAttachmentFilter] = useState<'all' | 'tasks' | 'general'>('all');
+    const [deletingAttachment, setDeletingAttachment] = useState<PmsAttachment | null>(null);
+    const [selectedTaskForUpload, setSelectedTaskForUpload] = useState<PmsTask | null>(null);
+    const [editingTask, setEditingTask] = useState<PmsTask | null>(null);
+    const [deletingTask, setDeletingTask] = useState<PmsTask | null>(null);
+
+    // Client Portal State
+    const [isClientPortalModalOpen, setIsClientPortalModalOpen] = useState(false);
+    const [copiedPortalLink, setCopiedPortalLink] = useState(false);
+    const [isSendingInvite, setIsSendingInvite] = useState(false);
+    const [isSendingReport, setIsSendingReport] = useState(false);
+
+    const portalForm = useForm({
+        client_email: project.client_email || '',
+        portal_pin: project.portal_pin || '',
+        is_portal_active: project.is_portal_active ?? true,
+    });
+
+    const portalUrl = typeof window !== 'undefined' && project.portal_token
+        ? `${window.location.origin}/portal/pms/${project.portal_token}`
+        : `/portal/pms/${project.portal_token || ''}`;
+
+    const handleCopyPortalLink = () => {
+        navigator.clipboard.writeText(portalUrl);
+        setCopiedPortalLink(true);
+        toast.success('Tautan portal klien berhasil disalin!');
+        setTimeout(() => setCopiedPortalLink(false), 2000);
+    };
+
+    const handleSavePortalSettings = (e: React.FormEvent) => {
+        e.preventDefault();
+        portalForm.put(`/studio/pms/projects/${project.id}/portal/settings`, {
+            preserveScroll: true,
+            onSuccess: () => toast.success('Pengaturan portal klien berhasil disimpan'),
+            onError: (err) => toast.error(Object.values(err)[0] as string || 'Gagal menyimpan pengaturan'),
+        });
+    };
+
+    const handleTogglePortal = () => {
+        router.post(`/studio/pms/projects/${project.id}/portal/toggle`, {}, {
+            preserveScroll: true,
+            onSuccess: () => toast.success('Status aktif portal berhasil diperbarui'),
+        });
+    };
+
+    const handleRegeneratePortal = () => {
+        if (!confirm('Apakah Anda yakin ingin memperbarui tautan & PIN rahasia? Tautan lama tidak akan dapat diakses lagi.')) return;
+        router.post(`/studio/pms/projects/${project.id}/portal/regenerate`, {}, {
+            preserveScroll: true,
+            onSuccess: () => toast.success('Tautan dan PIN rahasia baru berhasil dibuat'),
+        });
+    };
+
+    const handleSendInvite = () => {
+        if (!portalForm.data.client_email) {
+            toast.error('Harap masukkan alamat email klien terlebih dahulu');
+            return;
+        }
+        setIsSendingInvite(true);
+        router.post(`/studio/pms/projects/${project.id}/portal/send-invite`, {
+            client_email: portalForm.data.client_email,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success(`Undangan akses portal berhasil dikirim ke ${portalForm.data.client_email}`);
+                setIsSendingInvite(false);
+            },
+            onError: (err) => {
+                toast.error(Object.values(err)[0] as string || 'Gagal mengirim email');
+                setIsSendingInvite(false);
+            },
+        });
+    };
+
+    const handleSendReport = () => {
+        if (!portalForm.data.client_email) {
+            toast.error('Harap masukkan alamat email klien terlebih dahulu');
+            return;
+        }
+        setIsSendingReport(true);
+        router.post(`/studio/pms/projects/${project.id}/portal/send-report`, {
+            client_email: portalForm.data.client_email,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success(`Laporan progres berhasil dikirim ke ${portalForm.data.client_email}`);
+                setIsSendingReport(false);
+            },
+            onError: (err) => {
+                toast.error(Object.values(err)[0] as string || 'Gagal mengirim email');
+                setIsSendingReport(false);
+            },
+        });
+    };
+
+    const openAttachmentModalForTask = (task: PmsTask) => {
+        setSelectedTaskForUpload(task);
+        attachmentForm.setData({
+            project_id: project.id,
+            task_id: task.id,
+            file: null,
+        });
+        setIsAttachmentModalOpen(true);
+    };
+
+    const openGeneralAttachmentModal = () => {
+        setSelectedTaskForUpload(null);
+        attachmentForm.setData({
+            project_id: project.id,
+            task_id: null,
+            file: null,
+        });
+        setIsAttachmentModalOpen(true);
+    };
+
+    const handleDeleteAttachment = () => {
+        if (!deletingAttachment) return;
+        router.delete(`/studio/pms/attachments/${deletingAttachment.id}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success('Berkas berhasil dihapus');
+                setDeletingAttachment(null);
+            },
+            onError: (err) => toast.error(Object.values(err)[0] as string || 'Gagal menghapus berkas'),
+        });
+    };
 
     // Selected Sprint for task creation
     const [selectedSprintId, setSelectedSprintId] = useState<number | null>(null);
@@ -433,10 +572,63 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
         description: '',
         status: 'todo',
         priority: 'medium',
-        assigned_to: '' as string | number,
+        assigned_to: is_admin ? '' : (current_user_id ? String(current_user_id) : ''),
         due_date: '',
         estimated_hours: 0,
     });
+
+    // Edit Task Form
+    const editTaskForm = useForm({
+        sprint_id: '' as string | number,
+        title: '',
+        description: '',
+        status: 'todo',
+        priority: 'medium',
+        assigned_to: '' as string | number,
+        due_date: '',
+        estimated_hours: 0,
+        actual_hours: 0,
+    });
+
+    const openEditTaskModal = (task: PmsTask) => {
+        setEditingTask(task);
+        editTaskForm.setData({
+            sprint_id: task.sprint_id ? String(task.sprint_id) : '',
+            title: task.title,
+            description: task.description || '',
+            status: task.status,
+            priority: task.priority,
+            assigned_to: task.assigned_to ? String(task.assigned_to) : (is_admin ? '' : (current_user_id ? String(current_user_id) : '')),
+            due_date: task.due_date ? task.due_date.substring(0, 10) : '',
+            estimated_hours: task.estimated_hours || 0,
+            actual_hours: task.actual_hours || 0,
+        });
+    };
+
+    const handleUpdateTask = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingTask) return;
+        editTaskForm.put(`/studio/pms/tasks/${editingTask.id}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success('Tugas berhasil diperbarui');
+                setEditingTask(null);
+            },
+            onError: (err) => toast.error(Object.values(err)[0] as string || 'Gagal memperbarui tugas'),
+        });
+    };
+
+    const handleDeleteTask = () => {
+        if (!deletingTask) return;
+        router.delete(`/studio/pms/tasks/${deletingTask.id}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success('Tugas berhasil dihapus');
+                setDeletingTask(null);
+            },
+            onError: (err) => toast.error(Object.values(err)[0] as string || 'Gagal menghapus tugas'),
+        });
+    };
 
     // Member Assign Form (Dynamic Role!)
     const memberForm = useForm({
@@ -573,7 +765,17 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
             onSuccess: () => {
                 toast.success('Tugas baru berhasil dibuat');
                 setIsTaskModalOpen(false);
-                taskForm.reset();
+                taskForm.setData({
+                    project_id: project.id,
+                    sprint_id: '',
+                    title: '',
+                    description: '',
+                    status: 'todo',
+                    priority: 'medium',
+                    assigned_to: is_admin ? '' : (current_user_id ? String(current_user_id) : ''),
+                    due_date: '',
+                    estimated_hours: 0,
+                });
             },
             onError: (err) => toast.error(Object.values(err)[0] as string || 'Gagal membuat tugas'),
         });
@@ -665,6 +867,7 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
             onSuccess: () => {
                 toast.success('Berkas berhasil diunggah');
                 setIsAttachmentModalOpen(false);
+                setSelectedTaskForUpload(null);
                 attachmentForm.reset();
             },
             onError: (err) => toast.error(Object.values(err)[0] as string || 'Gagal mengunggah berkas'),
@@ -751,6 +954,16 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
                             </div>
 
                             <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                                {is_admin && (
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setIsClientPortalModalOpen(true)}
+                                        className="flex-1 sm:flex-none rounded-xl gap-1.5 h-9 text-xs font-semibold cursor-pointer border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-500/20 shadow-sm shadow-cyan-500/10"
+                                    >
+                                        <ShieldCheck className="size-3.5 text-cyan-500" /> Portal Klien
+                                    </Button>
+                                )}
                                 <Button
                                     size="sm"
                                     onClick={() => setIsTaskModalOpen(true)}
@@ -899,6 +1112,7 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
                             { id: 'team', label: 'Tim & Anggota', icon: Users, count: project.members?.length ?? 0 },
                             ...(is_admin ? [{ id: 'finances', label: 'Keuangan & Struk', icon: Coins, count: null }] : []),
                             { id: 'attachments', label: 'Lampiran', icon: Paperclip, count: project.attachments?.length ?? 0 },
+                            ...(is_admin ? [{ id: 'portal', label: 'Portal Klien', icon: ShieldCheck, count: project.is_portal_active !== false ? 'Live' : 'Off' }] : []),
                             { id: 'logs', label: 'Log Aktivitas', icon: Activity, count: null },
                         ].map((tab) => {
                             const Icon = tab.icon;
@@ -2010,123 +2224,248 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
                             </div>
                         ) : (
                             <div className="space-y-3 min-w-0 max-w-full">
-                                {displayedTasks.map((task) => (
-                                    <div
-                                        key={task.id}
-                                        className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 backdrop-blur-xl shadow-xs hover:border-violet-500/40 transition-all space-y-3 min-w-0"
-                                    >
-                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                            <div className="space-y-1 min-w-0">
-                                                <div className="flex flex-wrap items-center gap-2">
-                                                    <span className="font-semibold text-sm text-slate-900 dark:text-white">
-                                                        {task.title}
-                                                    </span>
-                                                    {task.assigned_to === current_user_id && (
-                                                        <Badge className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold text-[10px] gap-1 px-2 py-0.5 shadow-xs border-0">
-                                                            <CheckSquare className="size-2.5" /> Jobdesk Anda
+                                {displayedTasks.map((task) => {
+                                    const isMyTask = is_admin || task.assigned_to === current_user_id;
+
+                                    return (
+                                        <div
+                                            key={task.id}
+                                            className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 backdrop-blur-xl shadow-xs hover:border-violet-500/40 transition-all space-y-3 min-w-0"
+                                        >
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                                <div className="space-y-1 min-w-0">
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <span className="font-semibold text-sm text-slate-900 dark:text-white">
+                                                            {task.title}
+                                                        </span>
+                                                        {task.assigned_to === current_user_id ? (
+                                                            <Badge className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold text-[10px] gap-1 px-2 py-0.5 shadow-xs border-0">
+                                                                <CheckSquare className="size-2.5" /> Jobdesk Anda
+                                                            </Badge>
+                                                        ) : !is_admin ? (
+                                                            <Badge variant="outline" className="text-[10px] border-slate-300 dark:border-slate-700 text-slate-500 gap-1 bg-slate-50 dark:bg-slate-800/40">
+                                                                <Lock className="size-2.5" /> Read Only
+                                                            </Badge>
+                                                        ) : null}
+                                                        <Badge
+                                                            className={`text-[10px] capitalize font-medium ${
+                                                                task.status === 'done'
+                                                                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                                                                    : task.status === 'in_progress'
+                                                                    ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20'
+                                                                    : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                                                            }`}
+                                                        >
+                                                            {task.status.replace('_', ' ')}
                                                         </Badge>
+                                                        <Badge variant="outline" className="text-[10px] text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700">
+                                                            {task.priority}
+                                                        </Badge>
+                                                    </div>
+                                                    {task.description && (
+                                                        <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
+                                                            {task.description}
+                                                        </p>
                                                     )}
-                                                    <Badge
-                                                        className={`text-[10px] capitalize font-medium ${
-                                                            task.status === 'done'
-                                                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
-                                                                : task.status === 'in_progress'
-                                                                ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20'
-                                                                : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                                                </div>
+
+                                                <div className="flex items-center gap-3 shrink-0">
+                                                    {task.assignee ? (
+                                                        <div className="flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
+                                                            <User className="size-3 text-slate-400" />
+                                                            {task.assignee.name}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-xs text-slate-400 italic">Belum ditugaskan</span>
+                                                    )}
+
+                                                    {/* Move Status or Read-only locked badge */}
+                                                    {isMyTask ? (
+                                                        <Select
+                                                            value={task.status}
+                                                            onValueChange={(val) => {
+                                                                router.patch(
+                                                                    `/studio/pms/tasks/${task.id}/status`,
+                                                                    { status: val },
+                                                                    { preserveScroll: true }
+                                                                );
+                                                            }}
+                                                        >
+                                                            <SelectTrigger className="w-32 h-8 rounded-lg text-xs bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200">
+                                                                <SelectValue />
+                                                            </SelectTrigger>
+                                                            <SelectContent className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800">
+                                                                <SelectItem value="todo">Todo</SelectItem>
+                                                                <SelectItem value="in_progress">In Progress</SelectItem>
+                                                                <SelectItem value="review">Review</SelectItem>
+                                                                <SelectItem value="done">Done</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    ) : (
+                                                        <div 
+                                                            title="Tugas milik anggota tim lain bersifat Read-Only"
+                                                            className="w-32 h-8 px-2.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between cursor-not-allowed select-none"
+                                                        >
+                                                            <span className="capitalize truncate">{task.status.replace('_', ' ')}</span>
+                                                            <Lock className="size-3 text-slate-400 shrink-0" />
+                                                        </div>
+                                                    )}
+
+                                                    {/* Edit & Delete Actions for task owner / Admin */}
+                                                    {isMyTask && (
+                                                        <div className="flex items-center gap-1 border-l border-slate-200 dark:border-slate-800 pl-2">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => openEditTaskModal(task)}
+                                                                className="size-8 rounded-lg text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer transition-colors"
+                                                                title="Edit rincian tugas"
+                                                            >
+                                                                <Pencil className="size-3.5" />
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setDeletingTask(task)}
+                                                                className="size-8 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 flex items-center justify-center cursor-pointer transition-colors"
+                                                                title="Hapus tugas"
+                                                            >
+                                                                <Trash2 className="size-3.5" />
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Subtasks Checklist */}
+                                            <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 space-y-1.5">
+                                                <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500">
+                                                    <span>Subtask Checklist ({task.subtasks?.filter(s => s.is_done).length ?? 0}/{task.subtasks?.length ?? 0})</span>
+                                                    {isMyTask && (
+                                                        <button
+                                                            onClick={() => setActiveTaskIdForSubtask(activeTaskIdForSubtask === task.id ? null : task.id)}
+                                                            className="text-violet-600 hover:underline flex items-center gap-1 cursor-pointer"
+                                                        >
+                                                            <Plus className="size-3" /> Tambah Subtask
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                {task.subtasks?.map((subtask) => (
+                                                    <div
+                                                        key={subtask.id}
+                                                        onClick={isMyTask ? () => handleToggleSubtask(subtask.id) : undefined}
+                                                        className={`flex items-center gap-2 text-xs py-1 px-2 rounded-lg ${
+                                                            isMyTask 
+                                                                ? 'hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer' 
+                                                                : 'cursor-default select-none'
                                                         }`}
                                                     >
-                                                        {task.status.replace('_', ' ')}
-                                                    </Badge>
-                                                    <Badge variant="outline" className="text-[10px] text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700">
-                                                        {task.priority}
-                                                    </Badge>
-                                                </div>
-                                                {task.description && (
-                                                    <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
-                                                        {task.description}
-                                                    </p>
+                                                        <div className={`size-4 rounded border flex items-center justify-center ${subtask.is_done ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 dark:border-slate-700'}`}>
+                                                            {subtask.is_done && <Check className="size-3" />}
+                                                        </div>
+                                                        <span className={subtask.is_done ? 'line-through text-slate-400' : 'text-slate-700 dark:text-slate-300'}>
+                                                            {subtask.title}
+                                                        </span>
+                                                    </div>
+                                                ))}
+
+                                                {isMyTask && activeTaskIdForSubtask === task.id && (
+                                                    <div className="flex items-center gap-2 pt-1">
+                                                        <Input
+                                                            value={newSubtaskTitle}
+                                                            onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                                                            placeholder="Ketik judul subtask lalu enter..."
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter') handleAddSubtask(task.id);
+                                                            }}
+                                                            className="h-8 text-xs rounded-lg"
+                                                        />
+                                                        <Button size="sm" onClick={() => handleAddSubtask(task.id)} className="h-8 text-xs rounded-lg">
+                                                            Simpan
+                                                        </Button>
+                                                    </div>
                                                 )}
                                             </div>
 
-                                            <div className="flex items-center gap-3 shrink-0">
-                                                {task.assignee ? (
-                                                    <div className="flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
-                                                        <User className="size-3 text-slate-400" />
-                                                        {task.assignee.name}
+                                            {/* Task Deliverables & Attachments (Bukti Kerja) */}
+                                            <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800/80 space-y-2">
+                                                <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Paperclip className="size-3.5 text-cyan-500 shrink-0" />
+                                                        <span>Bukti Pengerjaan & Lampiran ({task.attachments?.length ?? 0})</span>
+                                                    </div>
+                                                    {isMyTask && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => openAttachmentModalForTask(task)}
+                                                            className="text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-1 font-bold text-[10.5px] cursor-pointer"
+                                                        >
+                                                            <Plus className="size-3" /> Unggah Bukti
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                {task.attachments && task.attachments.length > 0 ? (
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
+                                                        {task.attachments.map((att) => (
+                                                            <div
+                                                                key={att.id}
+                                                                className="p-2 rounded-xl bg-slate-50/80 dark:bg-slate-950/60 border border-slate-200/70 dark:border-white/5 flex items-center justify-between gap-2 text-xs"
+                                                            >
+                                                                <div className="flex items-center gap-2 min-w-0 flex-1">
+                                                                    <FileText className="size-4 text-cyan-600 dark:text-cyan-400 shrink-0" />
+                                                                    <div className="min-w-0 flex-1">
+                                                                        <span className="font-semibold text-slate-800 dark:text-slate-200 block truncate text-[11px]" title={att.file_name}>
+                                                                            {att.file_name}
+                                                                        </span>
+                                                                        <span className="text-[9.5px] text-slate-400 block truncate">
+                                                                            {formatFileSize(att.file_size)} • {att.uploader?.name || 'Anggota Tim'}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="flex items-center gap-1 shrink-0">
+                                                                    <a
+                                                                        href={att.file_url ?? (att.file_path?.startsWith('http') || att.file_path?.startsWith('/') ? att.file_path : `/storage/${att.file_path}`)}
+                                                                        download
+                                                                        target="_blank"
+                                                                        rel="noreferrer"
+                                                                        className="size-6.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-cyan-600 flex items-center justify-center transition-colors"
+                                                                        title="Unduh Berkas"
+                                                                    >
+                                                                        <Download className="size-3" />
+                                                                    </a>
+                                                                    {(is_admin || att.uploaded_by === current_user_id) && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setDeletingAttachment(att)}
+                                                                            className="size-6.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 hover:text-rose-500 flex items-center justify-center transition-colors cursor-pointer"
+                                                                            title="Hapus Lampiran"
+                                                                        >
+                                                                            <Trash2 className="size-3" />
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        ))}
                                                     </div>
                                                 ) : (
-                                                    <span className="text-xs text-slate-400 italic">Belum ditugaskan</span>
-                                                )}
-
-                                                <Select
-                                                    value={task.status}
-                                                    onValueChange={(val) => {
-                                                        router.patch(
-                                                            `/studio/pms/tasks/${task.id}/status`,
-                                                            { status: val },
-                                                            { preserveScroll: true }
-                                                        );
-                                                    }}
-                                                >
-                                                    <SelectTrigger className="w-32 h-8 rounded-lg text-xs bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200">
-                                                        <SelectValue />
-                                                    </SelectTrigger>
-                                                    <SelectContent className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800">
-                                                        <SelectItem value="todo">Todo</SelectItem>
-                                                        <SelectItem value="in_progress">In Progress</SelectItem>
-                                                        <SelectItem value="review">Review</SelectItem>
-                                                        <SelectItem value="done">Done</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                        </div>
-
-                                        {/* Subtasks Checklist */}
-                                        <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 space-y-1.5">
-                                            <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500">
-                                                <span>Subtask Checklist ({task.subtasks?.filter(s => s.is_done).length ?? 0}/{task.subtasks?.length ?? 0})</span>
-                                                <button
-                                                    onClick={() => setActiveTaskIdForSubtask(activeTaskIdForSubtask === task.id ? null : task.id)}
-                                                    className="text-violet-600 hover:underline flex items-center gap-1"
-                                                >
-                                                    <Plus className="size-3" /> Tambah Subtask
-                                                </button>
-                                            </div>
-
-                                            {task.subtasks?.map((subtask) => (
-                                                <div
-                                                    key={subtask.id}
-                                                    onClick={() => handleToggleSubtask(subtask.id)}
-                                                    className="flex items-center gap-2 text-xs py-1 px-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer"
-                                                >
-                                                    <div className={`size-4 rounded border flex items-center justify-center ${subtask.is_done ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 dark:border-slate-700'}`}>
-                                                        {subtask.is_done && <Check className="size-3" />}
+                                                    <div className="p-2 rounded-xl bg-slate-50/50 dark:bg-slate-950/40 border border-dashed border-slate-200/80 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+                                                        <span>Belum ada berkas atau bukti kerja yang dilampirkan.</span>
+                                                        {isMyTask && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => openAttachmentModalForTask(task)}
+                                                                className="text-violet-600 dark:text-violet-400 hover:underline font-semibold cursor-pointer shrink-0"
+                                                            >
+                                                                + Tambah
+                                                            </button>
+                                                        )}
                                                     </div>
-                                                    <span className={subtask.is_done ? 'line-through text-slate-400' : 'text-slate-700 dark:text-slate-300'}>
-                                                        {subtask.title}
-                                                    </span>
-                                                </div>
-                                            ))}
-
-                                            {activeTaskIdForSubtask === task.id && (
-                                                <div className="flex items-center gap-2 pt-1">
-                                                    <Input
-                                                        value={newSubtaskTitle}
-                                                        onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                                                        placeholder="Ketik judul subtask lalu enter..."
-                                                        onKeyDown={(e) => {
-                                                            if (e.key === 'Enter') handleAddSubtask(task.id);
-                                                        }}
-                                                        className="h-8 text-xs rounded-lg"
-                                                    />
-                                                    <Button size="sm" onClick={() => handleAddSubtask(task.id)} className="h-8 text-xs rounded-lg">
-                                                        Simpan
-                                                    </Button>
-                                                </div>
-                                            )}
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
@@ -2299,59 +2638,342 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
                     </div>
                 )}
 
-                {/* TAB: ATTACHMENTS */}
-                {activeTab === 'attachments' && (
-                    <div className="space-y-6">
-                        <div className="flex items-center justify-between">
+                {/* TAB: ATTACHMENTS (DIGITAL ASSET VAULT) */}
+                {activeTab === 'attachments' && (() => {
+                    const allAttachments = project.attachments || [];
+                    const taskAttachments = allAttachments.filter(a => Boolean(a.task_id));
+                    const generalAttachments = allAttachments.filter(a => !a.task_id);
+
+                    const filteredAttachments = attachmentFilter === 'tasks'
+                        ? taskAttachments
+                        : attachmentFilter === 'general'
+                        ? generalAttachments
+                        : allAttachments;
+
+                    return (
+                        <div className="space-y-6">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div>
+                                    <h3 className="font-bold text-lg text-slate-900 dark:text-white flex items-center gap-2">
+                                        <Paperclip className="size-5 text-cyan-500" />
+                                        Digital Asset & Deliverables Vault
+                                    </h3>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                        Pusat penyimpanan berkas bukti pengerjaan tugas, deliverable sprint, dan dokumen arsitektur proyek.
+                                    </p>
+                                </div>
+                                <div className="flex flex-wrap items-center gap-2.5">
+                                    {/* Filter Segmented Control */}
+                                    <div className="inline-flex p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                                        <button
+                                            type="button"
+                                            onClick={() => setAttachmentFilter('all')}
+                                            className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                                                attachmentFilter === 'all'
+                                                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                            }`}
+                                        >
+                                            Semua ({allAttachments.length})
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setAttachmentFilter('tasks')}
+                                            className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                                                attachmentFilter === 'tasks'
+                                                    ? 'bg-cyan-600 text-white shadow-xs'
+                                                    : 'text-slate-600 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400'
+                                            }`}
+                                        >
+                                            <CheckSquare className="size-3" />
+                                            Bukti Tugas ({taskAttachments.length})
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setAttachmentFilter('general')}
+                                            className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                                                attachmentFilter === 'general'
+                                                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                            }`}
+                                        >
+                                            Dokumen Umum ({generalAttachments.length})
+                                        </button>
+                                    </div>
+
+                                    <Button
+                                        onClick={openGeneralAttachmentModal}
+                                        className="rounded-xl bg-gradient-to-r from-cyan-600 via-blue-600 to-violet-600 hover:from-cyan-700 hover:to-violet-700 text-white gap-2 h-9 text-xs cursor-pointer shadow-sm shadow-cyan-500/25 shrink-0"
+                                    >
+                                        <FileUp className="size-3.5" /> Unggah Berkas Baru
+                                    </Button>
+                                </div>
+                            </div>
+
+                            {filteredAttachments.length === 0 ? (
+                                <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 p-12 text-center text-slate-500 dark:text-slate-400 bg-white/40 dark:bg-slate-900/40">
+                                    {attachmentFilter === 'tasks'
+                                        ? 'Belum ada berkas bukti pengerjaan tugas yang diunggah oleh tim.'
+                                        : attachmentFilter === 'general'
+                                        ? 'Belum ada dokumen umum proyek yang diunggah.'
+                                        : 'Belum ada berkas lampiran yang diunggah di proyek ini.'}
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 min-w-0 max-w-full">
+                                    {filteredAttachments.map((att) => {
+                                        const matchingTask = project.tasks?.find((t) => t.id === att.task_id) || att.task;
+
+                                        return (
+                                            <div
+                                                key={att.id}
+                                                className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 backdrop-blur-xl shadow-xs hover:border-cyan-500/40 transition-all flex flex-col justify-between gap-3 min-w-0 group"
+                                            >
+                                                <div className="space-y-2 min-w-0">
+                                                    {/* Linking Badge if linked to a task */}
+                                                    {matchingTask ? (
+                                                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold w-fit truncate max-w-full">
+                                                            <CheckSquare className="size-2.5 text-indigo-500 shrink-0" />
+                                                            <span className="truncate">Bukti Tugas #{matchingTask.id}: {matchingTask.title}</span>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[10px] font-semibold w-fit">
+                                                            <FolderKanban className="size-2.5 text-slate-400" />
+                                                            <span>Dokumen Umum Proyek</span>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="flex items-start gap-2.5 min-w-0">
+                                                        <div className="size-9 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shrink-0 mt-0.5">
+                                                            <FileText className="size-4.5" />
+                                                        </div>
+                                                        <div className="min-w-0 flex-1">
+                                                            <span className="font-bold text-xs text-slate-900 dark:text-white block truncate group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors" title={att.file_name}>
+                                                                {att.file_name}
+                                                            </span>
+                                                            <div className="flex items-center gap-1 text-[10px] text-slate-400 block mt-0.5 truncate">
+                                                                <span>{formatFileSize(att.file_size)}</span>
+                                                                <span>•</span>
+                                                                <span className="truncate">Oleh: {att.uploader?.name ?? 'Anggota Tim'}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs">
+                                                    <span className="text-[10px] text-slate-400 truncate">
+                                                        {new Date(att.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                    </span>
+
+                                                    <div className="flex items-center gap-1 shrink-0">
+                                                        <a
+                                                            href={att.file_url ?? (att.file_path?.startsWith('http') || att.file_path?.startsWith('/') ? att.file_path : `/storage/${att.file_path}`)}
+                                                            download
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="size-7 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-cyan-50 dark:hover:bg-cyan-950/40 hover:border-cyan-500/40 text-slate-600 dark:text-slate-300 hover:text-cyan-600 dark:hover:text-cyan-400 flex items-center justify-center transition-colors cursor-pointer"
+                                                            title="Unduh Berkas"
+                                                        >
+                                                            <Download className="size-3.5" />
+                                                        </a>
+                                                        {(is_admin || att.uploaded_by === current_user_id) && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setDeletingAttachment(att)}
+                                                                className="size-7 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:border-rose-500/40 text-slate-400 hover:text-rose-500 flex items-center justify-center transition-colors cursor-pointer"
+                                                                title="Hapus Lampiran"
+                                                            >
+                                                                <Trash2 className="size-3.5" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })()}
+
+                {/* TAB: CLIENT PORTAL (ADMIN ONLY) */}
+                {is_admin && activeTab === 'portal' && (
+                    <div className="space-y-6 min-w-0 max-w-full">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
                             <div>
-                                <h3 className="font-bold text-lg text-slate-900 dark:text-white">
-                                    Berkas & Lampiran Proyek
+                                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-700 dark:text-cyan-300 text-[10px] font-bold mb-1.5">
+                                    <ShieldCheck className="size-3 text-cyan-500" />
+                                    Secret Client Vault Suite
+                                </div>
+                                <h3 className="font-black text-xl text-slate-900 dark:text-white tracking-tight">
+                                    Portal Pantau Klien & Notifikasi Email
                                 </h3>
-                                <p className="text-xs text-slate-500">
-                                    Simpan dokumen brief, aset grafis, dan berkas serah terima proyek.
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                    Kelola tautan rahasia proyek dan kirimkan ringkasan kemajuan sprint langsung ke inbox email klien.
                                 </p>
                             </div>
-                            <Button
-                                onClick={() => setIsAttachmentModalOpen(true)}
-                                className="rounded-xl bg-violet-600 hover:bg-violet-700 text-white gap-2 h-9 text-xs"
-                            >
-                                <Paperclip className="size-3.5" /> Unggah Berkas
-                            </Button>
+
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    asChild
+                                    size="sm"
+                                    className="bg-gradient-to-r from-cyan-600 via-blue-600 to-violet-600 hover:from-cyan-700 hover:to-violet-700 text-white rounded-xl text-xs font-bold h-9 px-4 shadow-md shadow-cyan-500/25"
+                                >
+                                    <a href={portalUrl} target="_blank" rel="noopener noreferrer">
+                                        <ExternalLink className="size-3.5 mr-1.5" />
+                                        Buka Tampilan Klien
+                                    </a>
+                                </Button>
+                            </div>
                         </div>
 
-                        {project.attachments?.length === 0 ? (
-                            <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 p-12 text-center text-slate-500 dark:text-slate-400">
-                                Belum ada berkas lampiran yang diunggah.
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 min-w-0 max-w-full">
-                                {project.attachments?.map((att) => (
-                                    <div
-                                        key={att.id}
-                                        className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 backdrop-blur-xl shadow-xs flex items-center justify-between min-w-0"
-                                    >
-                                        <div className="space-y-1 min-w-0 pr-2">
-                                            <div className="font-semibold text-xs text-slate-900 dark:text-white truncate">
-                                                {att.file_name}
-                                            </div>
-                                            <div className="text-[10px] text-slate-500 dark:text-slate-400">
-                                                {(att.file_size / 1024).toFixed(1)} KB • Oleh: {att.uploader?.name ?? 'Admin'}
-                                            </div>
-                                        </div>
+                        {/* Top Overview Cards */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                            {/* Card 1: Status & Token */}
+                            <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Status Akses</span>
+                                    <Badge className={`text-[10px] px-2.5 py-0.5 rounded-full ${project.is_portal_active !== false ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30'}`}>
+                                        {project.is_portal_active !== false ? 'Aktif Terbuka' : 'Dinonaktifkan'}
+                                    </Badge>
+                                </div>
 
-                                        <a
-                                            href={att.file_url ?? (att.file_path?.startsWith('http') || att.file_path?.startsWith('/') ? att.file_path : `/storage/${att.file_path}`)}
-                                            download
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-violet-600 dark:text-violet-400 shrink-0 transition-colors"
+                                <div className="space-y-1">
+                                    <span className="text-[11px] text-slate-500 block">Tautan Rahasia Klien:</span>
+                                    <div className="flex items-center gap-1.5">
+                                        <Input
+                                            readOnly
+                                            value={portalUrl}
+                                            className="h-9 text-xs font-mono bg-slate-50 dark:bg-slate-950/80 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 select-all truncate"
+                                        />
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            onClick={handleCopyPortalLink}
+                                            className="h-9 px-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold cursor-pointer shrink-0"
                                         >
-                                            <Download className="size-3.5" />
-                                        </a>
+                                            {copiedPortalLink ? <Check className="size-3.5 text-emerald-300" /> : <Copy className="size-3.5" />}
+                                        </Button>
                                     </div>
-                                ))}
+                                </div>
+
+                                <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleTogglePortal}
+                                        className="h-8 rounded-xl text-xs font-semibold cursor-pointer border-slate-200 dark:border-slate-800"
+                                    >
+                                        {project.is_portal_active !== false ? 'Matikan Akses' : 'Buka Akses'}
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleRegeneratePortal}
+                                        className="h-8 rounded-xl text-xs font-semibold cursor-pointer border-slate-200 dark:border-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                                    >
+                                        <RefreshCw className="size-3 mr-1" />
+                                        Reset Tautan
+                                    </Button>
+                                </div>
                             </div>
-                        )}
+
+                            {/* Card 2: Pengaturan Email Klien */}
+                            <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-4">
+                                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block">Email Penerima Klien</span>
+
+                                <form onSubmit={handleSavePortalSettings} className="space-y-3">
+                                    <div className="space-y-1">
+                                        <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                                            Alamat Email
+                                        </Label>
+                                        <div className="relative">
+                                            <Input
+                                                type="email"
+                                                required
+                                                placeholder="klien@perusahaan.com"
+                                                value={portalForm.data.client_email}
+                                                onChange={(e) => portalForm.setData('client_email', e.target.value)}
+                                                className="h-9 text-xs pl-8 bg-slate-50/70 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800"
+                                            />
+                                            <Mail className="size-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
+                                        <span>
+                                            {project.portal_last_email_sent_at 
+                                                ? `Terkirim: ${formatDate(project.portal_last_email_sent_at)}` 
+                                                : 'Belum pernah dikirim'}
+                                        </span>
+                                        <Button
+                                            type="submit"
+                                            size="sm"
+                                            disabled={portalForm.processing}
+                                            className="h-8 px-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold cursor-pointer"
+                                        >
+                                            Simpan Email
+                                        </Button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            {/* Card 3: Pengiriman Email Cepat */}
+                            <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-3 flex flex-col justify-between">
+                                <div>
+                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block">Kirim Notifikasi Langsung</span>
+                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                                        Kirimkan akses portal atau ringkasan progres sprint live ke inbox email klien.
+                                    </p>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Button
+                                        type="button"
+                                        disabled={isSendingInvite || !portalForm.data.client_email}
+                                        onClick={handleSendInvite}
+                                        className="w-full h-8.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold cursor-pointer shadow-sm shadow-violet-500/20"
+                                    >
+                                        <KeyRound className="size-3 mr-1.5" />
+                                        {isSendingInvite ? 'Mengirim Undangan...' : 'Kirim Undangan Akses'}
+                                    </Button>
+
+                                    <Button
+                                        type="button"
+                                        disabled={isSendingReport || !portalForm.data.client_email}
+                                        onClick={handleSendReport}
+                                        className="w-full h-8.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white text-xs font-bold cursor-pointer shadow-sm shadow-cyan-500/20"
+                                    >
+                                        <FileText className="size-3 mr-1.5" />
+                                        {isSendingReport ? 'Mengirim Laporan...' : 'Kirim Laporan Progres'}
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* What Client Sees Summary */}
+                        <div className="p-6 rounded-3xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/5 via-blue-500/5 to-violet-500/5 dark:bg-slate-900/60 space-y-3">
+                            <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                <ShieldCheck className="size-4 text-cyan-500" />
+                                Apa yang Dilihat Klien di Portal Pantau?
+                            </h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                                <div className="p-3 rounded-2xl bg-white dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 space-y-1">
+                                    <strong className="text-slate-800 dark:text-slate-200 block">🚀 Siklus Sprint & Tugas</strong>
+                                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Daftar tahapan pengerjaan dan peran teknisi penanggung jawab.</p>
+                                </div>
+                                <div className="p-3 rounded-2xl bg-white dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 space-y-1">
+                                    <strong className="text-slate-800 dark:text-slate-200 block">✅ Subtask & Deliverables</strong>
+                                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Checklist butir fitur yang telah lolos pengujian dan berkas hasil kerja.</p>
+                                </div>
+                                <div className="p-3 rounded-2xl bg-white dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 space-y-1">
+                                    <strong className="text-slate-800 dark:text-slate-200 block">📅 Timeline Jadwal Visual</strong>
+                                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Peta waktu progres dari awal pengerjaan hingga target peluncuran.</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 )}
 
@@ -2889,49 +3511,71 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
                                     <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                                         Ditugaskan Kepada
                                     </Label>
-                                    <Select
-                                        value={taskForm.data.assigned_to ? String(taskForm.data.assigned_to) : 'none'}
-                                        onValueChange={(val) => taskForm.setData('assigned_to', val === 'none' ? '' : val)}
-                                    >
-                                        <SelectTrigger className="rounded-xl h-9 text-xs border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 w-full min-w-0">
-                                            <SelectValue placeholder="Belum Ditugaskan" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="none">Belum Ditugaskan</SelectItem>
-                                            {availableUsers.map((u) => (
-                                                <SelectItem key={u.id} value={String(u.id)}>
-                                                    {u.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    {is_admin ? (
+                                        <Select
+                                            value={taskForm.data.assigned_to ? String(taskForm.data.assigned_to) : 'none'}
+                                            onValueChange={(val) => taskForm.setData('assigned_to', val === 'none' ? '' : val)}
+                                        >
+                                            <SelectTrigger className="rounded-xl h-9 text-xs border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 w-full min-w-0">
+                                                <SelectValue placeholder="Belum Ditugaskan" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="none">Belum Ditugaskan</SelectItem>
+                                                {availableUsers.map((u) => (
+                                                    <SelectItem key={u.id} value={String(u.id)}>
+                                                        {u.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    ) : (
+                                        <div className="p-2 rounded-xl bg-violet-50/70 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-800/60 flex items-center justify-between gap-2 h-9">
+                                            <div className="flex items-center gap-1.5 min-w-0">
+                                                <div className="size-5 rounded-full bg-violet-600 text-white text-[9px] flex items-center justify-center font-bold shrink-0">
+                                                    {currentUserName.charAt(0) || 'U'}
+                                                </div>
+                                                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
+                                                    {currentUserName}
+                                                </span>
+                                            </div>
+                                            <span className="inline-flex items-center gap-1 text-[8.5px] font-bold text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-900/60 px-1.5 py-0.5 rounded shrink-0">
+                                                <Lock className="size-2" /> Terkunci
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
-                            {/* Live Assignee Preview Pill if assigned */}
-                            {taskForm.data.assigned_to && taskForm.data.assigned_to !== 'none' && (() => {
-                                const assignee = availableUsers.find(u => String(u.id) === String(taskForm.data.assigned_to));
-                                if (!assignee) return null;
-                                return (
-                                    <div className="flex items-center gap-2.5 p-2 rounded-xl border border-violet-500/20 bg-violet-500/5 text-xs min-w-0">
-                                        <div className="size-6 rounded-full bg-violet-600 text-white font-bold text-[10px] flex items-center justify-center shrink-0">
-                                            {assignee.avatar ? (
-                                                <img
-                                                    src={assignee.avatar.startsWith('http') || assignee.avatar.startsWith('/') ? assignee.avatar : `/storage/${assignee.avatar}`}
-                                                    alt={assignee.name}
-                                                    className="size-full rounded-full object-cover"
-                                                />
-                                            ) : (
-                                                assignee.name.charAt(0).toUpperCase()
-                                            )}
+                            {/* Live Assignee Preview Pill if assigned (Admin only) or Helper Note for Member */}
+                            {is_admin ? (
+                                taskForm.data.assigned_to && taskForm.data.assigned_to !== 'none' && (() => {
+                                    const assignee = availableUsers.find(u => String(u.id) === String(taskForm.data.assigned_to));
+                                    if (!assignee) return null;
+                                    return (
+                                        <div className="flex items-center gap-2.5 p-2 rounded-xl border border-violet-500/20 bg-violet-500/5 text-xs min-w-0">
+                                            <div className="size-6 rounded-full bg-violet-600 text-white font-bold text-[10px] flex items-center justify-center shrink-0">
+                                                {assignee.avatar ? (
+                                                    <img
+                                                        src={assignee.avatar.startsWith('http') || assignee.avatar.startsWith('/') ? assignee.avatar : `/storage/${assignee.avatar}`}
+                                                        alt={assignee.name}
+                                                        className="size-full rounded-full object-cover"
+                                                    />
+                                                ) : (
+                                                    assignee.name.charAt(0).toUpperCase()
+                                                )}
+                                            </div>
+                                            <span className="font-semibold text-slate-900 dark:text-white truncate flex-1">{assignee.name}</span>
+                                            <Badge className="bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-500/20 text-[10px] font-bold shrink-0">
+                                                {assignee.role_title || 'Anggota Tim'}
+                                            </Badge>
                                         </div>
-                                        <span className="font-semibold text-slate-900 dark:text-white truncate flex-1">{assignee.name}</span>
-                                        <Badge className="bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-500/20 text-[10px] font-bold shrink-0">
-                                            {assignee.role_title || 'Anggota Tim'}
-                                        </Badge>
-                                    </div>
-                                );
-                            })()}
+                                    );
+                                })()
+                            ) : (
+                                <p className="text-[10px] text-slate-400 italic">
+                                    *Sesuai alur kerja tim, anggota non-administrator hanya dapat membuat tugas untuk dirinya sendiri agar tidak terjadi konflik delegasi.
+                                </p>
+                            )}
 
                             {/* Tenggat Waktu (Due Date) */}
                             <div className="space-y-1 min-w-0">
@@ -2965,6 +3609,232 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
                                 </Button>
                             </DialogFooter>
                         </form>
+                    </DialogContent>
+                </Dialog>
+
+                {/* 4b. EDIT TASK MODAL */}
+                <Dialog open={Boolean(editingTask)} onOpenChange={(open) => { if (!open) setEditingTask(null); }}>
+                    <DialogContent className="w-[calc(100vw-1.5rem)] sm:w-full max-w-lg rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-4 sm:p-6 overflow-y-auto overflow-x-hidden max-h-[88vh] text-slate-900 dark:text-slate-100 min-w-0">
+                        <DialogHeader className="space-y-1 pb-2 border-b border-slate-100 dark:border-slate-800/80 min-w-0">
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-700 dark:text-violet-300 text-[10px] font-bold w-fit">
+                                <Pencil className="size-3 text-violet-500" />
+                                Edit Tiket Tugas
+                            </div>
+                            <DialogTitle className="text-base sm:text-xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2 min-w-0">
+                                <div className="size-8 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-white flex items-center justify-center shadow-sm shadow-violet-500/25 shrink-0">
+                                    <Pencil className="size-4" />
+                                </div>
+                                <span className="truncate">Perbarui Rincian Tugas</span>
+                            </DialogTitle>
+                            <DialogDescription className="text-[11px] text-slate-500 dark:text-slate-400">
+                                Ubah judul, deskripsi, prioritas, status pengerjaan, atau tenggat waktu tugas.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <form onSubmit={handleUpdateTask} className="space-y-3.5 pt-1.5 relative z-10 min-w-0">
+                            {/* Judul Tugas */}
+                            <div className="space-y-1.5 min-w-0">
+                                <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                                    <span>Judul Tugas <span className="text-rose-500">*</span></span>
+                                    <span className="text-[10px] font-normal text-slate-400">Wajib diisi</span>
+                                </Label>
+                                <Input
+                                    required
+                                    value={editTaskForm.data.title}
+                                    onChange={(e) => editTaskForm.setData('title', e.target.value)}
+                                    placeholder="Contoh: Slicing UI Dashboard Klien"
+                                    className="rounded-xl h-9 text-xs font-medium border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 focus:bg-white dark:focus:bg-slate-900 w-full min-w-0"
+                                />
+                            </div>
+
+                            {/* Deskripsi */}
+                            <div className="space-y-1 min-w-0">
+                                <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                    Deskripsi & Instruksi Pengerjaan
+                                </Label>
+                                <Textarea
+                                    rows={2}
+                                    value={editTaskForm.data.description}
+                                    onChange={(e) => editTaskForm.setData('description', e.target.value)}
+                                    placeholder="Catatan detail pekerjaan..."
+                                    className="rounded-xl text-xs font-medium border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 focus:bg-white dark:focus:bg-slate-900 resize-none w-full min-w-0"
+                                />
+                            </div>
+
+                            {/* Status & Prioritas */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 min-w-0">
+                                <div className="space-y-1 min-w-0">
+                                    <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                        Status Pengerjaan
+                                    </Label>
+                                    <Select
+                                        value={editTaskForm.data.status}
+                                        onValueChange={(val: any) => editTaskForm.setData('status', val)}
+                                    >
+                                        <SelectTrigger className="rounded-xl h-9 text-xs border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 w-full min-w-0">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="todo">To Do</SelectItem>
+                                            <SelectItem value="in_progress">In Progress</SelectItem>
+                                            <SelectItem value="review">Review</SelectItem>
+                                            <SelectItem value="done">Done</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-1 min-w-0">
+                                    <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                        Prioritas
+                                    </Label>
+                                    <Select
+                                        value={editTaskForm.data.priority}
+                                        onValueChange={(val: any) => editTaskForm.setData('priority', val)}
+                                    >
+                                        <SelectTrigger className="rounded-xl h-9 text-xs border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 w-full min-w-0">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="low">Low</SelectItem>
+                                            <SelectItem value="medium">Medium</SelectItem>
+                                            <SelectItem value="high">High</SelectItem>
+                                            <SelectItem value="urgent">Urgent</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            {/* Sprint & Ditugaskan Kepada */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 min-w-0">
+                                <div className="space-y-1 min-w-0">
+                                    <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                        Siklus Sprint
+                                    </Label>
+                                    <Select
+                                        value={editTaskForm.data.sprint_id ? String(editTaskForm.data.sprint_id) : 'none'}
+                                        onValueChange={(val) => editTaskForm.setData('sprint_id', val === 'none' ? '' : val)}
+                                    >
+                                        <SelectTrigger className="rounded-xl h-9 text-xs border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 w-full min-w-0">
+                                            <SelectValue placeholder="Pilih Sprint" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">Tanpa Sprint (Backlog)</SelectItem>
+                                            {project.sprints?.map((s) => (
+                                                <SelectItem key={s.id} value={String(s.id)}>
+                                                    {s.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-1 min-w-0">
+                                    <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                        Ditugaskan Kepada
+                                    </Label>
+                                    {is_admin ? (
+                                        <Select
+                                            value={editTaskForm.data.assigned_to ? String(editTaskForm.data.assigned_to) : 'none'}
+                                            onValueChange={(val) => editTaskForm.setData('assigned_to', val === 'none' ? '' : val)}
+                                        >
+                                            <SelectTrigger className="rounded-xl h-9 text-xs border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 w-full min-w-0">
+                                                <SelectValue placeholder="Belum Ditugaskan" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="none">Belum Ditugaskan</SelectItem>
+                                                {availableUsers.map((u) => (
+                                                    <SelectItem key={u.id} value={String(u.id)}>
+                                                        {u.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    ) : (
+                                        <div className="p-2 rounded-xl bg-violet-50/70 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-800/60 flex items-center justify-between gap-2 h-9">
+                                            <div className="flex items-center gap-1.5 min-w-0">
+                                                <div className="size-5 rounded-full bg-violet-600 text-white text-[9px] flex items-center justify-center font-bold shrink-0">
+                                                    {currentUserName.charAt(0) || 'U'}
+                                                </div>
+                                                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
+                                                    {currentUserName}
+                                                </span>
+                                            </div>
+                                            <span className="inline-flex items-center gap-1 text-[8.5px] font-bold text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-900/60 px-1.5 py-0.5 rounded shrink-0">
+                                                <Lock className="size-2" /> Terkunci
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Tenggat Waktu (Due Date) */}
+                            <div className="space-y-1 min-w-0">
+                                <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                    Tenggat Waktu (Due Date)
+                                </Label>
+                                <Input
+                                    type="date"
+                                    value={editTaskForm.data.due_date}
+                                    onChange={(e) => editTaskForm.setData('due_date', e.target.value)}
+                                    className="rounded-xl h-9 text-xs border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 focus:bg-white dark:focus:bg-slate-900 w-full min-w-0"
+                                />
+                            </div>
+
+                            <DialogFooter className="gap-2 pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col-reverse sm:flex-row sm:justify-end">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setEditingTask(null)}
+                                    className="rounded-xl h-9 px-4 text-xs font-semibold border-slate-200 dark:border-slate-800 cursor-pointer w-full sm:w-auto"
+                                >
+                                    Batal
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    disabled={editTaskForm.processing}
+                                    className="bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-600 hover:from-violet-700 hover:to-cyan-700 text-white rounded-xl shadow-md shadow-violet-500/25 h-9 px-5 text-xs font-bold cursor-pointer w-full sm:w-auto"
+                                >
+                                    <Pencil className="size-3.5 mr-1.5" />
+                                    {editTaskForm.processing ? 'Menyimpan...' : 'Perbarui Tugas'}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+
+                {/* 4c. DELETE TASK CONFIRMATION DIALOG */}
+                <Dialog open={Boolean(deletingTask)} onOpenChange={(open) => { if (!open) setDeletingTask(null); }}>
+                    <DialogContent className="w-[calc(100vw-1.5rem)] sm:w-full max-w-md rounded-2xl sm:rounded-3xl border border-rose-200 dark:border-rose-900/50 bg-white dark:bg-slate-900 shadow-2xl p-5 sm:p-6 text-slate-900 dark:text-slate-100">
+                        <DialogHeader className="space-y-2">
+                            <div className="size-10 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center">
+                                <Trash2 className="size-5" />
+                            </div>
+                            <DialogTitle className="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white">
+                                Hapus Tugas #{deletingTask?.id}?
+                            </DialogTitle>
+                            <DialogDescription className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                                Apakah Anda yakin ingin menghapus tugas <strong className="text-slate-900 dark:text-white">{deletingTask?.title}</strong>? Seluruh subtask dan catatan terkait akan dihapus secara permanen.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <DialogFooter className="gap-2 pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col-reverse sm:flex-row sm:justify-end">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setDeletingTask(null)}
+                                className="rounded-xl h-9 px-4 text-xs font-semibold border-slate-200 dark:border-slate-800 cursor-pointer w-full sm:w-auto"
+                            >
+                                Batal
+                            </Button>
+                            <Button
+                                type="button"
+                                onClick={handleDeleteTask}
+                                className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl shadow-md shadow-rose-500/25 h-9 px-5 text-xs font-bold cursor-pointer w-full sm:w-auto"
+                            >
+                                <Trash2 className="size-3.5 mr-1.5" />
+                                Ya, Hapus Tugas
+                            </Button>
+                        </DialogFooter>
                     </DialogContent>
                 </Dialog>
 
@@ -3472,23 +4342,48 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
                 </Dialog>
 
                 {/* 7. ATTACHMENT MODAL (UPLOAD) - SLEEK & COMPACT */}
-                <Dialog open={isAttachmentModalOpen} onOpenChange={setIsAttachmentModalOpen}>
+                <Dialog open={isAttachmentModalOpen} onOpenChange={(open) => { setIsAttachmentModalOpen(open); if (!open) setSelectedTaskForUpload(null); }}>
                     <DialogContent className="w-[calc(100vw-1.5rem)] sm:w-full max-w-lg rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-4 sm:p-6 overflow-y-auto overflow-x-hidden max-h-[88vh] text-slate-900 dark:text-slate-100 min-w-0">
                         <DialogHeader className="space-y-1 pb-2 border-b border-slate-100 dark:border-slate-800/80 min-w-0">
                             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-700 dark:text-cyan-300 text-[10px] font-bold w-fit">
                                 <Paperclip className="size-3 text-cyan-500" />
-                                Digital Asset Vault
+                                {selectedTaskForUpload ? 'Bukti Pengerjaan Tugas' : 'Digital Asset Vault'}
                             </div>
                             <DialogTitle className="text-base sm:text-xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2 min-w-0">
                                 <div className="size-8 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-600 text-white flex items-center justify-center shadow-sm shadow-cyan-500/25 shrink-0">
                                     <Paperclip className="size-4" />
                                 </div>
-                                <span className="truncate">Unggah Berkas Lampiran Proyek</span>
+                                <span className="truncate">
+                                    {selectedTaskForUpload ? 'Unggah Bukti Hasil Pengerjaan' : 'Unggah Berkas Lampiran Proyek'}
+                                </span>
                             </DialogTitle>
                             <DialogDescription className="text-[11px] text-slate-500 dark:text-slate-400">
-                                Simpan dokumen cetak biru, spesifikasi teknis, atau aset grafis proyek.
+                                {selectedTaskForUpload 
+                                    ? `Unggah dokumen, screenshot, atau arsip artefak untuk membuktikan penyelesaian tiket #${selectedTaskForUpload.id}.`
+                                    : 'Simpan dokumen cetak biru, spesifikasi teknis, atau aset grafis proyek.'}
                             </DialogDescription>
                         </DialogHeader>
+
+                        {selectedTaskForUpload && (
+                            <div className="p-3 rounded-2xl bg-violet-500/10 border border-violet-500/25 flex items-center justify-between gap-2.5 mt-2">
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                    <div className="size-7 rounded-lg bg-violet-500/20 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
+                                        <CheckSquare className="size-4" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <span className="text-[10px] uppercase font-bold text-violet-600 dark:text-violet-400 block tracking-wider">
+                                            Ditautkan ke Tiket
+                                        </span>
+                                        <span className="text-xs font-bold text-slate-900 dark:text-white truncate block">
+                                            #{selectedTaskForUpload.id} - {selectedTaskForUpload.title}
+                                        </span>
+                                    </div>
+                                </div>
+                                <span className="px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-600 dark:text-violet-300 text-[10px] font-bold shrink-0">
+                                    Terkunci Otomatis
+                                </span>
+                            </div>
+                        )}
 
                         <form onSubmit={handleUploadAttachment} className="space-y-3.5 pt-1.5 relative z-10 min-w-0">
                             {/* Interactive File Dropzone */}
@@ -3548,35 +4443,43 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
                             </div>
 
                             {/* Hubungkan ke Tiket Tugas */}
-                            <div className="space-y-1 min-w-0">
-                                <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                                    Hubungkan ke Tiket Tugas (Opsional)
-                                </Label>
-                                <Select
-                                    value={attachmentForm.data.task_id ? String(attachmentForm.data.task_id) : 'none'}
-                                    onValueChange={(val) => attachmentForm.setData('task_id', val === 'none' ? null : Number(val))}
-                                >
-                                    <SelectTrigger className="rounded-xl h-9 text-xs border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 w-full min-w-0">
-                                        <SelectValue placeholder="Lampiran Umum Proyek" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="none">
-                                            Lampiran Umum Proyek
-                                        </SelectItem>
-                                        {project.tasks?.map((t) => (
-                                            <SelectItem key={t.id} value={String(t.id)}>
-                                                #{t.id} {t.title}
+                            {!selectedTaskForUpload && (
+                                <div className="space-y-1 min-w-0">
+                                    <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                        Hubungkan ke Tiket Tugas (Opsional)
+                                    </Label>
+                                    <Select
+                                        value={attachmentForm.data.task_id ? String(attachmentForm.data.task_id) : 'none'}
+                                        onValueChange={(val) => attachmentForm.setData('task_id', val === 'none' ? null : Number(val))}
+                                    >
+                                        <SelectTrigger className="rounded-xl h-9 text-xs border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 w-full min-w-0">
+                                            <SelectValue placeholder="Lampiran Umum Proyek" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">
+                                                Lampiran Umum Proyek (Tanpa Tiket Tugas)
                                             </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                                            {(is_admin
+                                                ? (project.tasks || [])
+                                                : (project.tasks || []).filter((t) => t.assigned_to === current_user_id)
+                                            ).map((t) => (
+                                                <SelectItem key={t.id} value={String(t.id)}>
+                                                    #{t.id} {t.title}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
 
                             <DialogFooter className="gap-2 pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col-reverse sm:flex-row sm:justify-end">
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    onClick={() => setIsAttachmentModalOpen(false)}
+                                    onClick={() => {
+                                        setIsAttachmentModalOpen(false);
+                                        setSelectedTaskForUpload(null);
+                                    }}
                                     className="rounded-xl h-9 px-4 text-xs font-semibold border-slate-200 dark:border-slate-800 cursor-pointer w-full sm:w-auto"
                                 >
                                     Batal
@@ -3591,6 +4494,253 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
                                 </Button>
                             </DialogFooter>
                         </form>
+                    </DialogContent>
+                </Dialog>
+
+                {/* 8. DELETE ATTACHMENT CONFIRMATION DIALOG */}
+                <Dialog open={Boolean(deletingAttachment)} onOpenChange={(open) => { if (!open) setDeletingAttachment(null); }}>
+                    <DialogContent className="w-[calc(100vw-1.5rem)] sm:w-full max-w-md rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-5 sm:p-6 text-slate-900 dark:text-slate-100">
+                        <DialogHeader className="space-y-1">
+                            <div className="size-10 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center mb-2">
+                                <Trash2 className="size-5" />
+                            </div>
+                            <DialogTitle className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                                Hapus Berkas Lampiran?
+                            </DialogTitle>
+                            <DialogDescription className="text-xs text-slate-500 dark:text-slate-400">
+                                Apakah Anda yakin ingin menghapus berkas <span className="font-semibold text-slate-800 dark:text-slate-200">"{deletingAttachment?.file_name}"</span>? Berkas fisik dan tautan ke tugas akan dihapus secara permanen.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter className="gap-2 pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col-reverse sm:flex-row sm:justify-end">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setDeletingAttachment(null)}
+                                className="rounded-xl h-9 px-4 text-xs font-semibold border-slate-200 dark:border-slate-800 cursor-pointer w-full sm:w-auto"
+                            >
+                                Batal
+                            </Button>
+                            <Button
+                                type="button"
+                                onClick={handleDeleteAttachment}
+                                className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl shadow-md shadow-rose-500/25 h-9 px-5 text-xs font-bold cursor-pointer w-full sm:w-auto"
+                            >
+                                <Trash2 className="size-3.5 mr-1.5" />
+                                Hapus Berkas
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                {/* 9. CLIENT PORTAL ACCESS & EMAIL DISPATCH MODAL */}
+                <Dialog open={isClientPortalModalOpen} onOpenChange={setIsClientPortalModalOpen}>
+                    <DialogContent className="w-[calc(100vw-1.5rem)] sm:w-full max-w-xl rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-4 sm:p-6 overflow-y-auto overflow-x-hidden max-h-[90vh] text-slate-900 dark:text-slate-100 min-w-0">
+                        <DialogHeader className="space-y-1 pb-3 border-b border-slate-100 dark:border-slate-800/80 min-w-0">
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-700 dark:text-cyan-300 text-[10px] font-bold w-fit">
+                                <ShieldCheck className="size-3 text-cyan-500" />
+                                Secret Client Portal
+                            </div>
+                            <DialogTitle className="text-base sm:text-xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2 min-w-0">
+                                <div className="size-8 rounded-xl bg-gradient-to-tr from-cyan-600 to-violet-600 text-white flex items-center justify-center shadow-sm shadow-cyan-500/25 shrink-0">
+                                    <KeyRound className="size-4" />
+                                </div>
+                                <span className="truncate">Portal Pantau Klien & Notifikasi Email</span>
+                            </DialogTitle>
+                            <DialogDescription className="text-[11px] text-slate-500 dark:text-slate-400">
+                                Berikan akses transparansi pengerjaan proyek kepada klien melalui tautan token rahasia & notifikasi email resmi.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="space-y-4 pt-2">
+                            {/* Status Card & Quick Actions */}
+                            <div className="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div className="space-y-0.5">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                            Status Akses Portal
+                                        </span>
+                                        <Badge className={`text-[10px] px-2 py-0.2 rounded-full ${project.is_portal_active !== false ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30'}`}>
+                                            {project.is_portal_active !== false ? 'Aktif Terbuka' : 'Dinonaktifkan'}
+                                        </Badge>
+                                    </div>
+                                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                        {project.is_portal_active !== false 
+                                            ? 'Klien dapat membuka portal menggunakan token rahasia.' 
+                                            : 'Akses ditutup. Klien tidak dapat melihat data proyek.'}
+                                    </p>
+                                </div>
+
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={handleTogglePortal}
+                                        className="h-8 rounded-xl text-xs font-semibold cursor-pointer border-slate-200 dark:border-slate-800"
+                                    >
+                                        {project.is_portal_active !== false ? 'Nonaktifkan' : 'Aktifkan'}
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={handleRegeneratePortal}
+                                        title="Generate Ulang Token Rahasia"
+                                        className="h-8 rounded-xl text-xs font-semibold cursor-pointer border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                                    >
+                                        <RefreshCw className="size-3 mr-1" />
+                                        Reset Tautan
+                                    </Button>
+                                </div>
+                            </div>
+
+                            {/* Secret URL Box */}
+                            <div className="space-y-1.5">
+                                <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                                    <span>Tautan Rahasia Klien (Secret URL)</span>
+                                    <span className="text-[10px] font-normal text-slate-400">Read-Only View</span>
+                                </Label>
+                                <div className="flex items-center gap-2">
+                                    <Input
+                                        readOnly
+                                        value={portalUrl}
+                                        className="h-9 text-xs font-mono bg-slate-50 dark:bg-slate-950/80 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 select-all"
+                                    />
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        onClick={handleCopyPortalLink}
+                                        className="h-9 px-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold cursor-pointer shrink-0"
+                                    >
+                                        {copiedPortalLink ? (
+                                            <>
+                                                <Check className="size-3.5 mr-1 text-emerald-300" />
+                                                Disalin
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Copy className="size-3.5 mr-1" />
+                                                Salin
+                                            </>
+                                        )}
+                                    </Button>
+                                    <Button
+                                        asChild
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-9 px-3 rounded-xl border-slate-200 dark:border-slate-800 text-xs font-semibold cursor-pointer shrink-0"
+                                    >
+                                        <a href={portalUrl} target="_blank" rel="noopener noreferrer">
+                                            <ExternalLink className="size-3.5 mr-1 text-cyan-500" />
+                                            Pratinjau
+                                        </a>
+                                    </Button>
+                                </div>
+                            </div>
+
+                            {/* Client Email Form */}
+                            <form onSubmit={handleSavePortalSettings} className="space-y-3.5 pt-1">
+                                <div className="space-y-1">
+                                    <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                        Alamat Email Klien <span className="text-rose-500">*</span>
+                                    </Label>
+                                    <div className="relative">
+                                        <Input
+                                            type="email"
+                                            required
+                                            placeholder="klien@perusahaan.com"
+                                            value={portalForm.data.client_email}
+                                            onChange={(e) => portalForm.setData('client_email', e.target.value)}
+                                            className="h-9 text-xs pl-8 bg-slate-50/70 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800"
+                                        />
+                                        <Mail className="size-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
+                                    <span>
+                                        {project.portal_last_email_sent_at 
+                                            ? `Terakhir email dikirim: ${formatDate(project.portal_last_email_sent_at)}` 
+                                            : 'Belum pernah mengirim email'}
+                                    </span>
+                                    <Button
+                                        type="submit"
+                                        size="sm"
+                                        variant="ghost"
+                                        disabled={portalForm.processing}
+                                        className="h-7 text-xs font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/40 p-1 cursor-pointer"
+                                    >
+                                        Simpan Email
+                                    </Button>
+                                </div>
+                            </form>
+
+                            {/* Email Action Cards */}
+                            <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 space-y-2.5">
+                                <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 block">
+                                    Kirim Notifikasi Langsung ke Inbox Klien
+                                </Label>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {/* Action 1: Kirim Undangan Akses Langsung */}
+                                    <div className="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/50 space-y-2 flex flex-col justify-between">
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
+                                                <KeyRound className="size-3.5 text-violet-500" />
+                                                <span>Undangan Akses Portal</span>
+                                            </div>
+                                            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                                                Kirimkan tautan akses langsung ke portal pantau proyek ke inbox email klien.
+                                            </p>
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            disabled={isSendingInvite || !portalForm.data.client_email}
+                                            onClick={handleSendInvite}
+                                            className="w-full h-8.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold cursor-pointer shadow-sm shadow-violet-500/20"
+                                        >
+                                            <Send className="size-3 mr-1.5" />
+                                            {isSendingInvite ? 'Mengirim...' : 'Kirim Undangan Akses'}
+                                        </Button>
+                                    </div>
+
+                                    {/* Action 2: Kirim Laporan Progres */}
+                                    <div className="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/50 space-y-2 flex flex-col justify-between">
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
+                                                <FileText className="size-3.5 text-cyan-500" />
+                                                <span>Laporan Progres Live</span>
+                                            </div>
+                                            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                                                Kirimkan ringkasan kemajuan sprint, tugas selesai, dan checklist subtask.
+                                            </p>
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            disabled={isSendingReport || !portalForm.data.client_email}
+                                            onClick={handleSendReport}
+                                            className="w-full h-8.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white text-xs font-semibold cursor-pointer shadow-sm shadow-cyan-500/20"
+                                        >
+                                            <Send className="size-3 mr-1.5" />
+                                            {isSendingReport ? 'Mengirim...' : 'Kirim Laporan Progres'}
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <DialogFooter className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setIsClientPortalModalOpen(false)}
+                                className="rounded-xl h-9 px-4 text-xs font-semibold border-slate-200 dark:border-slate-800 cursor-pointer"
+                            >
+                                Tutup
+                            </Button>
+                        </DialogFooter>
                     </DialogContent>
                 </Dialog>
             </div>
