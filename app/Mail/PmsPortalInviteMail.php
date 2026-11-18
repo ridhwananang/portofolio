@@ -33,7 +33,7 @@ class PmsPortalInviteMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "[Akses Rahasia] Portal Pantau Proyek: {$this->project->name} ({$this->project->code})",
+            subject: "[Akses Portal Klien] Portal Pantau Proyek: {$this->project->name} ({$this->project->code})",
         );
     }
 

@@ -26,7 +26,7 @@ Berikut adalah laporan kemajuan (*executive progress update*) terkini untuk peng
 🔍 Lihat Rincian & Timeline Interaktif
 </x-mail::button>
 
-Anda dapat mengakses **Portal Pantau Proyek Rahasia** kapan saja untuk melihat timeline visual gantt chart dan rincian deliverable teknis.
+Anda dapat mengakses **Portal Pantau Proyek Klien** kapan saja untuk melihat timeline visual gantt chart dan rincian deliverable teknis.
 
 Salam hangat,<br>
 **Ridhwan Anang Ma'ruf**  

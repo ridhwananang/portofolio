@@ -292,7 +292,7 @@ class PmsClientPortalController extends Controller
         }
 
         return back()->withErrors([
-            'pin' => 'PIN akses salah. Harap periksa kembali PIN rahasia di email Anda.',
+            'pin' => 'PIN akses tidak sesuai. Silakan periksa kembali PIN pada undangan portal Anda.',
         ]);
     }
 
@@ -312,18 +312,18 @@ class PmsClientPortalController extends Controller
     }
 
     /**
-     * Regenerate client portal token & PIN (Admin only).
+     * Regenerate client portal token & reset PIN (Admin only).
      */
     public function regenerate(Request $request, PmsProject $project): RedirectResponse
     {
         $this->authorizeAdmin($request);
 
         $project->update([
-            'portal_token' => Str::random(32),
+            'portal_token' => PmsProject::generatePortalToken($project->name, $project->code),
             'portal_pin' => null,
         ]);
 
-        return back()->with('success', 'Tautan portal klien berhasil diperbarui.');
+        return back()->with('success', 'Tautan portal klien baru berhasil dibuat.');
     }
 
     /**
@@ -335,17 +335,27 @@ class PmsClientPortalController extends Controller
 
         $validated = $request->validate([
             'client_email' => 'nullable|email|max:255',
-            'portal_pin' => 'nullable|string|max:20',
+            'portal_pin' => 'nullable|string|min:4|max:20',
             'is_portal_active' => 'boolean',
+        ], [
+            'portal_pin.min' => 'PIN keamanan portal minimal terdiri dari 4 karakter.',
         ]);
 
-        $project->update($validated);
+        $normalizedPin = isset($validated['portal_pin']) && trim($validated['portal_pin']) !== ''
+            ? trim($validated['portal_pin'])
+            : null;
 
-        return back()->with('success', 'Pengaturan portal klien berhasil disimpan.');
+        $project->update([
+            'client_email' => $validated['client_email'] ?? null,
+            'portal_pin' => $normalizedPin,
+            'is_portal_active' => $validated['is_portal_active'] ?? $project->is_portal_active,
+        ]);
+
+        return back()->with('success', 'Pengaturan akses portal klien berhasil disimpan.');
     }
 
     /**
-     * Send portal invitation email with secret link & PIN (Admin only).
+     * Send portal invitation email with client access link & optional PIN (Admin only).
      */
     public function sendInvite(Request $request, PmsProject $project): RedirectResponse
     {
@@ -353,19 +363,32 @@ class PmsClientPortalController extends Controller
 
         $validated = $request->validate([
             'client_email' => 'required|email|max:255',
+            'sync_pin' => 'sometimes|boolean',
+            'portal_pin' => 'nullable|string|min:4|max:20',
+        ], [
+            'portal_pin.min' => 'PIN keamanan portal minimal terdiri dari 4 karakter.',
         ]);
 
-        // Save email if updated
-        $project->update([
+        $updatePayload = [
             'client_email' => $validated['client_email'],
             'portal_last_email_sent_at' => now(),
-        ]);
+        ];
 
-        $portalUrl = url("/portal/pms/{$project->portal_token}");
+        if ($request->boolean('sync_pin')) {
+            $updatePayload['portal_pin'] = isset($validated['portal_pin']) && trim((string) $validated['portal_pin']) !== ''
+                ? trim((string) $validated['portal_pin'])
+                : null;
+        }
+
+        // Persist latest email & optional PIN state before dispatching mail
+        $project->update($updatePayload);
+
+        $portalUrl = url("/portal/{$project->portal_token}");
+        $portalPin = filled($project->portal_pin) ? (string) $project->portal_pin : null;
 
         try {
             Mail::to($validated['client_email'])->send(
-                new PmsPortalInviteMail($project, $portalUrl, null)
+                new PmsPortalInviteMail($project, $portalUrl, $portalPin)
             );
             return back()->with('success', "Undangan akses portal berhasil dikirim ke {$validated['client_email']}.");
         } catch (\Throwable $e) {
@@ -384,7 +407,7 @@ class PmsClientPortalController extends Controller
             'client_email' => 'required|email|max:255',
         ]);
 
-        $portalUrl = url("/portal/pms/{$project->portal_token}");
+        $portalUrl = url("/portal/{$project->portal_token}");
 
         // Build summary data
         $project->load(['tasks.subtasks', 'sprints']);

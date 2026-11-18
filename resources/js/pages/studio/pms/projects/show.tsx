@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { WordRichEditor, WordDocumentViewer } from '@/components/ui/word-rich-editor';
+import { ClientPortalPanel } from '@/components/studio/pms/client-portal-panel';
 import {
     Dialog,
     DialogContent,
@@ -62,7 +63,6 @@ import {
     Layers,
     ListTodo,
     Lock,
-    Mail,
     MoreVertical,
     Paperclip,
     Pencil,
@@ -72,8 +72,6 @@ import {
     Plus,
     Printer,
     Receipt,
-    RefreshCw,
-    Send,
     Share2,
     Shield,
     ShieldCheck,
@@ -322,92 +320,10 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
 
     // Client Portal State
     const [isClientPortalModalOpen, setIsClientPortalModalOpen] = useState(false);
-    const [copiedPortalLink, setCopiedPortalLink] = useState(false);
-    const [isSendingInvite, setIsSendingInvite] = useState(false);
-    const [isSendingReport, setIsSendingReport] = useState(false);
-
-    const portalForm = useForm({
-        client_email: project.client_email || '',
-        portal_pin: project.portal_pin || '',
-        is_portal_active: project.is_portal_active ?? true,
-    });
 
     const portalUrl = typeof window !== 'undefined' && project.portal_token
-        ? `${window.location.origin}/portal/pms/${project.portal_token}`
-        : `/portal/pms/${project.portal_token || ''}`;
-
-    const handleCopyPortalLink = () => {
-        navigator.clipboard.writeText(portalUrl);
-        setCopiedPortalLink(true);
-        toast.success('Tautan portal klien berhasil disalin!');
-        setTimeout(() => setCopiedPortalLink(false), 2000);
-    };
-
-    const handleSavePortalSettings = (e: React.FormEvent) => {
-        e.preventDefault();
-        portalForm.put(`/studio/pms/projects/${project.id}/portal/settings`, {
-            preserveScroll: true,
-            onSuccess: () => toast.success('Pengaturan portal klien berhasil disimpan'),
-            onError: (err) => toast.error(Object.values(err)[0] as string || 'Gagal menyimpan pengaturan'),
-        });
-    };
-
-    const handleTogglePortal = () => {
-        router.post(`/studio/pms/projects/${project.id}/portal/toggle`, {}, {
-            preserveScroll: true,
-            onSuccess: () => toast.success('Status aktif portal berhasil diperbarui'),
-        });
-    };
-
-    const handleRegeneratePortal = () => {
-        if (!confirm('Apakah Anda yakin ingin memperbarui tautan & PIN rahasia? Tautan lama tidak akan dapat diakses lagi.')) return;
-        router.post(`/studio/pms/projects/${project.id}/portal/regenerate`, {}, {
-            preserveScroll: true,
-            onSuccess: () => toast.success('Tautan dan PIN rahasia baru berhasil dibuat'),
-        });
-    };
-
-    const handleSendInvite = () => {
-        if (!portalForm.data.client_email) {
-            toast.error('Harap masukkan alamat email klien terlebih dahulu');
-            return;
-        }
-        setIsSendingInvite(true);
-        router.post(`/studio/pms/projects/${project.id}/portal/send-invite`, {
-            client_email: portalForm.data.client_email,
-        }, {
-            preserveScroll: true,
-            onSuccess: () => {
-                toast.success(`Undangan akses portal berhasil dikirim ke ${portalForm.data.client_email}`);
-                setIsSendingInvite(false);
-            },
-            onError: (err) => {
-                toast.error(Object.values(err)[0] as string || 'Gagal mengirim email');
-                setIsSendingInvite(false);
-            },
-        });
-    };
-
-    const handleSendReport = () => {
-        if (!portalForm.data.client_email) {
-            toast.error('Harap masukkan alamat email klien terlebih dahulu');
-            return;
-        }
-        setIsSendingReport(true);
-        router.post(`/studio/pms/projects/${project.id}/portal/send-report`, {
-            client_email: portalForm.data.client_email,
-        }, {
-            preserveScroll: true,
-            onSuccess: () => {
-                toast.success(`Laporan progres berhasil dikirim ke ${portalForm.data.client_email}`);
-                setIsSendingReport(false);
-            },
-            onError: (err) => {
-                toast.error(Object.values(err)[0] as string || 'Gagal mengirim email');
-                setIsSendingReport(false);
-            },
-        });
-    };
+        ? `${window.location.origin}/portal/${project.portal_token}`
+        : `/portal/${project.portal_token || ''}`;
 
     const openAttachmentModalForTask = (task: PmsTask) => {
         setSelectedTaskForUpload(task);
@@ -2803,17 +2719,17 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
                             <div>
                                 <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-700 dark:text-cyan-300 text-[10px] font-bold mb-1.5">
                                     <ShieldCheck className="size-3 text-cyan-500" />
-                                    Secret Client Vault Suite
+                                    Portal Klien (Read-Only)
                                 </div>
                                 <h3 className="font-black text-xl text-slate-900 dark:text-white tracking-tight">
-                                    Portal Pantau Klien & Notifikasi Email
+                                    Manajemen Portal &amp; Akses Klien
                                 </h3>
                                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                                    Kelola tautan rahasia proyek dan kirimkan ringkasan kemajuan sprint langsung ke inbox email klien.
+                                    Bagikan tautan pantau proyek, atur verifikasi PIN opsional, dan kirim laporan progres ke email klien.
                                 </p>
                             </div>
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 shrink-0">
                                 <Button
                                     asChild
                                     size="sm"
@@ -2821,159 +2737,17 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
                                 >
                                     <a href={portalUrl} target="_blank" rel="noopener noreferrer">
                                         <ExternalLink className="size-3.5 mr-1.5" />
-                                        Buka Tampilan Klien
+                                        Buka Portal Klien
                                     </a>
                                 </Button>
                             </div>
                         </div>
 
-                        {/* Top Overview Cards */}
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                            {/* Card 1: Status & Token */}
-                            <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Status Akses</span>
-                                    <Badge className={`text-[10px] px-2.5 py-0.5 rounded-full ${project.is_portal_active !== false ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30'}`}>
-                                        {project.is_portal_active !== false ? 'Aktif Terbuka' : 'Dinonaktifkan'}
-                                    </Badge>
-                                </div>
-
-                                <div className="space-y-1">
-                                    <span className="text-[11px] text-slate-500 block">Tautan Rahasia Klien:</span>
-                                    <div className="flex items-center gap-1.5">
-                                        <Input
-                                            readOnly
-                                            value={portalUrl}
-                                            className="h-9 text-xs font-mono bg-slate-50 dark:bg-slate-950/80 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 select-all truncate"
-                                        />
-                                        <Button
-                                            type="button"
-                                            size="sm"
-                                            onClick={handleCopyPortalLink}
-                                            className="h-9 px-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold cursor-pointer shrink-0"
-                                        >
-                                            {copiedPortalLink ? <Check className="size-3.5 text-emerald-300" /> : <Copy className="size-3.5" />}
-                                        </Button>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={handleTogglePortal}
-                                        className="h-8 rounded-xl text-xs font-semibold cursor-pointer border-slate-200 dark:border-slate-800"
-                                    >
-                                        {project.is_portal_active !== false ? 'Matikan Akses' : 'Buka Akses'}
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={handleRegeneratePortal}
-                                        className="h-8 rounded-xl text-xs font-semibold cursor-pointer border-slate-200 dark:border-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white"
-                                    >
-                                        <RefreshCw className="size-3 mr-1" />
-                                        Reset Tautan
-                                    </Button>
-                                </div>
-                            </div>
-
-                            {/* Card 2: Pengaturan Email Klien */}
-                            <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-4">
-                                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block">Email Penerima Klien</span>
-
-                                <form onSubmit={handleSavePortalSettings} className="space-y-3">
-                                    <div className="space-y-1">
-                                        <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                                            Alamat Email
-                                        </Label>
-                                        <div className="relative">
-                                            <Input
-                                                type="email"
-                                                required
-                                                placeholder="klien@perusahaan.com"
-                                                value={portalForm.data.client_email}
-                                                onChange={(e) => portalForm.setData('client_email', e.target.value)}
-                                                className="h-9 text-xs pl-8 bg-slate-50/70 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800"
-                                            />
-                                            <Mail className="size-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
-                                        <span>
-                                            {project.portal_last_email_sent_at 
-                                                ? `Terkirim: ${formatDate(project.portal_last_email_sent_at)}` 
-                                                : 'Belum pernah dikirim'}
-                                        </span>
-                                        <Button
-                                            type="submit"
-                                            size="sm"
-                                            disabled={portalForm.processing}
-                                            className="h-8 px-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold cursor-pointer"
-                                        >
-                                            Simpan Email
-                                        </Button>
-                                    </div>
-                                </form>
-                            </div>
-
-                            {/* Card 3: Pengiriman Email Cepat */}
-                            <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-3 flex flex-col justify-between">
-                                <div>
-                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block">Kirim Notifikasi Langsung</span>
-                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                                        Kirimkan akses portal atau ringkasan progres sprint live ke inbox email klien.
-                                    </p>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Button
-                                        type="button"
-                                        disabled={isSendingInvite || !portalForm.data.client_email}
-                                        onClick={handleSendInvite}
-                                        className="w-full h-8.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold cursor-pointer shadow-sm shadow-violet-500/20"
-                                    >
-                                        <KeyRound className="size-3 mr-1.5" />
-                                        {isSendingInvite ? 'Mengirim Undangan...' : 'Kirim Undangan Akses'}
-                                    </Button>
-
-                                    <Button
-                                        type="button"
-                                        disabled={isSendingReport || !portalForm.data.client_email}
-                                        onClick={handleSendReport}
-                                        className="w-full h-8.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white text-xs font-bold cursor-pointer shadow-sm shadow-cyan-500/20"
-                                    >
-                                        <FileText className="size-3 mr-1.5" />
-                                        {isSendingReport ? 'Mengirim Laporan...' : 'Kirim Laporan Progres'}
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* What Client Sees Summary */}
-                        <div className="p-6 rounded-3xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/5 via-blue-500/5 to-violet-500/5 dark:bg-slate-900/60 space-y-3">
-                            <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                <ShieldCheck className="size-4 text-cyan-500" />
-                                Apa yang Dilihat Klien di Portal Pantau?
-                            </h4>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                                <div className="p-3 rounded-2xl bg-white dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 space-y-1">
-                                    <strong className="text-slate-800 dark:text-slate-200 block">🚀 Siklus Sprint & Tugas</strong>
-                                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Daftar tahapan pengerjaan dan peran teknisi penanggung jawab.</p>
-                                </div>
-                                <div className="p-3 rounded-2xl bg-white dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 space-y-1">
-                                    <strong className="text-slate-800 dark:text-slate-200 block">✅ Subtask & Deliverables</strong>
-                                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Checklist butir fitur yang telah lolos pengujian dan berkas hasil kerja.</p>
-                                </div>
-                                <div className="p-3 rounded-2xl bg-white dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 space-y-1">
-                                    <strong className="text-slate-800 dark:text-slate-200 block">📅 Timeline Jadwal Visual</strong>
-                                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Peta waktu progres dari awal pengerjaan hingga target peluncuran.</p>
-                                </div>
-                            </div>
-                        </div>
+                        <ClientPortalPanel
+                            key={`tab-${project.id}-${project.portal_token ?? ''}-${project.portal_pin ?? ''}-${project.client_email ?? ''}-${String(project.is_portal_active)}`}
+                            project={project}
+                            variant="tab"
+                        />
                     </div>
                 )}
 
@@ -4534,213 +4308,29 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
 
                 {/* 9. CLIENT PORTAL ACCESS & EMAIL DISPATCH MODAL */}
                 <Dialog open={isClientPortalModalOpen} onOpenChange={setIsClientPortalModalOpen}>
-                    <DialogContent className="w-[calc(100vw-1.5rem)] sm:w-full max-w-xl rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-4 sm:p-6 overflow-y-auto overflow-x-hidden max-h-[90vh] text-slate-900 dark:text-slate-100 min-w-0">
-                        <DialogHeader className="space-y-1 pb-3 border-b border-slate-100 dark:border-slate-800/80 min-w-0">
-                            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-700 dark:text-cyan-300 text-[10px] font-bold w-fit">
-                                <ShieldCheck className="size-3 text-cyan-500" />
-                                Secret Client Portal
-                            </div>
-                            <DialogTitle className="text-base sm:text-xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2 min-w-0">
-                                <div className="size-8 rounded-xl bg-gradient-to-tr from-cyan-600 to-violet-600 text-white flex items-center justify-center shadow-sm shadow-cyan-500/25 shrink-0">
-                                    <KeyRound className="size-4" />
+                    <DialogContent className="w-[calc(100vw-1.5rem)] sm:max-w-2xl rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-white/[0.1] bg-white/95 dark:bg-[#0B1222]/95 backdrop-blur-2xl shadow-2xl p-5 sm:p-6 gap-4 overflow-y-auto overflow-x-hidden max-h-[92vh] text-slate-900 dark:text-slate-100 min-w-0">
+                        <div className="pointer-events-none absolute inset-x-10 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-cyan-500/60 to-transparent" />
+                        <DialogHeader className="space-y-1 pb-3.5 border-b border-slate-100 dark:border-slate-800/80 min-w-0 text-left pr-6">
+                            <div className="flex items-center gap-2">
+                                <div className="size-9 rounded-xl bg-gradient-to-tr from-cyan-600 via-blue-600 to-violet-600 text-white flex items-center justify-center shadow-sm shadow-cyan-500/25 shrink-0">
+                                    <Globe className="size-4.5" />
                                 </div>
-                                <span className="truncate">Portal Pantau Klien & Notifikasi Email</span>
-                            </DialogTitle>
-                            <DialogDescription className="text-[11px] text-slate-500 dark:text-slate-400">
-                                Berikan akses transparansi pengerjaan proyek kepada klien melalui tautan token rahasia & notifikasi email resmi.
-                            </DialogDescription>
+                                <div className="min-w-0">
+                                    <DialogTitle className="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white truncate">
+                                        Portal Klien · {project.code}
+                                    </DialogTitle>
+                                    <DialogDescription className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                                        Kelola tautan pantau proyek untuk <strong className="font-semibold text-slate-700 dark:text-slate-300">{project.client}</strong>.
+                                    </DialogDescription>
+                                </div>
+                            </div>
                         </DialogHeader>
 
-                        <div className="space-y-4 pt-2">
-                            {/* Status Card & Quick Actions */}
-                            <div className="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                <div className="space-y-0.5">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs font-bold text-slate-900 dark:text-white">
-                                            Status Akses Portal
-                                        </span>
-                                        <Badge className={`text-[10px] px-2 py-0.2 rounded-full ${project.is_portal_active !== false ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30'}`}>
-                                            {project.is_portal_active !== false ? 'Aktif Terbuka' : 'Dinonaktifkan'}
-                                        </Badge>
-                                    </div>
-                                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                                        {project.is_portal_active !== false 
-                                            ? 'Klien dapat membuka portal menggunakan token rahasia.' 
-                                            : 'Akses ditutup. Klien tidak dapat melihat data proyek.'}
-                                    </p>
-                                </div>
-
-                                <div className="flex items-center gap-2 shrink-0">
-                                    <Button
-                                        type="button"
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={handleTogglePortal}
-                                        className="h-8 rounded-xl text-xs font-semibold cursor-pointer border-slate-200 dark:border-slate-800"
-                                    >
-                                        {project.is_portal_active !== false ? 'Nonaktifkan' : 'Aktifkan'}
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={handleRegeneratePortal}
-                                        title="Generate Ulang Token Rahasia"
-                                        className="h-8 rounded-xl text-xs font-semibold cursor-pointer border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                                    >
-                                        <RefreshCw className="size-3 mr-1" />
-                                        Reset Tautan
-                                    </Button>
-                                </div>
-                            </div>
-
-                            {/* Secret URL Box */}
-                            <div className="space-y-1.5">
-                                <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center justify-between">
-                                    <span>Tautan Rahasia Klien (Secret URL)</span>
-                                    <span className="text-[10px] font-normal text-slate-400">Read-Only View</span>
-                                </Label>
-                                <div className="flex items-center gap-2">
-                                    <Input
-                                        readOnly
-                                        value={portalUrl}
-                                        className="h-9 text-xs font-mono bg-slate-50 dark:bg-slate-950/80 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 select-all"
-                                    />
-                                    <Button
-                                        type="button"
-                                        size="sm"
-                                        onClick={handleCopyPortalLink}
-                                        className="h-9 px-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold cursor-pointer shrink-0"
-                                    >
-                                        {copiedPortalLink ? (
-                                            <>
-                                                <Check className="size-3.5 mr-1 text-emerald-300" />
-                                                Disalin
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Copy className="size-3.5 mr-1" />
-                                                Salin
-                                            </>
-                                        )}
-                                    </Button>
-                                    <Button
-                                        asChild
-                                        size="sm"
-                                        variant="outline"
-                                        className="h-9 px-3 rounded-xl border-slate-200 dark:border-slate-800 text-xs font-semibold cursor-pointer shrink-0"
-                                    >
-                                        <a href={portalUrl} target="_blank" rel="noopener noreferrer">
-                                            <ExternalLink className="size-3.5 mr-1 text-cyan-500" />
-                                            Pratinjau
-                                        </a>
-                                    </Button>
-                                </div>
-                            </div>
-
-                            {/* Client Email Form */}
-                            <form onSubmit={handleSavePortalSettings} className="space-y-3.5 pt-1">
-                                <div className="space-y-1">
-                                    <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                                        Alamat Email Klien <span className="text-rose-500">*</span>
-                                    </Label>
-                                    <div className="relative">
-                                        <Input
-                                            type="email"
-                                            required
-                                            placeholder="klien@perusahaan.com"
-                                            value={portalForm.data.client_email}
-                                            onChange={(e) => portalForm.setData('client_email', e.target.value)}
-                                            className="h-9 text-xs pl-8 bg-slate-50/70 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800"
-                                        />
-                                        <Mail className="size-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
-                                    <span>
-                                        {project.portal_last_email_sent_at 
-                                            ? `Terakhir email dikirim: ${formatDate(project.portal_last_email_sent_at)}` 
-                                            : 'Belum pernah mengirim email'}
-                                    </span>
-                                    <Button
-                                        type="submit"
-                                        size="sm"
-                                        variant="ghost"
-                                        disabled={portalForm.processing}
-                                        className="h-7 text-xs font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/40 p-1 cursor-pointer"
-                                    >
-                                        Simpan Email
-                                    </Button>
-                                </div>
-                            </form>
-
-                            {/* Email Action Cards */}
-                            <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 space-y-2.5">
-                                <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 block">
-                                    Kirim Notifikasi Langsung ke Inbox Klien
-                                </Label>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    {/* Action 1: Kirim Undangan Akses Langsung */}
-                                    <div className="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/50 space-y-2 flex flex-col justify-between">
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
-                                                <KeyRound className="size-3.5 text-violet-500" />
-                                                <span>Undangan Akses Portal</span>
-                                            </div>
-                                            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                                                Kirimkan tautan akses langsung ke portal pantau proyek ke inbox email klien.
-                                            </p>
-                                        </div>
-                                        <Button
-                                            type="button"
-                                            size="sm"
-                                            disabled={isSendingInvite || !portalForm.data.client_email}
-                                            onClick={handleSendInvite}
-                                            className="w-full h-8.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold cursor-pointer shadow-sm shadow-violet-500/20"
-                                        >
-                                            <Send className="size-3 mr-1.5" />
-                                            {isSendingInvite ? 'Mengirim...' : 'Kirim Undangan Akses'}
-                                        </Button>
-                                    </div>
-
-                                    {/* Action 2: Kirim Laporan Progres */}
-                                    <div className="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/50 space-y-2 flex flex-col justify-between">
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
-                                                <FileText className="size-3.5 text-cyan-500" />
-                                                <span>Laporan Progres Live</span>
-                                            </div>
-                                            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                                                Kirimkan ringkasan kemajuan sprint, tugas selesai, dan checklist subtask.
-                                            </p>
-                                        </div>
-                                        <Button
-                                            type="button"
-                                            size="sm"
-                                            disabled={isSendingReport || !portalForm.data.client_email}
-                                            onClick={handleSendReport}
-                                            className="w-full h-8.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white text-xs font-semibold cursor-pointer shadow-sm shadow-cyan-500/20"
-                                        >
-                                            <Send className="size-3 mr-1.5" />
-                                            {isSendingReport ? 'Mengirim...' : 'Kirim Laporan Progres'}
-                                        </Button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <DialogFooter className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setIsClientPortalModalOpen(false)}
-                                className="rounded-xl h-9 px-4 text-xs font-semibold border-slate-200 dark:border-slate-800 cursor-pointer"
-                            >
-                                Tutup
-                            </Button>
-                        </DialogFooter>
+                        <ClientPortalPanel
+                            key={`modal-${project.id}-${project.portal_token ?? ''}-${project.portal_pin ?? ''}-${project.client_email ?? ''}-${String(project.is_portal_active)}`}
+                            project={project}
+                            variant="modal"
+                        />
                     </DialogContent>
                 </Dialog>
             </div>

@@ -109,7 +109,62 @@ class PmsClientPortalTest extends TestCase
 
         $fresh = $project->fresh();
         $this->assertNotEquals('old-token', $fresh->portal_token);
+        $this->assertStringStartsWith('toggle-project-', $fresh->portal_token);
         $this->assertNull($fresh->portal_pin);
+    }
+
+    public function test_canonical_portal_url_and_sync_pin_invite_work(): void
+    {
+        Mail::fake();
+
+        $admin = User::factory()->create(['is_admin' => true]);
+        $project = PmsProject::create([
+            'created_by' => $admin->id,
+            'name' => 'Website Company Profile',
+            'code' => 'PRJ-WEB-09',
+            'client' => 'PT Sinar Abadi',
+            'is_portal_active' => true,
+        ]);
+
+        // Auto-generated token uses clean slug + random suffix format
+        $this->assertStringStartsWith('website-company-profile-', $project->portal_token);
+
+        // Send invite while syncing a fresh PIN in one step
+        $this->actingAs($admin)
+            ->post("/studio/pms/projects/{$project->id}/portal/send-invite", [
+                'client_email' => 'boss@sinarabadi.co.id',
+                'sync_pin' => true,
+                'portal_pin' => '774411',
+            ])
+            ->assertRedirect();
+
+        $this->assertEquals('774411', $project->fresh()->portal_pin);
+
+        Mail::assertSent(PmsPortalInviteMail::class, function ($mail) use ($project) {
+            return $mail->hasTo('boss@sinarabadi.co.id')
+                && $mail->pin === '774411'
+                && str_ends_with($mail->portalUrl, "/portal/{$project->portal_token}");
+        });
+
+        // Guest can access canonical /portal/{token} and verify PIN via /portal/{token}/verify-pin
+        $this->get("/portal/{$project->portal_token}")
+            ->assertStatus(200)
+            ->assertInertia(fn ($page) => $page
+                ->component('portal/pms/show')
+                ->where('requires_pin', true)
+                ->where('is_verified', false)
+            );
+
+        $this->post("/portal/{$project->portal_token}/verify-pin", [
+            'pin' => '774411',
+        ])->assertSessionHasNoErrors();
+
+        $this->get("/portal/{$project->portal_token}")
+            ->assertStatus(200)
+            ->assertInertia(fn ($page) => $page
+                ->component('portal/pms/show')
+                ->where('is_verified', true)
+            );
     }
 
     public function test_admin_can_send_invite_and_progress_report_emails(): void
@@ -128,7 +183,7 @@ class PmsClientPortalTest extends TestCase
             'is_portal_active' => true,
         ]);
 
-        // Send invite email
+        // Send invite email (includes active PIN)
         $this->actingAs($admin)
             ->post("/studio/pms/projects/{$project->id}/portal/send-invite", [
                 'client_email' => 'client@company.com',
@@ -136,18 +191,32 @@ class PmsClientPortalTest extends TestCase
             ->assertRedirect();
 
         Mail::assertSent(PmsPortalInviteMail::class, function ($mail) {
-            return $mail->hasTo('client@company.com');
+            return $mail->hasTo('client@company.com') && $mail->pin === '654321';
         });
+
+        // Update settings to disable optional PIN and update email
+        $this->actingAs($admin)
+            ->put("/studio/pms/projects/{$project->id}/portal/settings", [
+                'client_email' => 'updated@company.com',
+                'portal_pin' => null,
+                'is_portal_active' => true,
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect();
+
+        $fresh = $project->fresh();
+        $this->assertEquals('updated@company.com', $fresh->client_email);
+        $this->assertNull($fresh->portal_pin);
 
         // Send progress report email
         $this->actingAs($admin)
             ->post("/studio/pms/projects/{$project->id}/portal/send-report", [
-                'client_email' => 'client@company.com',
+                'client_email' => 'updated@company.com',
             ])
             ->assertRedirect();
 
         Mail::assertSent(PmsProgressReportMail::class, function ($mail) {
-            return $mail->hasTo('client@company.com');
+            return $mail->hasTo('updated@company.com');
         });
     }
 

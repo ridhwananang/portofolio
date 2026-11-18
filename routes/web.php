@@ -18,7 +18,11 @@ Route::post('/track-project/{tracking_code}/settle', [ProjectOrderController::cl
 Route::post('/track-project/{tracking_code}/staging', [ProjectOrderController::class, 'updateStaging'])->middleware(['auth', 'admin'])->name('project.tracker.staging');
 Route::post('/track-project/{tracking_code}/revision', [ProjectOrderController::class, 'submitRevision'])->middleware('throttle:10,1')->name('project.tracker.revision');
 
-// Confidential Client Portal (Public & Token-protected)
+// Client Project Portal (Canonical clean URL + legacy /portal/pms alias)
+Route::get('/portal/{token}', [PmsClientPortalController::class, 'show'])->middleware('throttle:60,1')->name('portal.client.show');
+Route::post('/portal/{token}/verify-pin', [PmsClientPortalController::class, 'verifyPin'])->middleware('throttle:15,1')->name('portal.client.verify-pin');
+
+// Legacy route alias so previously shared /portal/pms/{token} links remain valid
 Route::get('/portal/pms/{token}', [PmsClientPortalController::class, 'show'])->middleware('throttle:60,1')->name('portal.pms.show');
 Route::post('/portal/pms/{token}/verify-pin', [PmsClientPortalController::class, 'verifyPin'])->middleware('throttle:15,1')->name('portal.pms.verify-pin');
 

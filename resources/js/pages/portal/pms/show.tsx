@@ -132,7 +132,7 @@ export default function PmsClientPortalShow({
 
     const handleVerifyPin = (e: React.FormEvent) => {
         e.preventDefault();
-        pinForm.post(`/portal/pms/${token}/verify-pin`, {
+        pinForm.post(`/portal/${token}/verify-pin`, {
             preserveScroll: true,
             onError: () => {
                 toast.error('PIN akses tidak valid. Silakan coba lagi.');
@@ -279,7 +279,7 @@ Dikelola secara profesional oleh Ridhwan Studio.`;
                         </div>
                         <div className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/20 bg-violet-500/10 px-3 py-1 text-[10.5px] font-bold text-violet-700 dark:text-violet-300">
                             <ShieldCheck className="size-3.5 text-violet-500" />
-                            Confidential Client Vault
+                            Portal Pantau Proyek
                         </div>
                         <h1 className="pt-1 font-[family-name:var(--font-brand)] text-xl font-extrabold text-slate-900 sm:text-2xl dark:text-white">
                             Masukkan PIN Akses
@@ -481,7 +481,7 @@ Dikelola secara profesional oleh Ridhwan Studio.`;
                                 </span>
                             </div>
                             <span className="block truncate text-[10.5px] text-slate-500 dark:text-slate-400">
-                                Confidential Client Vault
+                                Portal Pantau Proyek Klien
                             </span>
                         </div>
                     </div>
@@ -864,12 +864,12 @@ Dikelola secara profesional oleh Ridhwan Studio.`;
                 </div>
             </main>
 
-            {/* CONFIDENTIAL NDA FOOTER */}
+            {/* NDA FOOTER */}
             <footer className="no-print mt-14 border-t border-slate-200/80 bg-white/70 py-7 text-center text-xs text-slate-500 backdrop-blur-md dark:border-slate-800/80 dark:bg-[#050814]/80">
                 <div className="mx-auto max-w-7xl space-y-1.5 px-4">
                     <p className="flex items-center justify-center gap-1.5 font-semibold text-slate-700 dark:text-slate-300">
                         <Shield className="size-3.5 text-violet-500" />
-                        Ruang Pantau Rahasia Proyek Dilindungi Oleh Perjanjian
+                        Portal Pantau Proyek Klien • Dilindungi Perjanjian
                         Kerahasiaan (NDA)
                     </p>
                     <p className="text-[11px] text-slate-400 dark:text-slate-500">

@@ -51,9 +51,22 @@ class PmsProject extends Model
     {
         static::creating(function ($project) {
             if (empty($project->portal_token)) {
-                $project->portal_token = Str::random(32);
+                $project->portal_token = self::generatePortalToken($project->name, $project->code);
             }
         });
+    }
+
+    /**
+     * Generate a readable, client-friendly, yet unpredictable portal access token.
+     */
+    public static function generatePortalToken(?string $name = null, ?string $code = null): string
+    {
+        $slugSource = trim((string) ($name ?: $code ?: 'proyek'));
+        $prefix = Str::slug($slugSource);
+        $prefix = Str::limit($prefix, 32, '');
+        $prefix = trim($prefix, '-') ?: 'proyek';
+
+        return $prefix . '-' . strtolower(Str::random(8));
     }
 
     protected $appends = [

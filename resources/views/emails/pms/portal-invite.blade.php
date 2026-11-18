@@ -3,7 +3,7 @@
 
 Terima kasih atas kepercayaan Anda bermitra dengan **Ridhwan Studio**. 
 
-Untuk menjaga kenyamanan dan transparansi pengerjaan proyek digital Anda, kami telah menyiapkan **Portal Pantau Proyek Rahasia (*Live Project Vault*)**. Melalui portal ini, Anda dapat memantau siklus sprint, rincian tugas tim, checklist deliverable, laporan progres berkala, hingga timeline jadwal peluncuran secara *real-time*.
+Untuk menjaga kenyamanan dan transparansi pengerjaan proyek digital Anda, kami telah menyiapkan **Portal Pantau Proyek Klien (*Client Access Portal*)**. Melalui portal ini, Anda dapat memantau siklus sprint, rincian tugas tim, checklist deliverable, laporan progres berkala, hingga timeline jadwal peluncuran secara *real-time*.
 
 <x-mail::panel>
 ### 📌 Ringkasan Proyek:
@@ -11,6 +11,9 @@ Untuk menjaga kenyamanan dan transparansi pengerjaan proyek digital Anda, kami t
 - **Status Saat Ini:** {{ strtoupper(str_replace('_', ' ', $project->status)) }}
 - **Target Deadline:** {{ $project->end_date ? \Carbon\Carbon::parse($project->end_date)->translatedFormat('d F Y') : 'Fleksibel' }}
 - **Lead / Creator:** {{ $project->creator?->name ?? 'Ridhwan Studio Team' }}
+@if(!empty($pin))
+- **PIN Keamanan Akses:** `{{ $pin }}`
+@endif
 </x-mail::panel>
 
 <x-mail::button :url="$portalUrl" color="primary">
