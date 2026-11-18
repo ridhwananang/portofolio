@@ -35,12 +35,29 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $host = $request->getHost();
+        $scheme = $request->getScheme();
+        $port = $request->getPort();
+        $portSuffix = ($port && ! in_array($port, [80, 443])) ? ':'.$port : '';
+
+        if (str_starts_with($host, 'studio.')) {
+            $mainHost = substr($host, 7);
+            $mainWebUrl = $scheme.'://'.$mainHost.$portSuffix;
+        } elseif (str_starts_with($host, 'admin.')) {
+            $mainHost = substr($host, 6);
+            $mainWebUrl = $scheme.'://'.$mainHost.$portSuffix;
+        } else {
+            $configuredUrl = config('app.url');
+            $mainWebUrl = $configuredUrl ? rtrim($configuredUrl, '/') : $scheme.'://'.$host.$portSuffix;
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
                 'user' => $request->user(),
             ],
+            'mainWebUrl' => $mainWebUrl,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

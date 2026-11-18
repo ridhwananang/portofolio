@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppearance } from '@/hooks/use-appearance';
-import { cn } from '@/lib/utils';
+import { cn, resolvePublicWebUrl } from '@/lib/utils';
 import type { Auth } from '@/types';
 
 type CommandGroup =
@@ -136,8 +136,9 @@ function HighlightMatch({ text, query }: { text: string; query: string }) {
 }
 
 export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
-    const page = usePage<{ auth?: Auth }>();
+    const page = usePage<{ auth?: Auth; mainWebUrl?: string }>();
     const isAdmin = Boolean(page.props.auth?.user?.is_admin);
+    const mainWebUrl = page.props.mainWebUrl;
     const currentPath = (page.url || '').split('?')[0];
 
     const [search, setSearch] = useState('');
@@ -569,7 +570,12 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 icon: Globe,
                 group: 'Aksi Cepat',
                 keywords: ['public', 'web', 'portofolio', 'depan', 'live'],
-                action: () => window.open('/', '_blank', 'noopener,noreferrer'),
+                action: () =>
+                    window.open(
+                        resolvePublicWebUrl(mainWebUrl),
+                        '_blank',
+                        'noopener,noreferrer',
+                    ),
                 actionLabel: 'Buka Tab',
             },
             {
@@ -582,7 +588,11 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 group: 'Aksi Cepat',
                 keywords: ['kalkulator', 'layanan', 'jasa', 'harga', 'estimasi'],
                 action: () =>
-                    window.open('/layanan', '_blank', 'noopener,noreferrer'),
+                    window.open(
+                        resolvePublicWebUrl(mainWebUrl, '/layanan'),
+                        '_blank',
+                        'noopener,noreferrer',
+                    ),
                 actionLabel: 'Buka Tab',
             },
         ];
@@ -623,7 +633,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         ];
 
         return [...pmsItems, ...studioNavItems, ...quickActions, ...prefItems];
-    }, [appearance, isAdmin, resolvedAppearance, updateAppearance]);
+    }, [appearance, isAdmin, mainWebUrl, resolvedAppearance, updateAppearance]);
 
     const availableGroups: GroupFilter[] = useMemo(() => {
         const present = new Set<CommandGroup>(items.map((item) => item.group));

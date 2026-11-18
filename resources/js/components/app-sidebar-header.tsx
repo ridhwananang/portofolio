@@ -41,6 +41,7 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useAppearance } from '@/hooks/use-appearance';
+import { resolvePublicWebUrl } from '@/lib/utils';
 import type { Auth, BreadcrumbItem as BreadcrumbItemType } from '@/types';
 
 const emptySubscribe = () => () => {};
@@ -50,12 +51,13 @@ export function AppSidebarHeader({
 }: {
     breadcrumbs?: BreadcrumbItemType[];
 }) {
-    const { auth } = usePage<{ auth: Auth }>().props;
+    const { auth, mainWebUrl } = usePage<{ auth: Auth; mainWebUrl?: string }>().props;
     const isAdmin = Boolean(auth?.user?.is_admin);
     const { resolvedAppearance, updateAppearance } = useAppearance();
     const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
     const [commandOpen, setCommandOpen] = useState(false);
     const { toggleSidebar } = useSidebar();
+    const publicWebUrl = resolvePublicWebUrl(mainWebUrl);
 
     // Ensure SSR and initial client hydration match identically by deferring dark state until mounted
     const isDark = mounted ? resolvedAppearance === 'dark' : false;
@@ -470,7 +472,7 @@ export function AppSidebarHeader({
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <a
-                                        href="/"
+                                        href={publicWebUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="h-8.5 sm:h-9 gap-1.5 sm:gap-2 rounded-xl border border-slate-200/90 dark:border-white/10 bg-slate-50/80 dark:bg-slate-950/60 hover:bg-white dark:hover:bg-slate-900 hover:border-violet-500/40 text-xs font-bold text-slate-700 dark:text-slate-200 transition-all duration-200 shadow-2xs hover:shadow-xs px-2.5 sm:px-3 inline-flex items-center group cursor-pointer active:scale-[0.98] shrink-0"
