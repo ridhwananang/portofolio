@@ -1,4 +1,4 @@
-import { Link, router, usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import {
     ExternalLink,
     Globe,
@@ -20,19 +20,17 @@ import {
     ArrowUpRight,
     Sparkles,
     History,
-    Radio,
     ShieldCheck,
 } from 'lucide-react';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useSyncExternalStore } from 'react';
 import { CommandPalette } from '@/components/admin/command-palette';
 import { Breadcrumbs } from '@/components/breadcrumbs';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -43,8 +41,9 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useAppearance } from '@/hooks/use-appearance';
-import { home } from '@/routes';
 import type { Auth, BreadcrumbItem as BreadcrumbItemType } from '@/types';
+
+const emptySubscribe = () => () => {};
 
 export function AppSidebarHeader({
     breadcrumbs = [],
@@ -54,13 +53,9 @@ export function AppSidebarHeader({
     const { auth } = usePage<{ auth: Auth }>().props;
     const isAdmin = Boolean(auth?.user?.is_admin);
     const { resolvedAppearance, updateAppearance } = useAppearance();
-    const [mounted, setMounted] = useState(false);
+    const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
     const [commandOpen, setCommandOpen] = useState(false);
     const { toggleSidebar } = useSidebar();
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
 
     // Ensure SSR and initial client hydration match identically by deferring dark state until mounted
     const isDark = mounted ? resolvedAppearance === 'dark' : false;
@@ -474,8 +469,8 @@ export function AppSidebarHeader({
                                 ======================================================== */}
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Link
-                                        href={home()}
+                                    <a
+                                        href="/"
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="h-8.5 sm:h-9 gap-1.5 sm:gap-2 rounded-xl border border-slate-200/90 dark:border-white/10 bg-slate-50/80 dark:bg-slate-950/60 hover:bg-white dark:hover:bg-slate-900 hover:border-violet-500/40 text-xs font-bold text-slate-700 dark:text-slate-200 transition-all duration-200 shadow-2xs hover:shadow-xs px-2.5 sm:px-3 inline-flex items-center group cursor-pointer active:scale-[0.98] shrink-0"
@@ -488,7 +483,7 @@ export function AppSidebarHeader({
                                         <Globe className="size-3.5 text-violet-600 dark:text-violet-400 group-hover:rotate-45 transition-transform duration-300 shrink-0" />
                                         <span className="hidden sm:inline font-semibold">Web Publik</span>
                                         <ExternalLink className="size-3 text-slate-400 group-hover:text-violet-600 dark:group-hover:text-violet-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all hidden sm:inline shrink-0" />
-                                    </Link>
+                                    </a>
                                 </TooltipTrigger>
                                 <TooltipContent side="bottom" className="rounded-xl border border-slate-200 dark:border-slate-800 shadow-lg text-xs py-1.5 px-3">
                                     <div className="font-bold flex items-center gap-1.5">
