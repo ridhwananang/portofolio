@@ -11,13 +11,14 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class PmsTaskController extends Controller
 {
     /**
-     * Display Kanban board / Tasks workspace.
+     * Display Personal Kanban board / Tasks workspace for the authenticated user.
      */
     public function index(Request $request): Response
     {
@@ -26,33 +27,43 @@ class PmsTaskController extends Controller
 
         $projectId = $request->input('project_id');
         $sprintId = $request->input('sprint_id');
-        $assignedTo = $request->input('assigned_to');
         $status = $request->input('status');
         $priority = $request->input('priority');
         $search = $request->input('search');
 
         // Non-admin can only access projects they belong to
-        $projectsQuery = PmsProject::query();
+        $projectsQuery = PmsProject::with([
+            'sprints' => fn ($q) => $q->select('id', 'project_id', 'name', 'status')->latest('id'),
+        ]);
         if (! $isAdmin && $user) {
             $projectsQuery->whereHas('members', fn ($q) => $q->where('user_id', $user->id));
         }
         $projects = $projectsQuery->select('id', 'name', 'code')->latest()->get();
         $userProjectIds = $projects->pluck('id');
 
-        $users = User::where('status', 'active')->select('id', 'name', 'email', 'avatar', 'role_title')->orderBy('name')->get();
+        $users = $user
+            ? collect([$user->only(['id', 'name', 'email', 'avatar', 'role_title'])])
+            : collect();
+
+        $likeOp = DB::connection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
 
         $tasksQuery = PmsTask::with(['project', 'sprint', 'assignee', 'subtasks'])
-            ->when(! $isAdmin, function ($q) use ($userProjectIds) {
-                $q->whereIn('project_id', $userProjectIds);
+            ->when($user, function ($q) use ($user, $isAdmin, $userProjectIds) {
+                // Personal Kanban Board: strictly scoped to the currently logged-in user only
+                $q->where('assigned_to', $user->id);
+                if (! $isAdmin) {
+                    $q->whereIn('project_id', $userProjectIds);
+                }
             })
             ->when($projectId, fn ($q) => $q->where('project_id', $projectId))
             ->when($sprintId, fn ($q) => $q->where('sprint_id', $sprintId))
-            ->when($assignedTo, fn ($q) => $q->where('assigned_to', $assignedTo))
             ->when($status, fn ($q) => $q->where('status', $status))
             ->when($priority, fn ($q) => $q->where('priority', $priority))
-            ->when($search, function ($q, $search) {
-                $q->where('title', 'ilike', "%{$search}%")
-                    ->orWhere('description', 'ilike', "%{$search}%");
+            ->when($search, function ($q, $search) use ($likeOp) {
+                $q->where(function ($sub) use ($search, $likeOp) {
+                    $sub->where('title', $likeOp, "%{$search}%")
+                        ->orWhere('description', $likeOp, "%{$search}%");
+                });
             })
             ->orderBy('order_index', 'asc')
             ->orderBy('id', 'desc');
@@ -68,7 +79,7 @@ class PmsTaskController extends Controller
             'filters' => [
                 'project_id' => $projectId ? (int) $projectId : null,
                 'sprint_id' => $sprintId ? (int) $sprintId : null,
-                'assigned_to' => $assignedTo ? (int) $assignedTo : null,
+                'assigned_to' => $user?->id,
                 'status' => $status,
                 'priority' => $priority,
                 'search' => $search,

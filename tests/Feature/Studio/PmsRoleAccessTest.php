@@ -317,3 +317,63 @@ test('admin has full access to create, assign to anyone, edit, and delete any ta
     $this->actingAs($this->admin)->delete("/studio/pms/tasks/{$task->id}")->assertRedirect();
     expect(PmsTask::find($task->id))->toBeNull();
 });
+
+test('kanban board is strictly scoped to individual logged-in user tasks for both admin and member', function () {
+    $myTask = PmsTask::create([
+        'project_id' => $this->assignedProject->id,
+        'title' => 'Developer Own Kanban Task',
+        'status' => 'todo',
+        'priority' => 'high',
+        'assigned_to' => $this->developer->id,
+        'created_by' => $this->admin->id,
+    ]);
+
+    $adminTask = PmsTask::create([
+        'project_id' => $this->assignedProject->id,
+        'title' => 'Admin Own Kanban Task',
+        'status' => 'todo',
+        'priority' => 'urgent',
+        'assigned_to' => $this->admin->id,
+        'created_by' => $this->admin->id,
+    ]);
+
+    // Developer only sees their own task (even if passing assigned_to param)
+    $response = $this->actingAs($this->developer)
+        ->get("/studio/pms/tasks?assigned_to={$this->admin->id}");
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('studio/pms/tasks/index')
+        ->where('is_admin', false)
+        ->where('current_user_id', $this->developer->id)
+        ->where('filters.assigned_to', $this->developer->id)
+        ->has('tasks', 1)
+        ->where('tasks.0.id', $myTask->id)
+    );
+
+    // Admin also sees strictly their own task on personal Kanban board
+    $adminResponse = $this->actingAs($this->admin)->get('/studio/pms/tasks');
+    $adminResponse->assertOk();
+    $adminResponse->assertInertia(fn ($page) => $page
+        ->component('studio/pms/tasks/index')
+        ->where('current_user_id', $this->admin->id)
+        ->has('tasks', 1)
+        ->where('tasks.0.id', $adminTask->id)
+    );
+
+    // Drag & drop JSON patch with order_index works cleanly
+    $this->actingAs($this->developer)
+        ->patchJson("/studio/pms/tasks/{$myTask->id}/status", [
+            'status' => 'review',
+            'order_index' => 2,
+        ])
+        ->assertOk()
+        ->assertJson([
+            'success' => true,
+            'task' => [
+                'id' => $myTask->id,
+                'status' => 'review',
+                'order_index' => 2,
+            ],
+        ]);
+});

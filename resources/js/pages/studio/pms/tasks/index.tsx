@@ -1,12 +1,21 @@
-import React, { useState } from 'react';
-import { Head, Link, router, useForm } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
+import { Head, router } from '@inertiajs/react';
+import { GripVertical, Trash2 } from 'lucide-react';
+import React, { useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import { KanbanColumn } from '@/components/studio/pms/kanban/kanban-column';
+import { KanbanHeader } from '@/components/studio/pms/kanban/kanban-header';
+import { KanbanToolbar } from '@/components/studio/pms/kanban/kanban-toolbar';
+import {
+    getXsrfToken,
+    KANBAN_COLUMNS,
+} from '@/components/studio/pms/kanban/kanban-types';
+import {
+    KanbanTaskModal
+    
+    
+} from '@/components/studio/pms/kanban-task-modal';
+import type {ProjectWithSprints, TaskStatus} from '@/components/studio/pms/kanban-task-modal';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent } from '@/components/ui/card';
 import {
     Dialog,
     DialogContent,
@@ -15,38 +24,12 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import {
-    AlertCircle,
-    Calendar,
-    Check,
-    CheckCircle2,
-    CheckSquare,
-    Clock,
-    FolderKanban,
-    Layers,
-    ListTodo,
-    Lock,
-    MoreHorizontal,
-    Pencil,
-    Plus,
-    Search,
-    Trash2,
-    User,
-    Zap,
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { PmsProject, PmsTask, PmsUser } from '@/types/pms';
+import AppLayout from '@/layouts/app-layout';
+import type { PmsTask, PmsUser } from '@/types/pms';
 
 interface Props {
     tasks: PmsTask[];
-    projects: PmsProject[];
+    projects: ProjectWithSprints[];
     users: PmsUser[];
     filters: {
         project_id?: number;
@@ -65,87 +48,293 @@ export default function TasksIndex({
     projects,
     users,
     filters,
-    is_admin = true,
+    is_admin = false,
     current_user_id,
 }: Props) {
+    const [prevTasksProp, setPrevTasksProp] = useState<PmsTask[]>(tasks);
+    const [boardTasks, setBoardTasks] = useState<PmsTask[]>(tasks);
+
+    if (tasks !== prevTasksProp) {
+        setPrevTasksProp(tasks);
+        setBoardTasks(tasks);
+    }
+
     const [search, setSearch] = useState(filters.search || '');
-    const [selectedProject, setSelectedProject] = useState(filters.project_id ? String(filters.project_id) : 'all');
-    const [selectedPriority, setSelectedPriority] = useState(filters.priority || 'all');
-    const [selectedAssignee, setSelectedAssignee] = useState(filters.assigned_to ? String(filters.assigned_to) : 'all');
+    const [selectedProject, setSelectedProject] = useState(
+        filters.project_id ? String(filters.project_id) : 'all',
+    );
+    const [selectedPriority, setSelectedPriority] = useState(
+        filters.priority || 'all',
+    );
+    const [mobileColumnView, setMobileColumnView] = useState<'all' | TaskStatus>(
+        'all',
+    );
+    const [cardDensity, setCardDensity] = useState<'standard' | 'compact'>(
+        'standard',
+    );
 
     // Modals
-    const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [taskModalOpen, setTaskModalOpen] = useState(false);
+    const [taskModalMode, setTaskModalMode] = useState<'create' | 'edit'>(
+        'create',
+    );
+    const [taskModalInitialStatus, setTaskModalInitialStatus] =
+        useState<TaskStatus>('todo');
+    const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
     const [deletingTask, setDeletingTask] = useState<PmsTask | null>(null);
-    const [editingTask, setEditingTask] = useState<PmsTask | null>(null);
 
-    // Create Form
-    const createForm = useForm({
-        project_id: (projects[0]?.id ? String(projects[0].id) : '') as string | number,
-        sprint_id: '' as string | number,
-        title: '',
-        description: '',
-        status: 'todo',
-        priority: 'medium',
-        assigned_to: is_admin ? '' : (current_user_id ? String(current_user_id) : ''),
-        due_date: '',
-        estimated_hours: 0,
-    });
+    // Drag & Drop State (Desktop HTML5 + Touch)
+    const [draggedTaskId, setDraggedTaskId] = useState<number | null>(null);
+    const [dragOverCol, setDragOverCol] = useState<TaskStatus | null>(null);
+    const [dropBeforeTaskId, setDropBeforeTaskId] = useState<number | null>(
+        null,
+    );
+    const [touchDragState, setTouchDragState] = useState<{
+        taskId: number;
+        title: string;
+        projectCode?: string;
+        x: number;
+        y: number;
+    } | null>(null);
 
-    const openCreateModal = (statusCol?: 'todo' | 'in_progress' | 'review' | 'done') => {
-        createForm.setData({
-            project_id: (projects[0]?.id ? String(projects[0].id) : '') as string | number,
-            sprint_id: '',
-            title: '',
-            description: '',
-            status: statusCol || 'todo',
-            priority: 'medium',
-            assigned_to: is_admin ? '' : (current_user_id ? String(current_user_id) : ''),
-            due_date: '',
-            estimated_hours: 0,
+    const boardScrollRef = useRef<HTMLDivElement | null>(null);
+
+    const editingTask = useMemo(
+        () => boardTasks.find((t) => t.id === editingTaskId) ?? null,
+        [boardTasks, editingTaskId],
+    );
+
+    const currentUser = useMemo(
+        () => users.find((u) => u.id === current_user_id) ?? users[0] ?? null,
+        [users, current_user_id],
+    );
+
+    // Strictly scoped to this individual user's own tasks
+    const visibleTasks = useMemo(() => {
+        const needle = search.trim().toLowerCase();
+
+        return boardTasks.filter((task) => {
+            if (current_user_id && task.assigned_to !== current_user_id) {
+                return false;
+            }
+
+            if (
+                selectedProject !== 'all' &&
+                String(task.project_id) !== selectedProject
+            ) {
+                return false;
+            }
+
+            if (
+                selectedPriority !== 'all' &&
+                task.priority !== selectedPriority
+            ) {
+                return false;
+            }
+
+            if (needle) {
+                const hay =
+                    `${task.title} ${task.description ?? ''} ${task.project?.code ?? ''} ${task.project?.name ?? ''}`.toLowerCase();
+
+                if (!hay.includes(needle)) {
+                    return false;
+                }
+            }
+
+            return true;
         });
-        setIsCreateOpen(true);
-    };
+    }, [
+        boardTasks,
+        search,
+        selectedProject,
+        selectedPriority,
+        current_user_id,
+    ]);
 
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
+    const totalVisible = visibleTasks.length;
+    const hasActiveFilters =
+        Boolean(search.trim()) ||
+        selectedProject !== 'all' ||
+        selectedPriority !== 'all';
+
+    const syncServerFilters = (overrides: {
+        search?: string;
+        project?: string;
+        priority?: string;
+    }) => {
+        const nextSearch = overrides.search ?? search;
+        const nextProject = overrides.project ?? selectedProject;
+        const nextPriority = overrides.priority ?? selectedPriority;
+
         router.get(
             '/studio/pms/tasks',
             {
-                search: search || undefined,
-                project_id: selectedProject !== 'all' ? selectedProject : undefined,
-                priority: selectedPriority !== 'all' ? selectedPriority : undefined,
-                assigned_to: selectedAssignee !== 'all' ? selectedAssignee : undefined,
+                search: nextSearch || undefined,
+                project_id: nextProject !== 'all' ? nextProject : undefined,
+                priority: nextPriority !== 'all' ? nextPriority : undefined,
             },
-            { preserveState: true }
+            { preserveState: true, preserveScroll: true, replace: true },
         );
     };
 
-    const handleCreateTask = (e: React.FormEvent) => {
+    const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        createForm.post('/studio/pms/tasks', {
-            preserveScroll: true,
-            onSuccess: () => {
-                toast.success('Tugas baru berhasil dibuat');
-                setIsCreateOpen(false);
-                createForm.reset();
-            },
-            onError: (err) => toast.error(Object.values(err)[0] as string || 'Gagal membuat tugas'),
-        });
+        syncServerFilters({});
     };
 
-    const handleUpdateStatus = (taskId: number, newStatus: string) => {
-        router.patch(
-            `/studio/pms/tasks/${taskId}/status`,
-            { status: newStatus },
-            {
-                preserveScroll: true,
-                onSuccess: () => toast.success(`Status tugas diubah ke ${newStatus.replace('_', ' ')}`),
-            }
+    const handleResetFilters = () => {
+        setSearch('');
+        setSelectedProject('all');
+        setSelectedPriority('all');
+
+        router.get(
+            '/studio/pms/tasks',
+            {},
+            { preserveState: true, preserveScroll: true, replace: true },
         );
+    };
+
+    const openCreateModal = (statusCol: TaskStatus = 'todo') => {
+        setTaskModalMode('create');
+        setTaskModalInitialStatus(statusCol);
+        setEditingTaskId(null);
+        setTaskModalOpen(true);
+    };
+
+    const openEditModal = (task: PmsTask) => {
+        setTaskModalMode('edit');
+        setEditingTaskId(task.id);
+        setTaskModalInitialStatus(task.status);
+        setTaskModalOpen(true);
+    };
+
+    const moveTaskOptimistically = async (
+        taskId: number,
+        targetStatus: TaskStatus,
+        beforeTaskId: number | null = null,
+        showUndo = true,
+    ) => {
+        const dragged = boardTasks.find((t) => t.id === taskId);
+
+        if (!dragged || (dragged.status === targetStatus && beforeTaskId === null)) {
+            return;
+        }
+
+        if (beforeTaskId === taskId) {
+            return;
+        }
+
+        const previousSnapshot = boardTasks;
+        const previousStatus = dragged.status;
+
+        const targetColTasks = boardTasks
+            .filter((t) => t.status === targetStatus && t.id !== taskId)
+            .sort((a, b) => a.order_index - b.order_index);
+
+        let insertIndex = targetColTasks.length;
+
+        if (beforeTaskId !== null) {
+            const idx = targetColTasks.findIndex((t) => t.id === beforeTaskId);
+
+            if (idx !== -1) {
+                insertIndex = idx;
+            }
+        }
+
+        const reorderedTarget = [...targetColTasks];
+        reorderedTarget.splice(insertIndex, 0, {
+            ...dragged,
+            status: targetStatus,
+        });
+
+        const updatedOrderMap = new Map<
+            number,
+            { status: TaskStatus; order_index: number }
+        >();
+        reorderedTarget.forEach((item, idx) => {
+            updatedOrderMap.set(item.id, {
+                status: targetStatus,
+                order_index: idx + 1,
+            });
+        });
+
+        const nextTasks = boardTasks.map((t) => {
+            const updated = updatedOrderMap.get(t.id);
+
+            if (updated) {
+                return {
+                    ...t,
+                    status: updated.status,
+                    order_index: updated.order_index,
+                };
+            }
+
+            return t;
+        });
+
+        nextTasks.sort((a, b) => a.order_index - b.order_index || b.id - a.id);
+        setBoardTasks(nextTasks);
+
+        try {
+            const response = await fetch(`/studio/pms/tasks/${taskId}/status`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-XSRF-TOKEN': getXsrfToken(),
+                },
+                body: JSON.stringify({
+                    status: targetStatus,
+                    order_index: insertIndex + 1,
+                }),
+            });
+
+            if (!response.ok) {
+                const errPayload = await response.json().catch(() => null);
+
+                throw new Error(
+                    errPayload?.message || 'Gagal memindahkan tugas',
+                );
+            }
+
+            const targetColMeta = KANBAN_COLUMNS.find(
+                (c) => c.id === targetStatus,
+            );
+
+            if (previousStatus !== targetStatus && targetColMeta) {
+                toast.success(
+                    `"${dragged.title}" dipindahkan ke ${targetColMeta.shortTitle}`,
+                    showUndo
+                        ? {
+                              action: {
+                                  label: 'Urungkan',
+                                  onClick: () =>
+                                      void moveTaskOptimistically(
+                                          taskId,
+                                          previousStatus,
+                                          null,
+                                          false,
+                                      ),
+                              },
+                          }
+                        : undefined,
+                );
+            }
+        } catch (err) {
+            setBoardTasks(previousSnapshot);
+            toast.error(
+                err instanceof Error
+                    ? err.message
+                    : 'Gagal memperbarui status tugas',
+            );
+        }
     };
 
     const confirmDeleteTask = () => {
-        if (!deletingTask) return;
+        if (!deletingTask) {
+            return;
+        }
+
         router.delete(`/studio/pms/tasks/${deletingTask.id}`, {
             preserveScroll: true,
             onSuccess: () => {
@@ -155,479 +344,392 @@ export default function TasksIndex({
         });
     };
 
-    // Columns for Kanban
-    const columns: { id: 'todo' | 'in_progress' | 'review' | 'done'; title: string; color: string; badge: string }[] = [
-        { id: 'todo', title: 'To Do / Backlog', color: 'border-slate-300 dark:border-slate-800', badge: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' },
-        { id: 'in_progress', title: 'Sedang Dikerjakan (In Progress)', color: 'border-indigo-400 dark:border-indigo-800', badge: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20' },
-        { id: 'review', title: 'Dalam Review / QA', color: 'border-amber-400 dark:border-amber-800', badge: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' },
-        { id: 'done', title: 'Selesai (Completed)', color: 'border-emerald-400 dark:border-emerald-800', badge: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' },
-    ];
+    // Desktop HTML5 Drag Handlers
+    const handleDragStart = (
+        e: React.DragEvent<HTMLDivElement>,
+        task: PmsTask,
+    ) => {
+        setDraggedTaskId(task.id);
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', String(task.id));
+    };
+
+    const handleDragEnd = () => {
+        setDraggedTaskId(null);
+        setDragOverCol(null);
+        setDropBeforeTaskId(null);
+    };
+
+    const handleColumnDragOver = (
+        e: React.DragEvent<HTMLDivElement>,
+        colId: TaskStatus,
+    ) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+
+        if (dragOverCol !== colId) {
+            setDragOverCol(colId);
+        }
+    };
+
+    const handleColumnDragLeave = (
+        e: React.DragEvent<HTMLDivElement>,
+        colId: TaskStatus,
+    ) => {
+        if (
+            !e.currentTarget.contains(e.relatedTarget as Node) &&
+            dragOverCol === colId
+        ) {
+            setDragOverCol(null);
+        }
+    };
+
+    const handleColumnDrop = (
+        e: React.DragEvent<HTMLDivElement>,
+        colId: TaskStatus,
+    ) => {
+        e.preventDefault();
+        const fallbackId = Number(e.dataTransfer.getData('text/plain'));
+        const activeId =
+            draggedTaskId ?? (Number.isFinite(fallbackId) ? fallbackId : null);
+
+        if (activeId) {
+            void moveTaskOptimistically(activeId, colId, dropBeforeTaskId);
+        }
+
+        handleDragEnd();
+    };
+
+    const handleCardDragOver = (
+        e: React.DragEvent<HTMLDivElement>,
+        colId: TaskStatus,
+        taskId: number,
+    ) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (dragOverCol !== colId) {
+            setDragOverCol(colId);
+        }
+
+        if (draggedTaskId !== null && draggedTaskId !== taskId) {
+            setDropBeforeTaskId(taskId);
+        }
+    };
+
+    const handleCardDragLeave = (taskId: number) => {
+        if (dropBeforeTaskId === taskId) {
+            setDropBeforeTaskId(null);
+        }
+    };
+
+    const handleCardDrop = (
+        e: React.DragEvent<HTMLDivElement>,
+        colId: TaskStatus,
+    ) => {
+        e.stopPropagation();
+        handleColumnDrop(e, colId);
+    };
+
+    // Touch Drag & Drop Handlers (Mobile & Tablet)
+    const handleTouchDragStart = (
+        e: React.TouchEvent<HTMLButtonElement>,
+        task: PmsTask,
+    ) => {
+        if (e.touches.length === 0) {
+            return;
+        }
+
+        const touch = e.touches[0];
+        setDraggedTaskId(task.id);
+        setTouchDragState({
+            taskId: task.id,
+            title: task.title,
+            projectCode: task.project?.code,
+            x: touch.clientX,
+            y: touch.clientY,
+        });
+    };
+
+    const handleTouchDragMove = (e: React.TouchEvent<HTMLButtonElement>) => {
+        if (!touchDragState || e.touches.length === 0) {
+            return;
+        }
+
+        const touch = e.touches[0];
+        setTouchDragState((prev) =>
+            prev ? { ...prev, x: touch.clientX, y: touch.clientY } : null,
+        );
+
+        const container = boardScrollRef.current;
+
+        if (container && container.scrollWidth > container.clientWidth) {
+            const rect = container.getBoundingClientRect();
+
+            if (touch.clientX > rect.right - 48) {
+                container.scrollLeft += 14;
+            } else if (touch.clientX < rect.left + 48) {
+                container.scrollLeft -= 14;
+            }
+        }
+
+        const element = document.elementFromPoint(touch.clientX, touch.clientY);
+        const colEl = element?.closest('[data-kanban-col]') as HTMLElement | null;
+        const cardEl = element?.closest(
+            '[data-kanban-card]',
+        ) as HTMLElement | null;
+
+        if (colEl) {
+            const colAttr = colEl.getAttribute(
+                'data-kanban-col',
+            ) as TaskStatus | null;
+
+            if (colAttr) {
+                setDragOverCol(colAttr);
+            }
+        } else {
+            setDragOverCol(null);
+        }
+
+        if (cardEl) {
+            const cardIdAttr = Number(cardEl.getAttribute('data-kanban-card'));
+            setDropBeforeTaskId(
+                Number.isFinite(cardIdAttr) &&
+                    cardIdAttr !== touchDragState.taskId
+                    ? cardIdAttr
+                    : null,
+            );
+        } else {
+            setDropBeforeTaskId(null);
+        }
+    };
+
+    const handleTouchDragEnd = () => {
+        if (touchDragState && dragOverCol) {
+            void moveTaskOptimistically(
+                touchDragState.taskId,
+                dragOverCol,
+                dropBeforeTaskId,
+            );
+        }
+
+        setTouchDragState(null);
+        setDraggedTaskId(null);
+        setDragOverCol(null);
+        setDropBeforeTaskId(null);
+    };
 
     return (
         <AppLayout
             breadcrumbs={[
                 { title: 'Studio', href: '/studio' },
                 { title: 'Project Management', href: '/studio/pms' },
-                { title: 'Kanban & Tasks', href: '/studio/pms/tasks' },
+                { title: 'Jobdesk & Kanban', href: '/studio/pms/tasks' },
             ]}
         >
-            <Head title="Kanban Board & Manajemen Tugas - Studio PMS" />
+            <Head title="Kanban & Jobdesk Saya - Studio PMS" />
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
-                {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <span className="p-2 rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20">
-                                <Layers className="size-5" />
-                            </span>
-                            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                                Kanban Board & Semua Tugas
-                            </h1>
-                        </div>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                            Papan kerja agile untuk mengatur alur tiket tugas, prioritas pengerjaan, dan developer penanggung jawab.
-                        </p>
-                    </div>
+            <div className="mx-auto w-full max-w-[1600px] space-y-4 px-3 py-4 sm:space-y-5 sm:px-6 sm:py-5 lg:px-8">
+                {/* 1. Compact Personal Luxury Header */}
+                <KanbanHeader
+                    currentUser={currentUser}
+                    visibleTasks={visibleTasks}
+                    onCreateTask={() => openCreateModal('todo')}
+                />
 
-                    <Button
-                        onClick={() => openCreateModal('todo')}
-                        className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white rounded-xl shadow-lg shadow-violet-500/20 gap-2 h-10 px-4 cursor-pointer"
+                {/* 2. Floating Filter & Density Dock */}
+                <KanbanToolbar
+                    search={search}
+                    onSearchChange={setSearch}
+                    onSearchSubmit={handleSearchSubmit}
+                    selectedProject={selectedProject}
+                    onProjectChange={(val) => {
+                        setSelectedProject(val);
+                        syncServerFilters({ project: val });
+                    }}
+                    selectedPriority={selectedPriority}
+                    onPriorityChange={(val) => {
+                        setSelectedPriority(val);
+                        syncServerFilters({ priority: val });
+                    }}
+                    projects={projects}
+                    cardDensity={cardDensity}
+                    onDensityChange={setCardDensity}
+                    hasActiveFilters={hasActiveFilters}
+                    onResetFilters={handleResetFilters}
+                />
+
+                {/* 3. Mobile Stage Switcher Pills */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:hidden">
+                    <button
+                        type="button"
+                        onClick={() => setMobileColumnView('all')}
+                        className={`shrink-0 cursor-pointer rounded-xl px-3.5 py-2 text-xs font-bold transition-all ${
+                            mobileColumnView === 'all'
+                                ? 'bg-slate-900 text-white shadow-sm dark:bg-white dark:text-slate-900'
+                                : 'border border-slate-200/90 bg-white/90 text-slate-600 dark:border-white/10 dark:bg-slate-900/80 dark:text-slate-300'
+                        }`}
                     >
-                        <Plus className="size-4" />
-                        Tambah Tugas Baru
-                    </Button>
-                </div>
-
-                {/* Filter and Search Bar */}
-                <Card className="rounded-2xl border-slate-200/80 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl shadow-sm">
-                    <CardContent className="p-4">
-                        <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-3">
-                            <div className="relative flex-1">
-                                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-                                <Input
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    placeholder="Cari tugas berdasarkan judul atau deskripsi..."
-                                    className="pl-9 h-10 rounded-xl bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800"
-                                />
-                            </div>
-
-                            <Select
-                                value={selectedProject}
-                                onValueChange={(val) => {
-                                    setSelectedProject(val);
-                                    router.get(
-                                        '/studio/pms/tasks',
-                                        {
-                                            search: search || undefined,
-                                            project_id: val !== 'all' ? val : undefined,
-                                            priority: selectedPriority !== 'all' ? selectedPriority : undefined,
-                                            assigned_to: selectedAssignee !== 'all' ? selectedAssignee : undefined,
-                                        },
-                                        { preserveState: true }
-                                    );
-                                }}
-                            >
-                                <SelectTrigger className="w-full md:w-52 h-10 rounded-xl bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800">
-                                    <SelectValue placeholder="Pilih Proyek" />
-                                </SelectTrigger>
-                                <SelectContent className="rounded-xl">
-                                    <SelectItem value="all">Semua Proyek</SelectItem>
-                                    {projects.map((p) => (
-                                        <SelectItem key={p.id} value={String(p.id)}>
-                                            {p.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-
-                            <Select
-                                value={selectedAssignee}
-                                onValueChange={(val) => {
-                                    setSelectedAssignee(val);
-                                    router.get(
-                                        '/studio/pms/tasks',
-                                        {
-                                            search: search || undefined,
-                                            project_id: selectedProject !== 'all' ? selectedProject : undefined,
-                                            priority: selectedPriority !== 'all' ? selectedPriority : undefined,
-                                            assigned_to: val !== 'all' ? val : undefined,
-                                        },
-                                        { preserveState: true }
-                                    );
-                                }}
-                            >
-                                <SelectTrigger className="w-full md:w-44 h-10 rounded-xl bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800">
-                                    <SelectValue placeholder="Penugasan" />
-                                </SelectTrigger>
-                                <SelectContent className="rounded-xl">
-                                    <SelectItem value="all">Semua Developer</SelectItem>
-                                    {users.map((u) => (
-                                        <SelectItem key={u.id} value={String(u.id)}>
-                                            {u.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    type="button"
-                                    variant={selectedAssignee === String(current_user_id) ? "default" : "outline"}
-                                    onClick={() => {
-                                        const next = selectedAssignee === String(current_user_id) ? 'all' : String(current_user_id);
-                                        setSelectedAssignee(next);
-                                        router.get(
-                                            '/studio/pms/tasks',
-                                            {
-                                                search: search || undefined,
-                                                project_id: selectedProject !== 'all' ? selectedProject : undefined,
-                                                priority: selectedPriority !== 'all' ? selectedPriority : undefined,
-                                                assigned_to: next !== 'all' ? next : undefined,
-                                            },
-                                            { preserveState: true }
-                                        );
-                                    }}
-                                    className={`h-10 rounded-xl px-4 gap-2 font-semibold text-xs cursor-pointer ${
-                                        selectedAssignee === String(current_user_id)
-                                            ? 'bg-violet-600 text-white shadow-sm'
-                                            : 'border-violet-500/30 text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-slate-800'
-                                    }`}
-                                >
-                                    <CheckSquare className="size-4" />
-                                    Jobdesk Saya
-                                </Button>
-
-                                <Button type="submit" variant="secondary" className="h-10 rounded-xl px-5 gap-2 cursor-pointer">
-                                    <Search className="size-4" /> Filter
-                                </Button>
-                            </div>
-                        </form>
-                    </CardContent>
-                </Card>
-
-                {/* 4-Column Enterprise Kanban Board */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
-                    {columns.map((col) => {
-                        const colTasks = tasks.filter((t) => t.status === col.id);
+                        Semua ({totalVisible})
+                    </button>
+                    {KANBAN_COLUMNS.map((col) => {
+                        const count = visibleTasks.filter(
+                            (t) => t.status === col.id,
+                        ).length;
 
                         return (
-                            <div
+                            <button
                                 key={col.id}
-                                className={`rounded-3xl border ${col.color} bg-slate-50/70 dark:bg-slate-950/40 p-4 backdrop-blur-xl flex flex-col space-y-4 min-h-[500px] shadow-sm`}
+                                type="button"
+                                onClick={() => setMobileColumnView(col.id)}
+                                className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition-all ${
+                                    mobileColumnView === col.id
+                                        ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-sm'
+                                        : 'border border-slate-200/90 bg-white/90 text-slate-600 dark:border-white/10 dark:bg-slate-900/80 dark:text-slate-300'
+                                }`}
                             >
-                                {/* Column Header */}
-                                <div className="flex items-center justify-between px-1">
-                                    <div className="flex items-center gap-2">
-                                        <h3 className="font-bold text-sm text-slate-800 dark:text-slate-200">
-                                            {col.title}
-                                        </h3>
-                                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${col.badge}`}>
-                                            {colTasks.length}
-                                        </span>
-                                    </div>
-
-                                    <Button
-                                        size="icon"
-                                        variant="ghost"
-                                        onClick={() => openCreateModal(col.id)}
-                                        className="size-7 rounded-lg cursor-pointer"
-                                    >
-                                        <Plus className="size-3.5" />
-                                    </Button>
-                                </div>
-
-                                {/* Task Cards */}
-                                <div className="space-y-3 flex-1 overflow-y-auto">
-                                    {colTasks.length === 0 ? (
-                                        <div className="py-12 text-center text-xs text-slate-400 italic">
-                                            Tidak ada tugas di kolom ini.
-                                        </div>
-                                    ) : (
-                                        colTasks.map((task) => (
-                                            <div
-                                                key={task.id}
-                                                className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-4 shadow-sm hover:shadow-md hover:border-violet-500/40 transition-all space-y-3"
-                                            >
-                                                {/* Card Header: Project & Priority */}
-                                                <div className="flex items-start justify-between gap-2">
-                                                    <span className="font-mono text-[10px] text-violet-600 font-bold bg-violet-500/10 px-2 py-0.5 rounded-md line-clamp-1">
-                                                        {task.project?.code ?? 'PRJ'}
-                                                    </span>
-
-                                                    <div className="flex items-center gap-1.5">
-                                                        {task.assigned_to === current_user_id ? (
-                                                            <Badge className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold text-[8.5px] px-1.5 py-0.2 border-0 shadow-xs">
-                                                                Jobdesk Anda
-                                                            </Badge>
-                                                        ) : !is_admin ? (
-                                                            <Badge variant="outline" className="text-[8.5px] border-slate-300 dark:border-slate-700 text-slate-500 gap-0.5 px-1.5 py-0.2 bg-slate-50 dark:bg-slate-800/50">
-                                                                <Lock className="size-2" /> Read Only
-                                                            </Badge>
-                                                        ) : null}
-                                                        <Badge
-                                                            className={`text-[9px] capitalize ${
-                                                                task.priority === 'urgent'
-                                                                    ? 'bg-rose-500/10 text-rose-600 border-rose-500/20'
-                                                                    : task.priority === 'high'
-                                                                    ? 'bg-amber-500/10 text-amber-600 border-amber-500/20'
-                                                                    : 'bg-slate-100 text-slate-600 dark:bg-slate-800'
-                                                            }`}
-                                                        >
-                                                            {task.priority}
-                                                        </Badge>
-                                                        {(is_admin || task.assigned_to === current_user_id) && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setDeletingTask(task)}
-                                                                className="text-slate-400 hover:text-rose-500 p-0.5 rounded cursor-pointer transition-colors"
-                                                                title="Hapus tugas"
-                                                            >
-                                                                <Trash2 className="size-3" />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                {/* Title & Description */}
-                                                <div>
-                                                    <h4 className="font-bold text-sm text-slate-900 dark:text-white line-clamp-2">
-                                                        {task.title}
-                                                    </h4>
-                                                    {task.description && (
-                                                        <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-                                                            {task.description}
-                                                        </p>
-                                                    )}
-                                                </div>
-
-                                                {/* Sprint / Subtasks info */}
-                                                {task.subtasks && task.subtasks.length > 0 && (
-                                                    <div className="text-[11px] text-slate-500 flex items-center gap-1 font-medium">
-                                                        <CheckCircle2 className="size-3 text-emerald-500" />
-                                                        <span>
-                                                            {task.subtasks.filter((s) => s.is_done).length}/{task.subtasks.length} subtask selesai
-                                                        </span>
-                                                    </div>
-                                                )}
-
-                                                {/* Card Footer: Assignee & Move Column */}
-                                                <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
-                                                    {task.assignee ? (
-                                                        <div
-                                                            title={task.assignee.name}
-                                                            className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700 dark:text-slate-300"
-                                                        >
-                                                            <div className="size-5 rounded-full bg-violet-600 text-white text-[9px] flex items-center justify-center font-bold">
-                                                                {task.assignee.name.charAt(0)}
-                                                            </div>
-                                                            <span className="line-clamp-1 max-w-[80px]">
-                                                                {task.assignee.name.split(' ')[0]}
-                                                            </span>
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-[10px] text-slate-400 italic">Unassigned</span>
-                                                    )}
-
-                                                    {/* Move column quick dropdown or Read-Only indicator */}
-                                                    {is_admin || task.assigned_to === current_user_id ? (
-                                                        <Select
-                                                            value={task.status}
-                                                            onValueChange={(val) => handleUpdateStatus(task.id, val)}
-                                                        >
-                                                            <SelectTrigger className="h-7 text-[10px] px-2 rounded-md font-semibold w-24">
-                                                                <SelectValue />
-                                                            </SelectTrigger>
-                                                            <SelectContent className="rounded-xl">
-                                                                <SelectItem value="todo">To Do</SelectItem>
-                                                                <SelectItem value="in_progress">In Progress</SelectItem>
-                                                                <SelectItem value="review">Review</SelectItem>
-                                                                <SelectItem value="done">Done</SelectItem>
-                                                            </SelectContent>
-                                                        </Select>
-                                                    ) : (
-                                                        <div 
-                                                            title="Tugas milik anggota tim lain bersifat Read-Only"
-                                                            className="h-7 text-[10px] px-2 rounded-md font-semibold bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700/60 flex items-center gap-1 cursor-not-allowed select-none"
-                                                        >
-                                                            <Lock className="size-2.5 text-slate-400" />
-                                                            <span className="capitalize">{task.status.replace('_', ' ')}</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                            </div>
+                                <span
+                                    className={`size-2 rounded-full ${
+                                        mobileColumnView === col.id
+                                            ? 'bg-white'
+                                            : col.dotClass
+                                    }`}
+                                />
+                                <span>{col.shortTitle}</span>
+                                <span className="opacity-75 tabular-nums">
+                                    ({count})
+                                </span>
+                            </button>
                         );
                     })}
                 </div>
 
-                {/* Create Task Modal */}
-                <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-                    <DialogContent className="max-w-md rounded-2xl">
+                {/* 4. Responsive Kanban Board Grid */}
+                <div
+                    ref={boardScrollRef}
+                    className={
+                        mobileColumnView === 'all'
+                            ? '-mx-3 flex snap-x snap-mandatory gap-4 overflow-x-auto px-3 pb-4 md:mx-0 md:px-0 md:snap-none'
+                            : 'grid grid-cols-1 gap-4'
+                    }
+                >
+                    {KANBAN_COLUMNS.filter(
+                        (col) =>
+                            mobileColumnView === 'all' ||
+                            mobileColumnView === col.id,
+                    ).map((col) => (
+                        <KanbanColumn
+                            key={col.id}
+                            column={col}
+                            tasks={visibleTasks.filter(
+                                (t) => t.status === col.id,
+                            )}
+                            density={cardDensity}
+                            isSnapMobile={mobileColumnView === 'all'}
+                            draggedTaskId={draggedTaskId}
+                            dragOverCol={dragOverCol}
+                            dropBeforeTaskId={dropBeforeTaskId}
+                            onOpenCreate={openCreateModal}
+                            onOpenEdit={openEditModal}
+                            onRequestDelete={setDeletingTask}
+                            onMoveTask={(
+                                taskId,
+                                targetStatus,
+                                beforeTaskId = null,
+                            ) =>
+                                void moveTaskOptimistically(
+                                    taskId,
+                                    targetStatus,
+                                    beforeTaskId,
+                                )
+                            }
+                            onDragStart={handleDragStart}
+                            onDragEnd={handleDragEnd}
+                            onColumnDragOver={handleColumnDragOver}
+                            onColumnDragLeave={handleColumnDragLeave}
+                            onColumnDrop={handleColumnDrop}
+                            onCardDragOver={handleCardDragOver}
+                            onCardDragLeave={handleCardDragLeave}
+                            onCardDrop={handleCardDrop}
+                            onTouchDragStart={handleTouchDragStart}
+                            onTouchDragMove={handleTouchDragMove}
+                            onTouchDragEnd={handleTouchDragEnd}
+                        />
+                    ))}
+                </div>
+
+                {/* Floating Touch Drag Ghost Pill */}
+                {touchDragState && (
+                    <div
+                        className="pointer-events-none fixed z-50 max-w-[240px] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-violet-500/50 bg-white/95 px-3.5 py-2.5 shadow-2xl shadow-violet-500/20 backdrop-blur-xl dark:bg-[#0f172a]/95"
+                        style={{
+                            left: touchDragState.x,
+                            top: touchDragState.y,
+                        }}
+                    >
+                        <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white">
+                            <GripVertical className="size-3.5 shrink-0 text-violet-500" />
+                            {touchDragState.projectCode && (
+                                <span className="rounded bg-violet-500/15 px-1.5 py-0.5 font-mono text-[9.5px] text-violet-600 dark:text-violet-300">
+                                    {touchDragState.projectCode}
+                                </span>
+                            )}
+                            <span className="truncate">
+                                {touchDragState.title}
+                            </span>
+                        </div>
+                    </div>
+                )}
+
+                {/* Task Detail / Create / Edit & Subtask Modal */}
+                <KanbanTaskModal
+                    open={taskModalOpen}
+                    onOpenChange={setTaskModalOpen}
+                    mode={taskModalMode}
+                    initialStatus={taskModalInitialStatus}
+                    task={editingTask}
+                    projects={projects}
+                    users={users}
+                    isAdmin={is_admin}
+                    currentUserId={current_user_id}
+                />
+
+                {/* Delete Task Confirmation Modal */}
+                <Dialog
+                    open={Boolean(deletingTask)}
+                    onOpenChange={(open) => !open && setDeletingTask(null)}
+                >
+                    <DialogContent className="max-w-md rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-2xl backdrop-blur-2xl dark:border-white/10 dark:bg-[#0c152a]/95">
                         <DialogHeader>
-                            <DialogTitle className="text-lg font-bold">Buat Tiket Tugas Baru</DialogTitle>
-                            <DialogDescription className="text-xs">
-                                Masukkan rincian tugas dan tentukan proyek target.
-                            </DialogDescription>
-                        </DialogHeader>
-
-                        <form onSubmit={handleCreateTask} className="space-y-3 pt-2">
-                            <div className="space-y-1">
-                                <Label className="text-xs font-semibold">Proyek Target *</Label>
-                                <Select
-                                    value={String(createForm.data.project_id)}
-                                    onValueChange={(val) => createForm.setData('project_id', val)}
-                                >
-                                    <SelectTrigger className="rounded-xl h-9 text-xs">
-                                        <SelectValue placeholder="Pilih Proyek" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {projects.map((p) => (
-                                            <SelectItem key={p.id} value={String(p.id)}>
-                                                {p.name} ({p.code})
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="space-y-1">
-                                <Label className="text-xs font-semibold">Judul Tugas *</Label>
-                                <Input
-                                    required
-                                    value={createForm.data.title}
-                                    onChange={(e) => createForm.setData('title', e.target.value)}
-                                    placeholder="Contoh: Implementasi Otentikasi Dua Langkah"
-                                    className="rounded-xl h-9"
-                                />
-                            </div>
-
-                            <div className="space-y-1">
-                                <Label className="text-xs font-semibold">Deskripsi</Label>
-                                <Textarea
-                                    rows={2}
-                                    value={createForm.data.description}
-                                    onChange={(e) => createForm.setData('description', e.target.value)}
-                                    placeholder="Catatan detail pekerjaan..."
-                                    className="rounded-xl text-xs"
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1">
-                                    <Label className="text-xs font-semibold">Kolom Status</Label>
-                                    <Select
-                                        value={createForm.data.status}
-                                        onValueChange={(val: any) => createForm.setData('status', val)}
-                                    >
-                                        <SelectTrigger className="rounded-xl h-9 text-xs">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="todo">To Do</SelectItem>
-                                            <SelectItem value="in_progress">In Progress</SelectItem>
-                                            <SelectItem value="review">Review</SelectItem>
-                                            <SelectItem value="done">Done</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div className="space-y-1">
-                                    <Label className="text-xs font-semibold">Prioritas</Label>
-                                    <Select
-                                        value={createForm.data.priority}
-                                        onValueChange={(val: any) => createForm.setData('priority', val)}
-                                    >
-                                        <SelectTrigger className="rounded-xl h-9 text-xs">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="low">Low</SelectItem>
-                                            <SelectItem value="medium">Medium</SelectItem>
-                                            <SelectItem value="high">High</SelectItem>
-                                            <SelectItem value="urgent">Urgent</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1">
-                                    <Label className="text-xs font-semibold">Tugaskan Kepada</Label>
-                                    {is_admin ? (
-                                        <Select
-                                            value={createForm.data.assigned_to ? String(createForm.data.assigned_to) : 'none'}
-                                            onValueChange={(val) => createForm.setData('assigned_to', val === 'none' ? '' : val)}
-                                        >
-                                            <SelectTrigger className="rounded-xl h-9 text-xs">
-                                                <SelectValue placeholder="Pilih Developer" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="none">Belum Ditugaskan</SelectItem>
-                                                {users.map((u) => (
-                                                    <SelectItem key={u.id} value={String(u.id)}>
-                                                        {u.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    ) : (
-                                        <div className="p-2 rounded-xl bg-violet-50/70 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-800/60 flex items-center justify-between gap-2 h-9">
-                                            <div className="flex items-center gap-1.5 min-w-0">
-                                                <div className="size-5 rounded-full bg-violet-600 text-white text-[9px] flex items-center justify-center font-bold shrink-0">
-                                                    {users.find(u => u.id === current_user_id)?.name.charAt(0) || 'U'}
-                                                </div>
-                                                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
-                                                    {users.find(u => u.id === current_user_id)?.name || 'Anda Sendiri'}
-                                                </span>
-                                            </div>
-                                            <span className="inline-flex items-center gap-1 text-[8.5px] font-bold text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-900/60 px-1.5 py-0.5 rounded shrink-0">
-                                                <Lock className="size-2" /> Terkunci
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="space-y-1">
-                                    <Label className="text-xs font-semibold">Tenggat Waktu</Label>
-                                    <Input
-                                        type="date"
-                                        value={createForm.data.due_date}
-                                        onChange={(e) => createForm.setData('due_date', e.target.value)}
-                                        className="rounded-xl h-9 text-xs"
-                                    />
-                                </div>
-                            </div>
-
-                            <DialogFooter className="gap-2 pt-2">
-                                <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)} className="rounded-xl">Batal</Button>
-                                <Button type="submit" disabled={createForm.processing} className="rounded-xl bg-violet-600 hover:bg-violet-700 text-white">Buat Tugas</Button>
-                            </DialogFooter>
-                        </form>
-                    </DialogContent>
-                </Dialog>
-
-                {/* Modal Konfirmasi Hapus Tugas (Tanpa Alert Browser!) */}
-                <Dialog open={Boolean(deletingTask)} onOpenChange={(open) => !open && setDeletingTask(null)}>
-                    <DialogContent className="max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-6">
-                        <DialogHeader>
-                            <DialogTitle className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                <Trash2 className="size-4 text-rose-500" />
+                            <DialogTitle className="flex items-center gap-2 font-[family-name:var(--font-brand)] text-base font-extrabold text-slate-900 dark:text-white">
+                                <span className="flex size-8 items-center justify-center rounded-xl bg-rose-500/10 text-rose-500">
+                                    <Trash2 className="size-4" />
+                                </span>
                                 Hapus Tugas?
                             </DialogTitle>
-                            <DialogDescription className="text-xs text-slate-500 mt-1">
-                                Apakah Anda yakin ingin menghapus tugas <strong className="text-slate-700 dark:text-slate-300">"{deletingTask?.title}"</strong>? Seluruh subtask di dalamnya akan ikut terhapus.
+                            <DialogDescription className="mt-1.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                                Apakah Anda yakin ingin menghapus tugas{' '}
+                                <strong className="text-slate-800 dark:text-slate-200">
+                                    &ldquo;{deletingTask?.title}&rdquo;
+                                </strong>
+                                ? Seluruh subtask di dalamnya akan ikut terhapus.
                             </DialogDescription>
                         </DialogHeader>
-                        <DialogFooter className="gap-2 mt-4">
-                            <Button type="button" variant="outline" onClick={() => setDeletingTask(null)} className="rounded-xl h-9 text-xs">
+                        <DialogFooter className="mt-4 gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setDeletingTask(null)}
+                                className="h-9.5 cursor-pointer rounded-xl text-xs font-semibold"
+                            >
                                 Batal
                             </Button>
-                            <Button type="button" variant="destructive" onClick={confirmDeleteTask} className="rounded-xl h-9 text-xs font-bold">
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                onClick={confirmDeleteTask}
+                                className="h-9.5 cursor-pointer rounded-xl text-xs font-bold shadow-md shadow-rose-500/20"
+                            >
                                 Hapus Tugas
                             </Button>
                         </DialogFooter>
