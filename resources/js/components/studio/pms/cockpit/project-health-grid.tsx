@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { PmsProjectHealth } from '@/types/pms';
+import { ClientPortalLinkButton, getPortalHref } from './client-portal-link-button';
 import {
     formatCurrencyIdr,
     formatDateRangeId,
@@ -298,6 +299,7 @@ function SpotlightProjectCard({ project, isAdmin }: { project: PmsProjectHealth;
                                 Timeline Gantt
                             </Link>
                         </Button>
+                        <ClientPortalLinkButton project={project} isAdmin={isAdmin} />
                     </div>
                 </div>
 
@@ -373,13 +375,14 @@ function CompactProjectCard({ project, isAdmin }: { project: PmsProjectHealth; i
     const statusMeta = PROJECT_STATUS_META[project.status] ?? PROJECT_STATUS_META.in_progress;
     const priorityMeta = PRIORITY_META[project.priority] ?? PRIORITY_META.medium;
     const daysBadge = formatDaysRemainingBadge(project.days_left);
+    const hasPortalLink = !isAdmin && getPortalHref(project) !== null;
 
     return (
-        <Link
-            href={`/studio/pms/projects/${project.id}`}
-            className="group rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/65 p-5 backdrop-blur-xl shadow-sm hover:shadow-lg hover:border-violet-500/40 transition-all flex flex-col justify-between"
-        >
-            <div>
+        <div className="group rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/65 p-5 backdrop-blur-xl shadow-sm hover:shadow-lg hover:border-violet-500/40 transition-all flex flex-col justify-between">
+            <Link
+                href={`/studio/pms/projects/${project.id}`}
+                className="block flex-1 focus:outline-none"
+            >
                 <div className="flex items-start justify-between gap-2 mb-3">
                     <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-1.5">
@@ -417,7 +420,7 @@ function CompactProjectCard({ project, isAdmin }: { project: PmsProjectHealth; i
                         />
                     </div>
                 </div>
-            </div>
+            </Link>
 
             <div className="mt-5 pt-4 border-t border-slate-100 dark:border-white/10 space-y-3">
                 <div className="flex items-center justify-between gap-2">
@@ -430,8 +433,8 @@ function CompactProjectCard({ project, isAdmin }: { project: PmsProjectHealth; i
                     </span>
                 </div>
 
-                {((project.members && project.members.length > 0) || (isAdmin && project.budget > 0)) && (
-                    <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                {((project.members && project.members.length > 0) || (isAdmin && project.budget > 0) || hasPortalLink) && (
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400">
                         <div className="flex -space-x-1.5">
                             {project.members?.slice(0, 4).map((member) => (
                                 <Avatar
@@ -451,9 +454,17 @@ function CompactProjectCard({ project, isAdmin }: { project: PmsProjectHealth; i
                                 Burn {project.burn_rate}%
                             </span>
                         )}
+                        {hasPortalLink && (
+                            <ClientPortalLinkButton
+                                project={project}
+                                isAdmin={isAdmin}
+                                size="sm"
+                                className="h-7 px-2.5 text-[11px]"
+                            />
+                        )}
                     </div>
                 )}
             </div>
-        </Link>
+        </div>
     );
 }

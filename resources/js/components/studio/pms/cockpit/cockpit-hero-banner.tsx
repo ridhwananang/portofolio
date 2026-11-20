@@ -2,12 +2,15 @@ import { Link } from '@inertiajs/react';
 import { CalendarDays, FolderKanban, Plus, Sparkles, Zap } from 'lucide-react';
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import type { PmsProjectHealth } from '@/types/pms';
+import { ClientPortalLinkButton } from './client-portal-link-button';
 
 interface CockpitHeroBannerProps {
     isAdmin: boolean;
+    primaryPortalProject?: PmsProjectHealth | null;
 }
 
-export function CockpitHeroBanner({ isAdmin }: CockpitHeroBannerProps) {
+export function CockpitHeroBanner({ isAdmin, primaryPortalProject }: CockpitHeroBannerProps) {
     const todayFormatted = new Intl.DateTimeFormat('id-ID', {
         weekday: 'long',
         day: 'numeric',
@@ -62,7 +65,7 @@ export function CockpitHeroBanner({ isAdmin }: CockpitHeroBannerProps) {
                 </div>
 
                 {/* Action Hub - shrink-0 prevents vertical squishing on desktop */}
-                <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 shrink-0">
+                <div className="flex flex-wrap lg:flex-nowrap items-center gap-2.5 shrink-0">
                     {isAdmin && (
                         <Button
                             asChild
@@ -111,6 +114,13 @@ export function CockpitHeroBanner({ isAdmin }: CockpitHeroBannerProps) {
                             <span>Timeline</span>
                         </Link>
                     </Button>
+
+                    <ClientPortalLinkButton
+                        project={primaryPortalProject}
+                        isAdmin={isAdmin}
+                        size="default"
+                        className="h-10 sm:h-11 px-4 whitespace-nowrap"
+                    />
                 </div>
             </div>
         </section>

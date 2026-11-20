@@ -204,6 +204,11 @@ test('pms cockpit returns integer days_left, actionableTasks, activeSprints, and
         'created_by' => $this->admin->id,
     ]);
 
+    $this->assignedProject->update([
+        'portal_pin' => '123456',
+        'is_portal_active' => true,
+    ]);
+
     $response = $this->actingAs($this->developer)->get('/studio/pms');
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
@@ -211,6 +216,10 @@ test('pms cockpit returns integer days_left, actionableTasks, activeSprints, and
         ->where('is_admin', false)
         ->where('projectHealth.0.days_left', 27)
         ->where('projectHealth.0.days_left', fn ($val) => is_int($val))
+        ->where('projectHealth.0.portal_token', $this->assignedProject->portal_token)
+        ->where('projectHealth.0.is_portal_active', true)
+        ->where('projectHealth.0.budget', 0)
+        ->missing('projectHealth.0.portal_pin')
         ->where('stats.in_progress_tasks', 1)
         ->where('stats.completion_rate', 0)
         ->has('activeSprints', 1)

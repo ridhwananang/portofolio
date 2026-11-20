@@ -1,5 +1,6 @@
 import { Head, usePage } from '@inertiajs/react';
 import React from 'react';
+import { resolvePrimaryPortalProject } from '@/components/studio/pms/cockpit/client-portal-link-button';
 import { CockpitBottomBento } from '@/components/studio/pms/cockpit/cockpit-bottom-bento';
 import { CockpitHeroBanner } from '@/components/studio/pms/cockpit/cockpit-hero-banner';
 import { CockpitMetricConstellation } from '@/components/studio/pms/cockpit/cockpit-metric-constellation';
@@ -32,6 +33,7 @@ export default function PmsDashboard({
 }: Props) {
     const { auth } = usePage<{ auth: Auth }>().props;
     const isAdmin = is_admin ?? Boolean(auth?.user?.is_admin);
+    const primaryPortalProject = resolvePrimaryPortalProject(projectHealth);
 
     return (
         <AppLayout
@@ -43,7 +45,10 @@ export default function PmsDashboard({
             <Head title="PMS Executive Cockpit - Studio Workspace" />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
-                <CockpitHeroBanner isAdmin={isAdmin} />
+                <CockpitHeroBanner
+                    isAdmin={isAdmin}
+                    primaryPortalProject={primaryPortalProject}
+                />
 
                 <CockpitMetricConstellation stats={stats} isAdmin={isAdmin} />
 

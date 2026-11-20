@@ -69,6 +69,8 @@ class PmsDashboardController extends Controller
                 'status' => $project->status,
                 'priority' => $project->priority,
                 'progress' => $project->progress_percentage,
+                'portal_token' => $project->portal_token,
+                'is_portal_active' => (bool) ($project->is_portal_active ?? true),
                 'start_date' => $project->start_date?->format('Y-m-d'),
                 'end_date' => $project->end_date?->format('Y-m-d'),
                 'active_sprints' => $project->sprints->where('status', 'active')->count(),

@@ -226,6 +226,8 @@ export interface PmsProjectHealth {
     status: string;
     priority: string;
     progress: number;
+    portal_token?: string | null;
+    is_portal_active?: boolean;
     start_date?: string | null;
     end_date?: string | null;
     active_sprints: number;
