@@ -5,14 +5,21 @@ namespace App\Http\Controllers\Studio\Pms;
 use App\Http\Controllers\Controller;
 use App\Models\Pms\PmsActivityLog;
 use App\Models\Pms\PmsAttachment;
+use App\Models\Pms\PmsProjectMember;
+use App\Models\Pms\PmsTask;
+use App\Services\Pms\PmsAttachmentStorage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PmsAttachmentController extends Controller
 {
+    public function __construct(private readonly PmsAttachmentStorage $storage)
+    {
+    }
+
     /**
-     * Store new file attachment.
+     * Store one or multiple file attachments in S3 bucket storage.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -20,87 +27,124 @@ class PmsAttachmentController extends Controller
         $validated = $request->validate([
             'project_id' => ['nullable', 'exists:pms_projects,id'],
             'task_id' => ['nullable', 'exists:pms_tasks,id'],
-            'file' => ['required', 'file', 'max:20480'], // max 20MB
+            'file' => ['nullable', 'file', 'max:20480', 'required_without:files'],
+            'files' => ['nullable', 'array', 'min:1', 'max:20', 'required_without:file'],
+            'files.*' => ['required', 'file', 'max:20480'],
         ]);
 
         $projectId = $validated['project_id'] ?? null;
         $taskId = $validated['task_id'] ?? null;
-        if (! $projectId && $taskId) {
-            $task = \App\Models\Pms\PmsTask::find($taskId);
-            $projectId = $task?->project_id;
+        $task = $taskId ? PmsTask::find($taskId) : null;
+
+        if (! $projectId && $task) {
+            $projectId = $task->project_id;
             $validated['project_id'] = $projectId;
         }
 
-        if ($user && !$user->isAdmin()) {
+        if ($user && ! $user->isAdmin()) {
             if ($projectId) {
-                $isMember = \App\Models\Pms\PmsProjectMember::where('project_id', $projectId)
+                $isMember = PmsProjectMember::where('project_id', $projectId)
                     ->where('user_id', $user->id)
                     ->exists();
-                if (!$isMember) {
+                if (! $isMember) {
                     abort(403, 'Akses ditolak. Anda bukan anggota dari proyek ini.');
                 }
             }
 
             // WORKFLOW RULE: Tugas anggota tim lain bersifat Read-Only.
             // Bukti pengerjaan / deliverable hanya dapat diunggah oleh penanggung jawab tugas terkait.
-            if ($taskId) {
-                $task = \App\Models\Pms\PmsTask::find($taskId);
-                if ($task && $task->assigned_to !== null && $task->assigned_to !== $user->id) {
-                    abort(403, 'Akses ditolak. Tugas milik anggota tim lain bersifat Read-Only dan bukti pengerjaan hanya dapat diunggah oleh penanggung jawab tugas.');
-                }
+            if ($task && $task->assigned_to !== null && $task->assigned_to !== $user->id) {
+                abort(403, 'Akses ditolak. Tugas milik anggota tim lain bersifat Read-Only dan bukti pengerjaan hanya dapat diunggah oleh penanggung jawab tugas.');
             }
         }
 
-        $file = $request->file('file');
-        $fileName = $file->getClientOriginalName();
-        $fileSize = $file->getSize();
-        $fileType = $file->getClientOriginalExtension();
-        $disk = config('filesystems.default');
-        $filePath = $file->store('pms_attachments', $disk);
+        $uploadedFiles = [];
+        if ($request->hasFile('files')) {
+            foreach ((array) $request->file('files') as $item) {
+                if ($item) {
+                    $uploadedFiles[] = $item;
+                }
+            }
+        }
+        if ($request->hasFile('file') && $request->file('file')) {
+            $uploadedFiles[] = $request->file('file');
+        }
 
-        $attachment = PmsAttachment::create([
-            'project_id' => $validated['project_id'] ?? null,
-            'task_id' => $validated['task_id'] ?? null,
-            'file_name' => $fileName,
-            'file_path' => $filePath,
-            'file_size' => $fileSize,
-            'file_type' => $fileType,
-            'uploaded_by' => auth()->id(),
-        ]);
+        $disk = PmsAttachment::storageDisk();
+        $createdNames = [];
 
-        $taskTitle = $attachment->task?->title;
+        foreach ($uploadedFiles as $file) {
+            $fileName = $file->getClientOriginalName();
+            $filePath = $file->store('pms_attachments', $disk);
+
+            PmsAttachment::create([
+                'project_id' => $validated['project_id'] ?? null,
+                'task_id' => $validated['task_id'] ?? null,
+                'file_name' => $fileName,
+                'file_path' => $filePath,
+                'file_size' => $file->getSize(),
+                'file_type' => $file->getClientOriginalExtension(),
+                'uploaded_by' => auth()->id(),
+            ]);
+
+            $createdNames[] = $fileName;
+        }
+
+        $count = count($createdNames);
+        $namesSummary = implode(', ', array_slice($createdNames, 0, 3)) . ($count > 3 ? ' (+' . ($count - 3) . ' lainnya)' : '');
+        $taskTitle = $task?->title;
         $description = $taskTitle
-            ? "Mengunggah berkas bukti tugas #{$attachment->task_id} ({$taskTitle}): {$fileName}"
-            : "Mengunggah lampiran berkas proyek: {$fileName}";
+            ? "Mengunggah {$count} berkas bukti tugas #{$task->id} ({$taskTitle}): {$namesSummary}"
+            : "Mengunggah {$count} lampiran berkas proyek: {$namesSummary}";
 
         PmsActivityLog::log(
             action: 'created',
             entityType: 'attachment',
             description: $description,
-            projectId: $attachment->project_id
+            projectId: $projectId ? (int) $projectId : null
         );
 
-        return back()->with('success', "Berkas {$fileName} berhasil diunggah.");
+        $flash = $count > 1
+            ? "{$count} berkas berhasil diunggah ke cloud storage."
+            : "Berkas {$createdNames[0]} berhasil diunggah ke cloud storage.";
+
+        return back()->with('success', $flash);
     }
 
     /**
-     * Delete an attachment.
+     * Stream attachment inline for responsive preview without S3 CORS/iframe issues.
+     */
+    public function preview(Request $request, PmsAttachment $attachment): StreamedResponse|RedirectResponse
+    {
+        $this->authorizeReadAccess($request, $attachment);
+
+        return $this->storage->stream($attachment, 'inline');
+    }
+
+    /**
+     * Stream attachment as download preserving the original file name.
+     */
+    public function download(Request $request, PmsAttachment $attachment): StreamedResponse|RedirectResponse
+    {
+        $this->authorizeReadAccess($request, $attachment);
+
+        return $this->storage->stream($attachment, 'attachment');
+    }
+
+    /**
+     * Delete an attachment from S3 / fallback disk and database.
      */
     public function destroy(Request $request, PmsAttachment $attachment): RedirectResponse
     {
         $user = $request->user();
-        if ($user && !$user->isAdmin() && $attachment->uploaded_by !== $user->id) {
+        if ($user && ! $user->isAdmin() && $attachment->uploaded_by !== $user->id) {
             abort(403, 'Anda hanya dapat menghapus lampiran berkas yang Anda unggah sendiri.');
         }
 
         $fileName = $attachment->file_name;
         $projectId = $attachment->project_id;
-        $disk = config('filesystems.default');
 
-        if ($attachment->file_path && !str_starts_with($attachment->file_path, '/') && !str_starts_with($attachment->file_path, 'http') && Storage::disk($disk)->exists($attachment->file_path)) {
-            Storage::disk($disk)->delete($attachment->file_path);
-        }
-
+        $this->storage->delete($attachment);
         $attachment->delete();
 
         PmsActivityLog::log(
@@ -111,5 +155,25 @@ class PmsAttachmentController extends Controller
         );
 
         return back()->with('success', "Berkas {$fileName} berhasil dihapus.");
+    }
+
+    private function authorizeReadAccess(Request $request, PmsAttachment $attachment): void
+    {
+        $user = $request->user();
+        if (! $user) {
+            abort(401);
+        }
+
+        if ($user->isAdmin() || ! $attachment->project_id) {
+            return;
+        }
+
+        $isMember = PmsProjectMember::where('project_id', $attachment->project_id)
+            ->where('user_id', $user->id)
+            ->exists();
+
+        if (! $isMember) {
+            abort(403, 'Akses ditolak. Anda bukan anggota dari proyek ini.');
+        }
     }
 }

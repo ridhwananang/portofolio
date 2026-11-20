@@ -13,6 +13,8 @@ export interface ClientAttachment {
     file_name: string;
     file_path: string;
     file_url?: string | null;
+    preview_url?: string | null;
+    download_url?: string | null;
     file_size: number;
     file_type?: string | null;
     uploader_name?: string | null;

@@ -4,10 +4,13 @@ namespace Tests\Feature\Studio;
 
 use App\Mail\PmsPortalInviteMail;
 use App\Mail\PmsProgressReportMail;
+use App\Models\Pms\PmsAttachment;
 use App\Models\Pms\PmsProject;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class PmsClientPortalTest extends TestCase
@@ -247,5 +250,72 @@ class PmsClientPortalTest extends TestCase
                 'client_email' => 'hacker@test.com',
             ])
             ->assertForbidden();
+    }
+
+    public function test_client_portal_attachment_preview_and_download_respects_pin_and_s3_storage(): void
+    {
+        config(['filesystems.default' => 's3']);
+        Storage::fake('s3');
+
+        $admin = User::factory()->create(['is_admin' => true]);
+        $project = PmsProject::create([
+            'created_by' => $admin->id,
+            'name' => 'Portal Attachment Vault',
+            'code' => 'PRJ-PRT-ATT',
+            'client' => 'Toko Ikhsan Tani',
+            'portal_token' => 'portal-att-token',
+            'portal_pin' => '998877',
+            'is_portal_active' => true,
+        ]);
+
+        $otherProject = PmsProject::create([
+            'created_by' => $admin->id,
+            'name' => 'Other Project',
+            'code' => 'PRJ-OTH-01',
+            'client' => 'Other Client',
+            'portal_token' => 'other-token',
+            'is_portal_active' => true,
+        ]);
+
+        $storedPath = UploadedFile::fake()->image('wireframe-portal.png', 300, 200)->store('pms_attachments', 's3');
+
+        $attachment = PmsAttachment::create([
+            'project_id' => $project->id,
+            'file_name' => 'wireframe-portal.png',
+            'file_path' => $storedPath,
+            'file_size' => 1024,
+            'file_type' => 'png',
+            'uploaded_by' => $admin->id,
+        ]);
+
+        $foreignAttachment = PmsAttachment::create([
+            'project_id' => $otherProject->id,
+            'file_name' => 'secret.pdf',
+            'file_path' => 'pms_attachments/secret.pdf',
+            'file_size' => 2048,
+            'file_type' => 'pdf',
+            'uploaded_by' => $admin->id,
+        ]);
+
+        // Unverified PIN session should get 403
+        $this->get("/portal/portal-att-token/attachments/{$attachment->id}/preview")
+            ->assertForbidden();
+
+        // Cross-project attachment must 404 even with verified session
+        $this->withSession(["portal_pms_verified_{$project->id}" => true])
+            ->get("/portal/portal-att-token/attachments/{$foreignAttachment->id}/preview")
+            ->assertNotFound();
+
+        // Verified session can preview inline & download with exact filename from S3
+        $preview = $this->withSession(["portal_pms_verified_{$project->id}" => true])
+            ->get("/portal/portal-att-token/attachments/{$attachment->id}/preview");
+        $preview->assertOk();
+        $this->assertStringContainsString('inline', (string) $preview->headers->get('content-disposition'));
+
+        $download = $this->withSession(["portal_pms_verified_{$project->id}" => true])
+            ->get("/portal/portal-att-token/attachments/{$attachment->id}/download");
+        $download->assertOk();
+        $this->assertStringContainsString('attachment', (string) $download->headers->get('content-disposition'));
+        $this->assertStringContainsString('wireframe-portal.png', (string) $download->headers->get('content-disposition'));
     }
 }

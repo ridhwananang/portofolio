@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Pms\PmsActivityLog;
 use App\Models\Pms\PmsFinance;
 use App\Models\Pms\PmsProject;
+use App\Models\ProjectOrder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -26,12 +27,28 @@ class PmsFinanceController extends Controller
         $projectId = $request->input('project_id');
         $type = $request->input('type');
 
-        $projects = PmsProject::select('id', 'name', 'code', 'budget', 'status')->latest()->get();
+        $projects = PmsProject::with(['projectOrder', 'finances'])
+            ->select('id', 'name', 'code', 'client', 'budget', 'status', 'project_order_id', 'created_by')
+            ->latest()
+            ->get();
+
+        // Ensure any linked ProjectOrder with verified DP/Final payments syncs automatically into project income
+        $syncedAny = false;
+        foreach ($projects as $p) {
+            if ($p->projectOrder && $p->finances->where('type', 'income')->isEmpty()) {
+                $p->syncOrderPaymentsToFinances($request->user()?->id);
+                $syncedAny = true;
+            }
+        }
+        if ($syncedAny) {
+            $projects->load('finances');
+        }
 
         $financesQuery = PmsFinance::with(['project', 'creator'])
             ->when($projectId, fn ($q) => $q->where('project_id', $projectId))
             ->when($type, fn ($q) => $q->where('type', $type))
-            ->latest('transaction_date');
+            ->latest('transaction_date')
+            ->latest('id');
 
         $finances = $financesQuery->paginate(20)->withQueryString();
 
@@ -43,25 +60,46 @@ class PmsFinanceController extends Controller
         $netMargin = $totalIncome - $totalExpenses;
         $totalProjectBudgets = (float) PmsProject::sum('budget');
 
-        // Project Breakdown
-        $projectFinancials = $projects->map(function ($p) {
+        // Project Breakdown (automatically displays all PMS projects with budgets & real-time realization)
+        $projectFinancials = $projects->map(function (PmsProject $p) {
+            $income = (float) $p->finances->where('type', 'income')->sum('amount');
+            $expense = (float) $p->finances->where('type', 'project_expense')->sum('amount');
+            $budget = (float) $p->budget;
+            $remaining = max(0, $budget - $expense);
+            $burnRate = $budget > 0 ? round(($expense / $budget) * 100, 1) : 0;
+
             return [
                 'id' => $p->id,
                 'name' => $p->name,
                 'code' => $p->code,
-                'budget' => (float) $p->budget,
-                'income' => $p->total_income,
-                'expense' => $p->total_expense,
-                'remaining' => $p->remaining_budget,
-                'burn_rate' => $p->budget_burn_rate,
+                'client' => $p->client,
+                'budget' => $budget,
+                'income' => $income,
+                'expense' => $expense,
+                'remaining' => $remaining,
+                'burn_rate' => $burnRate,
                 'status' => $p->status,
+                'transactions_count' => $p->finances->count(),
+                'order_tracking_code' => $p->projectOrder?->tracking_code,
             ];
         });
+
+        // Verified/Active client orders not yet bridged to PMS projects
+        $unimportedOrders = ProjectOrder::whereDoesntHave('pmsProject')
+            ->where(function ($q) {
+                $q->whereIn('status', ['in_progress', 'in_review', 'completed'])
+                    ->orWhereNotNull('dp_paid_at')
+                    ->orWhereNotNull('final_paid_at');
+            })
+            ->select('id', 'tracking_code', 'client_name', 'project_type', 'total_amount', 'payment_stage', 'status')
+            ->latest()
+            ->get();
 
         return Inertia::render('studio/pms/finances/index', [
             'finances' => $finances,
             'projects' => $projects,
             'projectFinancials' => $projectFinancials,
+            'unimportedOrders' => $unimportedOrders,
             'summary' => [
                 'total_income' => $totalIncome,
                 'total_project_expenses' => $totalProjectExpenses,

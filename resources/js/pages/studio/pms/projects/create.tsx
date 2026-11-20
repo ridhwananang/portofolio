@@ -1034,6 +1034,55 @@ export default function PmsProjectCreate({
                                 </p>
                             </div>
 
+                            {/* Repository & Live Demo URLs */}
+                            <div className="grid grid-cols-1 gap-5 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4 sm:p-5 md:grid-cols-2 dark:border-slate-800 dark:bg-[#080f20]/70">
+                                <div className="space-y-2">
+                                    <Label className="flex items-center gap-1.5 text-xs font-bold tracking-wider uppercase">
+                                        <GitBranch className="size-4 text-violet-500" />
+                                        Tautan Repositori Git (Internal)
+                                    </Label>
+                                    <Input
+                                        value={form.data.repository_url}
+                                        onChange={(e) =>
+                                            form.setData(
+                                                'repository_url',
+                                                e.target.value,
+                                            )
+                                        }
+                                        placeholder="https://github.com/organization/repo-name"
+                                        className="h-11 rounded-xl border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+                                    />
+                                    {form.errors.repository_url && (
+                                        <p className="text-xs text-rose-500">
+                                            {form.errors.repository_url}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label className="flex items-center gap-1.5 text-xs font-bold tracking-wider uppercase">
+                                        <Globe className="size-4 text-cyan-500" />
+                                        Tautan Demo / Staging / Live
+                                    </Label>
+                                    <Input
+                                        value={form.data.live_demo_url}
+                                        onChange={(e) =>
+                                            form.setData(
+                                                'live_demo_url',
+                                                e.target.value,
+                                            )
+                                        }
+                                        placeholder="https://staging.domainproyek.com"
+                                        className="h-11 rounded-xl border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+                                    />
+                                    {form.errors.live_demo_url && (
+                                        <p className="text-xs text-rose-500">
+                                            {form.errors.live_demo_url}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
                             {/* 1. Objective */}
                             <div className="space-y-2">
                                 <WordRichEditor
@@ -1171,55 +1220,6 @@ export default function PmsProjectCreate({
                                     minHeight="210px"
                                     presetType="deliverables"
                                 />
-                            </div>
-
-                            {/* Repository & Live Demo URLs */}
-                            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                                <div className="space-y-2">
-                                    <Label className="flex items-center gap-1.5 text-xs font-bold tracking-wider uppercase">
-                                        <GitBranch className="size-4 text-slate-500" />
-                                        Tautan Repositori Git (Internal)
-                                    </Label>
-                                    <Input
-                                        value={form.data.repository_url}
-                                        onChange={(e) =>
-                                            form.setData(
-                                                'repository_url',
-                                                e.target.value,
-                                            )
-                                        }
-                                        placeholder="https://github.com/organization/repo-name"
-                                        className="h-11 rounded-xl border-slate-200 bg-slate-50/70 dark:border-slate-800 dark:bg-[#080f20]"
-                                    />
-                                    {form.errors.repository_url && (
-                                        <p className="text-xs text-rose-500">
-                                            {form.errors.repository_url}
-                                        </p>
-                                    )}
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label className="flex items-center gap-1.5 text-xs font-bold tracking-wider uppercase">
-                                        <Globe className="size-4 text-cyan-500" />
-                                        Tautan Demo / Staging / Live
-                                    </Label>
-                                    <Input
-                                        value={form.data.live_demo_url}
-                                        onChange={(e) =>
-                                            form.setData(
-                                                'live_demo_url',
-                                                e.target.value,
-                                            )
-                                        }
-                                        placeholder="https://staging.domainproyek.com"
-                                        className="h-11 rounded-xl border-slate-200 bg-slate-50/70 dark:border-slate-800 dark:bg-[#080f20]"
-                                    />
-                                    {form.errors.live_demo_url && (
-                                        <p className="text-xs text-rose-500">
-                                            {form.errors.live_demo_url}
-                                        </p>
-                                    )}
-                                </div>
                             </div>
 
                             {/* 5. Internal Technical Notes */}

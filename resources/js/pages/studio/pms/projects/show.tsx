@@ -9,6 +9,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { WordRichEditor, WordDocumentViewer } from '@/components/ui/word-rich-editor';
 import { ClientPortalPanel } from '@/components/studio/pms/client-portal-panel';
+import { AttachmentDropzone } from '@/components/studio/pms/attachments/attachment-dropzone';
+import { AttachmentPreviewModal } from '@/components/studio/pms/attachments/attachment-preview-modal';
+import {
+    getAttachmentExtension,
+    getAttachmentStyleMeta,
+    resolveAttachmentDownloadUrl,
+    resolveAttachmentUrl,
+} from '@/components/studio/pms/attachments/attachment-utils';
 import {
     Dialog,
     DialogContent,
@@ -89,7 +97,7 @@ import {
     Zap,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { PmsProject, PmsProjectMember, PmsSprint, PmsTask, PmsUser } from '@/types/pms';
+import { PmsAttachment, PmsProject, PmsProjectMember, PmsSprint, PmsTask, PmsUser } from '@/types/pms';
 
 interface Props {
     project: PmsProject;
@@ -274,7 +282,6 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
 
     // File Input Refs for Luxury Dropzones
     const receiptInputRef = useRef<HTMLInputElement>(null);
-    const attachmentInputRef = useRef<HTMLInputElement>(null);
 
     const checkTabScroll = () => {
         if (!tabsTrackRef.current) return;
@@ -314,7 +321,14 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
     const [isAttachmentModalOpen, setIsAttachmentModalOpen] = useState(false);
     const [attachmentFilter, setAttachmentFilter] = useState<'all' | 'tasks' | 'general'>('all');
     const [deletingAttachment, setDeletingAttachment] = useState<PmsAttachment | null>(null);
+    const [previewAttachment, setPreviewAttachment] = useState<PmsAttachment | null>(null);
+    const [previewList, setPreviewList] = useState<PmsAttachment[]>([]);
     const [selectedTaskForUpload, setSelectedTaskForUpload] = useState<PmsTask | null>(null);
+
+    const openAttachmentPreview = (attachment: PmsAttachment, list?: PmsAttachment[]) => {
+        setPreviewList(list && list.length > 0 ? list : [attachment]);
+        setPreviewAttachment(attachment);
+    };
     const [editingTask, setEditingTask] = useState<PmsTask | null>(null);
     const [deletingTask, setDeletingTask] = useState<PmsTask | null>(null);
 
@@ -327,21 +341,17 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
 
     const openAttachmentModalForTask = (task: PmsTask) => {
         setSelectedTaskForUpload(task);
-        attachmentForm.setData({
-            project_id: project.id,
-            task_id: task.id,
-            file: null,
-        });
+        setAttachmentTaskId(task.id);
+        setAttachmentFiles([]);
+        setAttachmentUploadError(null);
         setIsAttachmentModalOpen(true);
     };
 
     const openGeneralAttachmentModal = () => {
         setSelectedTaskForUpload(null);
-        attachmentForm.setData({
-            project_id: project.id,
-            task_id: null,
-            file: null,
-        });
+        setAttachmentTaskId(null);
+        setAttachmentFiles([]);
+        setAttachmentUploadError(null);
         setIsAttachmentModalOpen(true);
     };
 
@@ -581,12 +591,11 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
         receipt: null as File | null,
     });
 
-    // Attachment Form
-    const attachmentForm = useForm({
-        project_id: project.id,
-        task_id: null as number | null,
-        file: null as File | null,
-    });
+    // Attachment Upload State (direct FormData submission to avoid deep-clone mutation on File[])
+    const [attachmentTaskId, setAttachmentTaskId] = useState<number | null>(null);
+    const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
+    const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
+    const [attachmentUploadError, setAttachmentUploadError] = useState<string | null>(null);
 
     const formatCurrency = (val: number | string) => {
         return new Intl.NumberFormat('id-ID', {
@@ -777,16 +786,41 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
 
     const handleUploadAttachment = (e: React.FormEvent) => {
         e.preventDefault();
-        attachmentForm.post('/studio/pms/attachments', {
+        if (attachmentFiles.length === 0 || isUploadingAttachment) {
+            return;
+        }
+
+        const count = attachmentFiles.length;
+        const formData = new FormData();
+        formData.append('project_id', String(project.id));
+        if (attachmentTaskId) {
+            formData.append('task_id', String(attachmentTaskId));
+        }
+        attachmentFiles.forEach((file) => {
+            formData.append('files[]', file, file.name);
+        });
+
+        setAttachmentUploadError(null);
+        setIsUploadingAttachment(true);
+
+        router.post('/studio/pms/attachments', formData, {
             forceFormData: true,
             preserveScroll: true,
             onSuccess: () => {
-                toast.success('Berkas berhasil diunggah');
+                toast.success(count > 1 ? `${count} berkas berhasil diunggah` : 'Berkas berhasil diunggah');
                 setIsAttachmentModalOpen(false);
                 setSelectedTaskForUpload(null);
-                attachmentForm.reset();
+                setAttachmentTaskId(null);
+                setAttachmentFiles([]);
             },
-            onError: (err) => toast.error(Object.values(err)[0] as string || 'Gagal mengunggah berkas'),
+            onError: (err) => {
+                const msg = (Object.values(err)[0] as string) || 'Gagal mengunggah berkas. Pastikan ukuran berkas maksimal 20MB.';
+                setAttachmentUploadError(msg);
+                toast.error(msg);
+            },
+            onFinish: () => {
+                setIsUploadingAttachment(false);
+            },
         });
     };
 
@@ -1085,15 +1119,15 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
 
                 {/* TAB: BLUEPRINT */}
                 {activeTab === 'blueprint' && (
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start min-w-0 max-w-full">
-                        <div className="lg:col-span-8 min-w-0 max-w-full space-y-6">
-                            {!isEditingBlueprint ? (
-                                /* 1. Executive Word Document Sheets (View Mode) */
-                                <div className="space-y-6">
-                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-5 rounded-2xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 backdrop-blur-xl shadow-xs">
+                    <div className="space-y-6 min-w-0 max-w-full">
+                        {!isEditingBlueprint ? (
+                            /* 1. Executive Word Document Sheets (View Mode — Full Width) */
+                            <div className="space-y-6">
+                                <div className="p-4 sm:p-5 rounded-2xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 backdrop-blur-xl shadow-xs space-y-3.5">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                         <div>
                                             <h3 className="font-extrabold text-base sm:text-lg text-slate-900 dark:text-white flex items-center gap-2">
-                                                <FileText className="size-5 text-violet-500" />
+                                                <FileText className="size-5 text-violet-500 shrink-0" />
                                                 Dokumen Cetak Biru & Spesifikasi Teknis
                                             </h3>
                                             <p className="text-xs text-slate-500 mt-0.5">
@@ -1105,187 +1139,214 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
                                                 type="button"
                                                 onClick={() => setIsEditingBlueprint(true)}
                                                 size="sm"
-                                                className="rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs gap-1.5 shadow-sm font-semibold shrink-0"
+                                                className="rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs gap-1.5 shadow-sm font-semibold shrink-0 cursor-pointer"
                                             >
                                                 <PenLine className="size-3.5" /> Ubah / Edit Cetak Biru
                                             </Button>
                                         )}
                                     </div>
 
-                                    <WordDocumentViewer
-                                        content={project.detail?.objective || detailForm.data.objective}
-                                        label="1. Sasaran Utama & Key Results (Objectives)"
-                                    />
+                                    {/* Compact Quick Links & Resources Pill Strip */}
+                                    <div className="pt-3 border-t border-slate-200/70 dark:border-slate-800/80 flex flex-wrap items-center gap-2 text-xs">
+                                        <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mr-1">
+                                            <Sparkles className="size-3.5 text-amber-500 shrink-0" />
+                                            Tautan Cepat:
+                                        </span>
 
-                                    <WordDocumentViewer
-                                        content={project.detail?.scope || detailForm.data.scope}
-                                        label="2. Ruang Lingkup Teknis (Scope of Work)"
-                                    />
-
-                                    <WordDocumentViewer
-                                        content={project.detail?.background || detailForm.data.background}
-                                        label="3. Latar Belakang Proyek & Masalah Bisnis"
-                                    />
-
-                                    <WordDocumentViewer
-                                        content={project.detail?.deliverables || detailForm.data.deliverables}
-                                        label="4. Hasil Akhir & Deliverables"
-                                    />
-
-                                    <WordDocumentViewer
-                                        content={project.detail?.notes || detailForm.data.notes}
-                                        label="5. Catatan Teknis Tambahan & Instruksi Khusus"
-                                    />
-                                </div>
-                            ) : (
-                                /* 2. Full Word Rich Editor Form (Edit Mode) */
-                                <Card className="rounded-2xl border-slate-200/80 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-sm">
-                                    <CardContent className="p-6">
-                                        <form onSubmit={handleSaveDetail} className="space-y-5">
-                                            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                                                <div className="flex items-center gap-2">
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => setIsEditingBlueprint(false)}
-                                                        className="rounded-xl text-xs gap-1.5 text-slate-600 dark:text-slate-400"
-                                                    >
-                                                        <ArrowLeft className="size-3.5" /> Kembali ke Tampilan Dokumen
-                                                    </Button>
-                                                </div>
-                                                <Button
-                                                    type="submit"
-                                                    disabled={detailForm.processing}
-                                                    size="sm"
-                                                    className="rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold h-8 px-4 shadow-sm"
+                                        {[
+                                            {
+                                                key: 'repo',
+                                                url: detailForm.data.repository_url,
+                                                label: 'Repositori Git',
+                                                emptyLabel: 'Repositori belum diatur',
+                                                Icon: GitBranch,
+                                                iconColor: 'text-violet-500',
+                                            },
+                                            {
+                                                key: 'staging',
+                                                url: detailForm.data.live_demo_url,
+                                                label: 'Preview Staging',
+                                                emptyLabel: 'Staging belum diatur',
+                                                Icon: Globe,
+                                                iconColor: 'text-emerald-500',
+                                            },
+                                        ].map(({ key, url, label, emptyLabel, Icon, iconColor }) =>
+                                            url ? (
+                                                <a
+                                                    key={key}
+                                                    href={url}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100/90 hover:bg-violet-50 dark:bg-slate-800/80 dark:hover:bg-violet-500/15 border border-slate-200 dark:border-slate-700 hover:border-violet-500/40 text-slate-700 dark:text-slate-200 font-semibold transition-all"
                                                 >
-                                                    {detailForm.processing ? 'Menyimpan...' : 'Simpan Cetak Biru'}
+                                                    <Icon className={`size-3.5 ${iconColor} shrink-0`} />
+                                                    <span>{label}</span>
+                                                    <ExternalLink className="size-3 text-slate-400 shrink-0" />
+                                                </a>
+                                            ) : is_admin ? (
+                                                <button
+                                                    key={key}
+                                                    type="button"
+                                                    onClick={() => setIsEditingBlueprint(true)}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-50 hover:bg-slate-100 dark:bg-slate-950/60 dark:hover:bg-slate-800/70 border border-dashed border-slate-200 dark:border-slate-800 hover:border-violet-400/50 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors cursor-pointer"
+                                                    title="Klik untuk mengisi URL di Cetak Biru"
+                                                >
+                                                    <Icon className="size-3.5 shrink-0 opacity-70" />
+                                                    <span>{emptyLabel}</span>
+                                                </button>
+                                            ) : (
+                                                <span
+                                                    key={key}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-50 dark:bg-slate-950/60 border border-dashed border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500"
+                                                >
+                                                    <Icon className="size-3.5 shrink-0 opacity-70" />
+                                                    <span>{emptyLabel}</span>
+                                                </span>
+                                            )
+                                        )}
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setActiveTab('attachments')}
+                                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 hover:bg-amber-500/15 border border-amber-500/25 text-amber-700 dark:text-amber-300 font-semibold transition-colors cursor-pointer"
+                                        >
+                                            <Paperclip className="size-3.5 shrink-0" />
+                                            <span>Lampiran ({project.attachments?.length ?? 0})</span>
+                                            <ArrowRight className="size-3 shrink-0" />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <WordDocumentViewer
+                                    content={project.detail?.objective || detailForm.data.objective}
+                                    label="1. Sasaran Utama & Key Results (Objectives)"
+                                />
+
+                                <WordDocumentViewer
+                                    content={project.detail?.scope || detailForm.data.scope}
+                                    label="2. Ruang Lingkup Teknis (Scope of Work)"
+                                />
+
+                                <WordDocumentViewer
+                                    content={project.detail?.background || detailForm.data.background}
+                                    label="3. Latar Belakang Proyek & Masalah Bisnis"
+                                />
+
+                                <WordDocumentViewer
+                                    content={project.detail?.deliverables || detailForm.data.deliverables}
+                                    label="4. Hasil Akhir & Deliverables"
+                                />
+
+                                <WordDocumentViewer
+                                    content={project.detail?.notes || detailForm.data.notes}
+                                    label="5. Catatan Teknis Tambahan & Instruksi Khusus"
+                                />
+                            </div>
+                        ) : (
+                            /* 2. Full Word Rich Editor Form (Edit Mode — Full Width) */
+                            <Card className="rounded-2xl border-slate-200/80 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-sm">
+                                <CardContent className="p-6">
+                                    <form onSubmit={handleSaveDetail} className="space-y-5">
+                                        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                                            <div className="flex items-center gap-2">
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => setIsEditingBlueprint(false)}
+                                                    className="rounded-xl text-xs gap-1.5 text-slate-600 dark:text-slate-400"
+                                                >
+                                                    <ArrowLeft className="size-3.5" /> Kembali ke Tampilan Dokumen
                                                 </Button>
                                             </div>
+                                            <Button
+                                                type="submit"
+                                                disabled={detailForm.processing}
+                                                size="sm"
+                                                className="rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold h-8 px-4 shadow-sm"
+                                            >
+                                                {detailForm.processing ? 'Menyimpan...' : 'Simpan Cetak Biru'}
+                                            </Button>
+                                        </div>
 
-                                            <div className="space-y-4">
-                                                <WordRichEditor
-                                                    value={detailForm.data.objective}
-                                                    onChange={(val) => detailForm.setData('objective', val)}
-                                                    label="Sasaran Utama & Key Results (Objectives)"
-                                                    placeholder="Menjelaskan problem statement dan sasaran teknis..."
-                                                    minHeight="180px"
-                                                    presetType="objective"
-                                                />
-
-                                                <WordRichEditor
-                                                    value={detailForm.data.scope}
-                                                    onChange={(val) => detailForm.setData('scope', val)}
-                                                    label="Ruang Lingkup Teknis (Scope of Work)"
-                                                    placeholder="Daftar modul, integrasi payment gateway, role permission, dsb..."
-                                                    minHeight="180px"
-                                                    presetType="scope"
-                                                />
-
-                                                <WordRichEditor
-                                                    value={detailForm.data.background}
-                                                    onChange={(val) => detailForm.setData('background', val)}
-                                                    label="Latar Belakang Proyek & Masalah Bisnis"
-                                                    placeholder="Konteks industri, arsitektur sistem sebelumnya, dsb..."
-                                                    minHeight="160px"
-                                                    presetType="background"
-                                                />
-
-                                                <WordRichEditor
-                                                    value={detailForm.data.deliverables}
-                                                    onChange={(val) => detailForm.setData('deliverables', val)}
-                                                    label="Hasil Akhir & Deliverables"
-                                                    placeholder="Contoh: Source code Git repo, staging deploy, panduan instalasi..."
-                                                    minHeight="160px"
-                                                    presetType="deliverables"
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl bg-slate-50/80 dark:bg-slate-950/50 border border-slate-200/70 dark:border-slate-800/80">
+                                            <div className="space-y-1.5">
+                                                <Label className="text-xs font-semibold flex items-center gap-1.5">
+                                                    <GitBranch className="size-3.5 text-violet-500" /> Repositori URL (GitHub/GitLab)
+                                                </Label>
+                                                <Input
+                                                    value={detailForm.data.repository_url}
+                                                    onChange={(e) => detailForm.setData('repository_url', e.target.value)}
+                                                    placeholder="https://github.com/..."
+                                                    className="rounded-xl h-9 text-xs bg-white dark:bg-slate-900"
                                                 />
                                             </div>
 
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div className="space-y-1.5">
-                                                    <Label className="text-xs font-semibold flex items-center gap-1.5">
-                                                        <GitBranch className="size-3 text-slate-400" /> Repositori URL (GitHub/GitLab)
-                                                    </Label>
-                                                    <Input
-                                                        value={detailForm.data.repository_url}
-                                                        onChange={(e) => detailForm.setData('repository_url', e.target.value)}
-                                                        placeholder="https://github.com/..."
-                                                        className="rounded-xl h-9 text-xs"
-                                                    />
-                                                </div>
-
-                                                <div className="space-y-1.5">
-                                                    <Label className="text-xs font-semibold flex items-center gap-1.5">
-                                                        <Globe className="size-3 text-slate-400" /> Staging / Preview Live URL
-                                                    </Label>
-                                                    <Input
-                                                        value={detailForm.data.live_demo_url}
-                                                        onChange={(e) => detailForm.setData('live_demo_url', e.target.value)}
-                                                        placeholder="https://preview.domain.com"
-                                                        className="rounded-xl h-9 text-xs"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-2">
-                                                <WordRichEditor
-                                                    value={detailForm.data.notes}
-                                                    onChange={(val) => detailForm.setData('notes', val)}
-                                                    label="Catatan Teknis Tambahan / Instruksi Khusus"
-                                                    placeholder="Kredensial staging, environment variables, konfigurasi server..."
-                                                    minHeight="180px"
-                                                    presetType="notes"
+                                            <div className="space-y-1.5">
+                                                <Label className="text-xs font-semibold flex items-center gap-1.5">
+                                                    <Globe className="size-3.5 text-emerald-500" /> Staging / Preview Live URL
+                                                </Label>
+                                                <Input
+                                                    value={detailForm.data.live_demo_url}
+                                                    onChange={(e) => detailForm.setData('live_demo_url', e.target.value)}
+                                                    placeholder="https://preview.domain.com"
+                                                    className="rounded-xl h-9 text-xs bg-white dark:bg-slate-900"
                                                 />
                                             </div>
-                                        </form>
-                                    </CardContent>
-                                </Card>
-                            )}
-                        </div>
+                                        </div>
 
-                        {/* Right Column: Quick Links & Summary */}
-                        <div className="lg:col-span-4 min-w-0 max-w-full space-y-4">
-                            <Card className="rounded-2xl border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 backdrop-blur-xl shadow-xs">
-                                <h4 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2 mb-3">
-                                    <Sparkles className="size-4 text-amber-500" />
-                                    Tautan Cepat & Sumber Daya
-                                </h4>
-                                <div className="space-y-2.5 text-xs">
-                                    {detailForm.data.repository_url ? (
-                                        <a
-                                            href={detailForm.data.repository_url}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 hover:border-violet-500 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 transition-colors"
-                                        >
-                                            <span className="flex items-center gap-2 font-medium truncate">
-                                                <GitBranch className="size-3.5 text-slate-500 shrink-0" /> <span className="truncate">Repositori Git</span>
-                                            </span>
-                                            <ExternalLink className="size-3 text-slate-400 shrink-0" />
-                                        </a>
-                                    ) : (
-                                        <div className="text-slate-400 dark:text-slate-500 italic">Repositori belum dikonfigurasi</div>
-                                    )}
+                                        <div className="space-y-4">
+                                            <WordRichEditor
+                                                value={detailForm.data.objective}
+                                                onChange={(val) => detailForm.setData('objective', val)}
+                                                label="Sasaran Utama & Key Results (Objectives)"
+                                                placeholder="Menjelaskan problem statement dan sasaran teknis..."
+                                                minHeight="180px"
+                                                presetType="objective"
+                                            />
 
-                                    {detailForm.data.live_demo_url ? (
-                                        <a
-                                            href={detailForm.data.live_demo_url}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 hover:border-violet-500 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 transition-colors"
-                                        >
-                                            <span className="flex items-center gap-2 font-medium truncate">
-                                                <Globe className="size-3.5 text-emerald-500 shrink-0" /> <span className="truncate">Server Preview Staging</span>
-                                            </span>
-                                            <ExternalLink className="size-3 text-slate-400 shrink-0" />
-                                        </a>
-                                    ) : (
-                                        <div className="text-slate-400 dark:text-slate-500 italic">URL staging belum dikonfigurasi</div>
-                                    )}
-                                </div>
+                                            <WordRichEditor
+                                                value={detailForm.data.scope}
+                                                onChange={(val) => detailForm.setData('scope', val)}
+                                                label="Ruang Lingkup Teknis (Scope of Work)"
+                                                placeholder="Daftar modul, integrasi payment gateway, role permission, dsb..."
+                                                minHeight="180px"
+                                                presetType="scope"
+                                            />
+
+                                            <WordRichEditor
+                                                value={detailForm.data.background}
+                                                onChange={(val) => detailForm.setData('background', val)}
+                                                label="Latar Belakang Proyek & Masalah Bisnis"
+                                                placeholder="Konteks industri, arsitektur sistem sebelumnya, dsb..."
+                                                minHeight="160px"
+                                                presetType="background"
+                                            />
+
+                                            <WordRichEditor
+                                                value={detailForm.data.deliverables}
+                                                onChange={(val) => detailForm.setData('deliverables', val)}
+                                                label="Hasil Akhir & Deliverables"
+                                                placeholder="Contoh: Source code Git repo, staging deploy, panduan instalasi..."
+                                                minHeight="160px"
+                                                presetType="deliverables"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <WordRichEditor
+                                                value={detailForm.data.notes}
+                                                onChange={(val) => detailForm.setData('notes', val)}
+                                                label="Catatan Teknis Tambahan / Instruksi Khusus"
+                                                placeholder="Kredensial staging, environment variables, konfigurasi server..."
+                                                minHeight="180px"
+                                                presetType="notes"
+                                            />
+                                        </div>
+                                    </form>
+                                </CardContent>
                             </Card>
-                        </div>
+                        )}
                     </div>
                 )}
 
@@ -2322,47 +2383,65 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
 
                                                 {task.attachments && task.attachments.length > 0 ? (
                                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
-                                                        {task.attachments.map((att) => (
-                                                            <div
-                                                                key={att.id}
-                                                                className="p-2 rounded-xl bg-slate-50/80 dark:bg-slate-950/60 border border-slate-200/70 dark:border-white/5 flex items-center justify-between gap-2 text-xs"
-                                                            >
-                                                                <div className="flex items-center gap-2 min-w-0 flex-1">
-                                                                    <FileText className="size-4 text-cyan-600 dark:text-cyan-400 shrink-0" />
-                                                                    <div className="min-w-0 flex-1">
-                                                                        <span className="font-semibold text-slate-800 dark:text-slate-200 block truncate text-[11px]" title={att.file_name}>
-                                                                            {att.file_name}
-                                                                        </span>
-                                                                        <span className="text-[9.5px] text-slate-400 block truncate">
-                                                                            {formatFileSize(att.file_size)} • {att.uploader?.name || 'Anggota Tim'}
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
+                                                        {task.attachments.map((att) => {
+                                                            const styleMeta = getAttachmentStyleMeta(att.file_name, att.file_type);
+                                                            const downloadUrl = resolveAttachmentDownloadUrl(att);
 
-                                                                <div className="flex items-center gap-1 shrink-0">
-                                                                    <a
-                                                                        href={att.file_url ?? (att.file_path?.startsWith('http') || att.file_path?.startsWith('/') ? att.file_path : `/storage/${att.file_path}`)}
-                                                                        download
-                                                                        target="_blank"
-                                                                        rel="noreferrer"
-                                                                        className="size-6.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-cyan-600 flex items-center justify-center transition-colors"
-                                                                        title="Unduh Berkas"
+                                                            return (
+                                                                <div
+                                                                    key={att.id}
+                                                                    className="p-2 rounded-xl bg-slate-50/80 dark:bg-slate-950/60 border border-slate-200/70 dark:border-white/5 hover:border-cyan-500/40 flex items-center justify-between gap-2 text-xs transition-colors group"
+                                                                >
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => openAttachmentPreview(att, task.attachments)}
+                                                                        className="flex items-center gap-2 min-w-0 flex-1 text-left cursor-pointer"
+                                                                        title="Klik untuk pratinjau berkas"
                                                                     >
-                                                                        <Download className="size-3" />
-                                                                    </a>
-                                                                    {(is_admin || att.uploaded_by === current_user_id) && (
+                                                                        <div className={`size-7 rounded-lg border flex items-center justify-center shrink-0 ${styleMeta.iconBgClass}`}>
+                                                                            <styleMeta.Icon className="size-3.5" />
+                                                                        </div>
+                                                                        <div className="min-w-0 flex-1">
+                                                                            <span className="font-semibold text-slate-800 dark:text-slate-200 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 block truncate text-[11px] transition-colors" title={att.file_name}>
+                                                                                {att.file_name}
+                                                                            </span>
+                                                                            <span className="text-[9.5px] text-slate-400 block truncate">
+                                                                                {formatFileSize(att.file_size)} • {att.uploader?.name || 'Anggota Tim'}
+                                                                            </span>
+                                                                        </div>
+                                                                    </button>
+
+                                                                    <div className="flex items-center gap-1 shrink-0">
                                                                         <button
                                                                             type="button"
-                                                                            onClick={() => setDeletingAttachment(att)}
-                                                                            className="size-6.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 hover:text-rose-500 flex items-center justify-center transition-colors cursor-pointer"
-                                                                            title="Hapus Lampiran"
+                                                                            onClick={() => openAttachmentPreview(att, task.attachments)}
+                                                                            className="size-6.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-cyan-600 hover:border-cyan-500/40 flex items-center justify-center transition-colors cursor-pointer"
+                                                                            title="Pratinjau Berkas"
                                                                         >
-                                                                            <Trash2 className="size-3" />
+                                                                            <Eye className="size-3" />
                                                                         </button>
-                                                                    )}
+                                                                        <a
+                                                                            href={downloadUrl}
+                                                                            download={att.file_name}
+                                                                            className="size-6.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-cyan-600 flex items-center justify-center transition-colors"
+                                                                            title="Unduh Berkas"
+                                                                        >
+                                                                            <Download className="size-3" />
+                                                                        </a>
+                                                                        {(is_admin || att.uploaded_by === current_user_id) && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => setDeletingAttachment(att)}
+                                                                                className="size-6.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 hover:text-rose-500 flex items-center justify-center transition-colors cursor-pointer"
+                                                                                title="Hapus Lampiran"
+                                                                            >
+                                                                                <Trash2 className="size-3" />
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        ))}
+                                                            );
+                                                        })}
                                                     </div>
                                                 ) : (
                                                     <div className="p-2 rounded-xl bg-slate-50/50 dark:bg-slate-950/40 border border-dashed border-slate-200/80 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
@@ -2635,72 +2714,126 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
                                         : 'Belum ada berkas lampiran yang diunggah di proyek ini.'}
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 min-w-0 max-w-full">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 min-w-0 max-w-full">
                                     {filteredAttachments.map((att) => {
                                         const matchingTask = project.tasks?.find((t) => t.id === att.task_id) || att.task;
+                                        const styleMeta = getAttachmentStyleMeta(att.file_name, att.file_type);
+                                        const ext = getAttachmentExtension(att.file_name, att.file_type).toUpperCase();
+                                        const fileUrl = resolveAttachmentUrl(att);
+                                        const downloadUrl = resolveAttachmentDownloadUrl(att);
 
                                         return (
                                             <div
                                                 key={att.id}
-                                                className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 backdrop-blur-xl shadow-xs hover:border-cyan-500/40 transition-all flex flex-col justify-between gap-3 min-w-0 group"
+                                                className="group relative overflow-hidden rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-slate-900/90 backdrop-blur-xl shadow-xs hover:shadow-xl hover:shadow-cyan-500/10 hover:border-cyan-500/45 transition-all duration-300 flex flex-col justify-between min-w-0"
                                             >
-                                                <div className="space-y-2 min-w-0">
-                                                    {/* Linking Badge if linked to a task */}
-                                                    {matchingTask ? (
-                                                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold w-fit truncate max-w-full">
-                                                            <CheckSquare className="size-2.5 text-indigo-500 shrink-0" />
-                                                            <span className="truncate">Bukti Tugas #{matchingTask.id}: {matchingTask.title}</span>
-                                                        </div>
+                                                {/* Visual Thumbnail / Format Preview Header */}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openAttachmentPreview(att, filteredAttachments)}
+                                                    className={`relative h-36 sm:h-40 w-full overflow-hidden border-b border-slate-200/70 dark:border-slate-800/80 bg-gradient-to-br ${styleMeta.bannerClass} flex items-center justify-center cursor-pointer text-left`}
+                                                    title="Klik untuk membuka pratinjau layar penuh"
+                                                >
+                                                    {styleMeta.category === 'image' ? (
+                                                        <img
+                                                            src={fileUrl}
+                                                            alt={att.file_name}
+                                                            loading="lazy"
+                                                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                        />
                                                     ) : (
-                                                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[10px] font-semibold w-fit">
-                                                            <FolderKanban className="size-2.5 text-slate-400" />
-                                                            <span>Dokumen Umum Proyek</span>
+                                                        <div className="flex flex-col items-center justify-center gap-2 p-4">
+                                                            <div className={`size-14 rounded-2xl border flex items-center justify-center shadow-sm transition-transform duration-300 group-hover:scale-110 ${styleMeta.iconBgClass}`}>
+                                                                <styleMeta.Icon className="size-7" />
+                                                            </div>
+                                                            <span className="text-[10.5px] font-semibold text-slate-600 dark:text-slate-300">
+                                                                {styleMeta.label}
+                                                            </span>
                                                         </div>
                                                     )}
 
-                                                    <div className="flex items-start gap-2.5 min-w-0">
-                                                        <div className="size-9 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shrink-0 mt-0.5">
-                                                            <FileText className="size-4.5" />
-                                                        </div>
-                                                        <div className="min-w-0 flex-1">
-                                                            <span className="font-bold text-xs text-slate-900 dark:text-white block truncate group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors" title={att.file_name}>
+                                                    {/* Top Format & Origin Pills Overlay */}
+                                                    <div className="absolute inset-x-3 top-3 flex items-center justify-between gap-2 pointer-events-none">
+                                                        <span className={`px-2 py-0.5 rounded-full border text-[10px] font-extrabold tracking-wider backdrop-blur-md shadow-xs ${styleMeta.badgeClass}`}>
+                                                            {ext || 'FILE'}
+                                                        </span>
+                                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-950/70 text-white text-[10px] font-semibold backdrop-blur-md opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
+                                                            <Eye className="size-3 text-cyan-300" />
+                                                            Pratinjau
+                                                        </span>
+                                                    </div>
+
+                                                    {styleMeta.category === 'image' && (
+                                                        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-slate-950/55 to-transparent" />
+                                                    )}
+                                                </button>
+
+                                                <div className="p-4 space-y-3 flex-1 flex flex-col justify-between min-w-0">
+                                                    <div className="space-y-2 min-w-0">
+                                                        {/* Linking Badge if linked to a task */}
+                                                        {matchingTask ? (
+                                                            <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold w-fit truncate max-w-full">
+                                                                <CheckSquare className="size-2.5 text-indigo-500 shrink-0" />
+                                                                <span className="truncate">Tiket #{matchingTask.id}: {matchingTask.title}</span>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[10px] font-semibold w-fit">
+                                                                <FolderKanban className="size-2.5 text-slate-400" />
+                                                                <span>Dokumen Umum Proyek</span>
+                                                            </div>
+                                                        )}
+
+                                                        <div className="min-w-0">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => openAttachmentPreview(att, filteredAttachments)}
+                                                                className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white block truncate group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors text-left w-full cursor-pointer"
+                                                                title={att.file_name}
+                                                            >
                                                                 {att.file_name}
-                                                            </span>
-                                                            <div className="flex items-center gap-1 text-[10px] text-slate-400 block mt-0.5 truncate">
-                                                                <span>{formatFileSize(att.file_size)}</span>
+                                                            </button>
+                                                            <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                                                                <span className="font-medium">{formatFileSize(att.file_size)}</span>
                                                                 <span>•</span>
-                                                                <span className="truncate">Oleh: {att.uploader?.name ?? 'Anggota Tim'}</span>
+                                                                <span className="truncate">Oleh {att.uploader?.name ?? 'Anggota Tim'}</span>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
 
-                                                <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs">
-                                                    <span className="text-[10px] text-slate-400 truncate">
-                                                        {new Date(att.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
-                                                    </span>
+                                                    <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2 text-xs">
+                                                        <span className="text-[11px] text-slate-400 truncate">
+                                                            {new Date(att.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                        </span>
 
-                                                    <div className="flex items-center gap-1 shrink-0">
-                                                        <a
-                                                            href={att.file_url ?? (att.file_path?.startsWith('http') || att.file_path?.startsWith('/') ? att.file_path : `/storage/${att.file_path}`)}
-                                                            download
-                                                            target="_blank"
-                                                            rel="noreferrer"
-                                                            className="size-7 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-cyan-50 dark:hover:bg-cyan-950/40 hover:border-cyan-500/40 text-slate-600 dark:text-slate-300 hover:text-cyan-600 dark:hover:text-cyan-400 flex items-center justify-center transition-colors cursor-pointer"
-                                                            title="Unduh Berkas"
-                                                        >
-                                                            <Download className="size-3.5" />
-                                                        </a>
-                                                        {(is_admin || att.uploaded_by === current_user_id) && (
+                                                        <div className="flex items-center gap-1.5 shrink-0">
                                                             <button
                                                                 type="button"
-                                                                onClick={() => setDeletingAttachment(att)}
-                                                                className="size-7 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:border-rose-500/40 text-slate-400 hover:text-rose-500 flex items-center justify-center transition-colors cursor-pointer"
-                                                                title="Hapus Lampiran"
+                                                                onClick={() => openAttachmentPreview(att, filteredAttachments)}
+                                                                className="h-7.5 px-2.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/25 text-cyan-700 dark:text-cyan-300 text-[11px] font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                                                                title="Pratinjau Berkas"
                                                             >
-                                                                <Trash2 className="size-3.5" />
+                                                                <Eye className="size-3" />
+                                                                <span>Lihat</span>
                                                             </button>
-                                                        )}
+                                                            <a
+                                                                href={downloadUrl}
+                                                                download={att.file_name}
+                                                                className="size-7.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-cyan-50 dark:hover:bg-cyan-950/40 hover:border-cyan-500/40 text-slate-600 dark:text-slate-300 hover:text-cyan-600 dark:hover:text-cyan-400 flex items-center justify-center transition-colors cursor-pointer"
+                                                                title="Unduh Berkas"
+                                                            >
+                                                                <Download className="size-3.5" />
+                                                            </a>
+                                                            {(is_admin || att.uploaded_by === current_user_id) && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setDeletingAttachment(att)}
+                                                                    className="size-7.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:border-rose-500/40 text-slate-400 hover:text-rose-500 flex items-center justify-center transition-colors cursor-pointer"
+                                                                    title="Hapus Lampiran"
+                                                                >
+                                                                    <Trash2 className="size-3.5" />
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -3267,7 +3400,7 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
                                         value={taskForm.data.sprint_id ? String(taskForm.data.sprint_id) : 'none'}
                                         onValueChange={(val) => taskForm.setData('sprint_id', val === 'none' ? '' : val)}
                                     >
-                                        <SelectTrigger className="rounded-xl h-9 text-xs border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 w-full min-w-0">
+                                        <SelectTrigger className="rounded-xl h-9 text-xs border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 w-full min-w-0 [&>span]:truncate">
                                             <SelectValue placeholder="Pilih Sprint" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -3290,7 +3423,7 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
                                             value={taskForm.data.assigned_to ? String(taskForm.data.assigned_to) : 'none'}
                                             onValueChange={(val) => taskForm.setData('assigned_to', val === 'none' ? '' : val)}
                                         >
-                                            <SelectTrigger className="rounded-xl h-9 text-xs border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 w-full min-w-0">
+                                            <SelectTrigger className="rounded-xl h-9 text-xs border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 w-full min-w-0 [&>span]:truncate">
                                                 <SelectValue placeholder="Belum Ditugaskan" />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -3445,7 +3578,7 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
                                         value={editTaskForm.data.status}
                                         onValueChange={(val: any) => editTaskForm.setData('status', val)}
                                     >
-                                        <SelectTrigger className="rounded-xl h-9 text-xs border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 w-full min-w-0">
+                                        <SelectTrigger className="rounded-xl h-9 text-xs border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 w-full min-w-0 [&>span]:truncate">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -3465,7 +3598,7 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
                                         value={editTaskForm.data.priority}
                                         onValueChange={(val: any) => editTaskForm.setData('priority', val)}
                                     >
-                                        <SelectTrigger className="rounded-xl h-9 text-xs border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 w-full min-w-0">
+                                        <SelectTrigger className="rounded-xl h-9 text-xs border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 w-full min-w-0 [&>span]:truncate">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -3488,7 +3621,7 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
                                         value={editTaskForm.data.sprint_id ? String(editTaskForm.data.sprint_id) : 'none'}
                                         onValueChange={(val) => editTaskForm.setData('sprint_id', val === 'none' ? '' : val)}
                                     >
-                                        <SelectTrigger className="rounded-xl h-9 text-xs border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 w-full min-w-0">
+                                        <SelectTrigger className="rounded-xl h-9 text-xs border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 w-full min-w-0 [&>span]:truncate">
                                             <SelectValue placeholder="Pilih Sprint" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -3511,7 +3644,7 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
                                             value={editTaskForm.data.assigned_to ? String(editTaskForm.data.assigned_to) : 'none'}
                                             onValueChange={(val) => editTaskForm.setData('assigned_to', val === 'none' ? '' : val)}
                                         >
-                                            <SelectTrigger className="rounded-xl h-9 text-xs border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 w-full min-w-0">
+                                            <SelectTrigger className="rounded-xl h-9 text-xs border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 w-full min-w-0 [&>span]:truncate">
                                                 <SelectValue placeholder="Belum Ditugaskan" />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -4115,10 +4248,22 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
                     </DialogContent>
                 </Dialog>
 
-                {/* 7. ATTACHMENT MODAL (UPLOAD) - SLEEK & COMPACT */}
-                <Dialog open={isAttachmentModalOpen} onOpenChange={(open) => { setIsAttachmentModalOpen(open); if (!open) setSelectedTaskForUpload(null); }}>
-                    <DialogContent className="w-[calc(100vw-1.5rem)] sm:w-full max-w-lg rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-4 sm:p-6 overflow-y-auto overflow-x-hidden max-h-[88vh] text-slate-900 dark:text-slate-100 min-w-0">
-                        <DialogHeader className="space-y-1 pb-2 border-b border-slate-100 dark:border-slate-800/80 min-w-0">
+                {/* 7. ATTACHMENT MODAL (UPLOAD) - PINNED HEADER & FOOTER, SCROLLABLE BODY */}
+                <Dialog
+                    open={isAttachmentModalOpen}
+                    onOpenChange={(open) => {
+                        setIsAttachmentModalOpen(open);
+                        if (!open) {
+                            setSelectedTaskForUpload(null);
+                            setAttachmentTaskId(null);
+                            setAttachmentFiles([]);
+                            setAttachmentUploadError(null);
+                        }
+                    }}
+                >
+                    <DialogContent className="w-[calc(100vw-1rem)] sm:w-full sm:max-w-xl rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-white/[0.1] bg-white/95 dark:bg-[#0B1222]/95 backdrop-blur-2xl shadow-2xl p-0 gap-0 overflow-hidden flex flex-col max-h-[92dvh] text-slate-900 dark:text-slate-100 min-w-0">
+                        <div className="pointer-events-none absolute inset-x-10 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-cyan-400/65 to-transparent" />
+                        <DialogHeader className="px-4 pt-4 pb-3 sm:px-6 sm:pt-5 sm:pb-3.5 space-y-1 border-b border-slate-100 dark:border-slate-800/80 shrink-0 min-w-0 pr-11 text-left">
                             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-700 dark:text-cyan-300 text-[10px] font-bold w-fit">
                                 <Paperclip className="size-3 text-cyan-500" />
                                 {selectedTaskForUpload ? 'Bukti Pengerjaan Tugas' : 'Digital Asset Vault'}
@@ -4132,127 +4277,99 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
                                 </span>
                             </DialogTitle>
                             <DialogDescription className="text-[11px] text-slate-500 dark:text-slate-400">
-                                {selectedTaskForUpload 
+                                {selectedTaskForUpload
                                     ? `Unggah dokumen, screenshot, atau arsip artefak untuk membuktikan penyelesaian tiket #${selectedTaskForUpload.id}.`
                                     : 'Simpan dokumen cetak biru, spesifikasi teknis, atau aset grafis proyek.'}
                             </DialogDescription>
                         </DialogHeader>
 
-                        {selectedTaskForUpload && (
-                            <div className="p-3 rounded-2xl bg-violet-500/10 border border-violet-500/25 flex items-center justify-between gap-2.5 mt-2">
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                    <div className="size-7 rounded-lg bg-violet-500/20 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
-                                        <CheckSquare className="size-4" />
-                                    </div>
-                                    <div className="min-w-0">
-                                        <span className="text-[10px] uppercase font-bold text-violet-600 dark:text-violet-400 block tracking-wider">
-                                            Ditautkan ke Tiket
-                                        </span>
-                                        <span className="text-xs font-bold text-slate-900 dark:text-white truncate block">
-                                            #{selectedTaskForUpload.id} - {selectedTaskForUpload.title}
-                                        </span>
-                                    </div>
-                                </div>
-                                <span className="px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-600 dark:text-violet-300 text-[10px] font-bold shrink-0">
-                                    Terkunci Otomatis
-                                </span>
-                            </div>
-                        )}
-
-                        <form onSubmit={handleUploadAttachment} className="space-y-3.5 pt-1.5 relative z-10 min-w-0">
-                            {/* Interactive File Dropzone */}
-                            <div className="space-y-1 min-w-0">
-                                <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center justify-between">
-                                    <span>Pilih Berkas Lampiran <span className="text-rose-500">*</span></span>
-                                    <span className="text-[10px] font-normal text-slate-400">Maksimal 20MB</span>
-                                </Label>
-
-                                <input
-                                    ref={attachmentInputRef}
-                                    type="file"
-                                    required
-                                    onChange={(e) => attachmentForm.setData('file', e.target.files?.[0] || null)}
-                                    className="hidden"
-                                />
-
-                                {attachmentForm.data.file ? (
-                                    <div className="p-3 rounded-2xl border border-cyan-500/30 bg-cyan-500/10 flex items-center justify-between gap-2.5 min-w-0">
-                                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                            <FileText className="size-5 text-cyan-600 dark:text-cyan-400 shrink-0" />
-                                            <div className="min-w-0 flex-1">
-                                                <span className="font-bold text-xs text-slate-900 dark:text-white block truncate">
-                                                    {(attachmentForm.data.file as File).name}
+                        <form onSubmit={handleUploadAttachment} className="flex flex-col flex-1 min-h-0 relative z-10 min-w-0">
+                            <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3.5 sm:px-6 space-y-3.5">
+                                {selectedTaskForUpload && (
+                                    <div className="p-3 rounded-2xl bg-violet-500/10 border border-violet-500/25 flex items-center justify-between gap-2.5">
+                                        <div className="flex items-center gap-2.5 min-w-0">
+                                            <div className="size-7 rounded-lg bg-violet-500/20 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
+                                                <CheckSquare className="size-4" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <span className="text-[10px] uppercase font-bold text-violet-600 dark:text-violet-400 block tracking-wider">
+                                                    Ditautkan ke Tiket
                                                 </span>
-                                                <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
-                                                    <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                                                        {formatFileSize((attachmentForm.data.file as File).size)}
-                                                    </span>
-                                                    <span className="text-[10px] text-emerald-600 font-semibold">• Siap diunggah</span>
-                                                </div>
+                                                <span className="text-xs font-bold text-slate-900 dark:text-white truncate block">
+                                                    #{selectedTaskForUpload.id} - {selectedTaskForUpload.title}
+                                                </span>
                                             </div>
                                         </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => attachmentForm.setData('file', null)}
-                                            className="size-7 rounded-lg bg-slate-100 dark:bg-slate-800 hover:text-rose-500 text-slate-400 flex items-center justify-center transition-colors cursor-pointer shrink-0"
-                                        >
-                                            <X className="size-3.5" />
-                                        </button>
+                                        <span className="px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-600 dark:text-violet-300 text-[10px] font-bold shrink-0">
+                                            Terkunci Otomatis
+                                        </span>
                                     </div>
-                                ) : (
-                                    <button
-                                        type="button"
-                                        onClick={() => attachmentInputRef.current?.click()}
-                                        className="w-full p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 hover:border-cyan-500/50 bg-slate-50/50 dark:bg-slate-950/50 text-center transition-all cursor-pointer group min-w-0"
-                                    >
-                                        <UploadCloud className="size-6 text-slate-400 group-hover:text-cyan-500 mx-auto transition-colors" />
-                                        <span className="block mt-1 text-xs font-semibold text-slate-700 dark:text-slate-300">
-                                            Klik untuk memilih atau seret berkas ke sini
-                                        </span>
-                                        <span className="block text-[10px] text-slate-400 mt-0.5">
-                                            PDF, DOCX, XLSX, ZIP, PNG, JPG (Maksimal 20MB)
-                                        </span>
-                                    </button>
+                                )}
+
+                                {/* Interactive File Dropzone */}
+                                <div className="space-y-1.5 min-w-0">
+                                    <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                                        <span>Pilih atau Seret Berkas Lampiran <span className="text-rose-500">*</span></span>
+                                        <span className="text-[10px] font-normal text-slate-400">Maksimal 20MB</span>
+                                    </Label>
+
+                                    <AttachmentDropzone
+                                        files={attachmentFiles}
+                                        onFilesChange={(nextFiles) => {
+                                            setAttachmentFiles(nextFiles);
+                                            setAttachmentUploadError(null);
+                                        }}
+                                        disabled={isUploadingAttachment}
+                                    />
+                                </div>
+
+                                {attachmentUploadError && (
+                                    <div className="p-3 rounded-xl border border-rose-500/30 bg-rose-500/10 text-xs font-medium text-rose-600 dark:text-rose-400">
+                                        {attachmentUploadError}
+                                    </div>
+                                )}
+
+                                {/* Hubungkan ke Tiket Tugas */}
+                                {!selectedTaskForUpload && (
+                                    <div className="space-y-1 min-w-0">
+                                        <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                            Hubungkan ke Tiket Tugas (Opsional)
+                                        </Label>
+                                        <Select
+                                            value={attachmentTaskId ? String(attachmentTaskId) : 'none'}
+                                            onValueChange={(val) => setAttachmentTaskId(val === 'none' ? null : Number(val))}
+                                        >
+                                            <SelectTrigger className="rounded-xl h-9 text-xs border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 w-full min-w-0 [&>span]:truncate">
+                                                <SelectValue placeholder="Lampiran Umum Proyek" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="none">
+                                                    Lampiran Umum Proyek (Tanpa Tiket Tugas)
+                                                </SelectItem>
+                                                {(is_admin
+                                                    ? (project.tasks || [])
+                                                    : (project.tasks || []).filter((t) => t.assigned_to === current_user_id)
+                                                ).map((t) => (
+                                                    <SelectItem key={t.id} value={String(t.id)}>
+                                                        #{t.id} {t.title}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                 )}
                             </div>
 
-                            {/* Hubungkan ke Tiket Tugas */}
-                            {!selectedTaskForUpload && (
-                                <div className="space-y-1 min-w-0">
-                                    <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                                        Hubungkan ke Tiket Tugas (Opsional)
-                                    </Label>
-                                    <Select
-                                        value={attachmentForm.data.task_id ? String(attachmentForm.data.task_id) : 'none'}
-                                        onValueChange={(val) => attachmentForm.setData('task_id', val === 'none' ? null : Number(val))}
-                                    >
-                                        <SelectTrigger className="rounded-xl h-9 text-xs border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 w-full min-w-0">
-                                            <SelectValue placeholder="Lampiran Umum Proyek" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="none">
-                                                Lampiran Umum Proyek (Tanpa Tiket Tugas)
-                                            </SelectItem>
-                                            {(is_admin
-                                                ? (project.tasks || [])
-                                                : (project.tasks || []).filter((t) => t.assigned_to === current_user_id)
-                                            ).map((t) => (
-                                                <SelectItem key={t.id} value={String(t.id)}>
-                                                    #{t.id} {t.title}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            )}
-
-                            <DialogFooter className="gap-2 pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col-reverse sm:flex-row sm:justify-end">
+                            <DialogFooter className="px-4 py-3 sm:px-6 sm:py-3.5 gap-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/95 shrink-0 flex flex-col-reverse sm:flex-row sm:justify-end">
                                 <Button
                                     type="button"
                                     variant="outline"
                                     onClick={() => {
                                         setIsAttachmentModalOpen(false);
                                         setSelectedTaskForUpload(null);
+                                        setAttachmentTaskId(null);
+                                        setAttachmentFiles([]);
+                                        setAttachmentUploadError(null);
                                     }}
                                     className="rounded-xl h-9 px-4 text-xs font-semibold border-slate-200 dark:border-slate-800 cursor-pointer w-full sm:w-auto"
                                 >
@@ -4260,11 +4377,15 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
                                 </Button>
                                 <Button
                                     type="submit"
-                                    disabled={attachmentForm.processing || !attachmentForm.data.file}
+                                    disabled={isUploadingAttachment || attachmentFiles.length === 0}
                                     className="bg-gradient-to-r from-cyan-600 via-blue-600 to-violet-600 hover:from-cyan-700 hover:to-violet-700 text-white rounded-xl shadow-md shadow-cyan-500/25 h-9 px-5 text-xs font-bold cursor-pointer w-full sm:w-auto"
                                 >
                                     <FileUp className="size-3.5 mr-1.5" />
-                                    {attachmentForm.processing ? 'Mengunggah...' : 'Unggah Berkas'}
+                                    {isUploadingAttachment
+                                        ? 'Mengunggah...'
+                                        : attachmentFiles.length > 1
+                                        ? `Unggah ${attachmentFiles.length} Berkas`
+                                        : 'Unggah Berkas'}
                                 </Button>
                             </DialogFooter>
                         </form>
@@ -4333,6 +4454,15 @@ Waktu Laporan: ${new Date().toLocaleString('id-ID')}
                         />
                     </DialogContent>
                 </Dialog>
+
+                {/* 10. LUXURY ATTACHMENT PREVIEW LIGHTBOX MODAL */}
+                <AttachmentPreviewModal
+                    attachment={previewAttachment}
+                    attachments={previewList}
+                    tasks={project.tasks || []}
+                    onClose={() => setPreviewAttachment(null)}
+                    onSelectAttachment={setPreviewAttachment}
+                />
             </div>
         </AppLayout>
     );

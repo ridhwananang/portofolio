@@ -9,6 +9,7 @@ import {
     Copy,
     Download,
     ExternalLink,
+    Eye,
     FileText,
     FolderKanban,
     Globe,
@@ -26,6 +27,12 @@ import {
     Zap,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { AttachmentPreviewModal } from '@/components/studio/pms/attachments/attachment-preview-modal';
+import {
+    getAttachmentExtension,
+    getAttachmentStyleMeta,
+    resolveAttachmentDownloadUrl,
+} from '@/components/studio/pms/attachments/attachment-utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,7 +47,6 @@ import {
     formatDate,
     formatFileSize,
     getDayDuration,
-    getFileExtensionBadge,
     getPriorityMeta,
     getSprintStatusMeta,
     getStatusMeta,
@@ -51,104 +57,111 @@ import {
 /* -------------------------------------------------------------------------- */
 /* MODULE 0: CETAK BIRU TEKNIS (BLUEPRINT)                                    */
 /* -------------------------------------------------------------------------- */
-export function PortalBlueprintModule({ project }: { project: ClientProject }) {
+export function PortalBlueprintModule({
+    project,
+    onOpenAttachments,
+}: {
+    project: ClientProject;
+    onOpenAttachments?: () => void;
+}) {
     const detail = project.detail;
     const hasTechStack =
         Array.isArray(detail?.tech_stack) && detail.tech_stack.length > 0;
+    const attachmentCount = project.attachments?.length ?? 0;
 
     return (
-        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12 lg:gap-8">
-            {/* Left Column: Executive Word Document Sheets */}
-            <div className="min-w-0 space-y-6 lg:col-span-8">
-                <div className="luxury-card relative rounded-3xl p-5 sm:p-6">
-                    <div className="specular-top" />
-                    <div className="flex items-start gap-3 sm:items-center">
-                        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-violet-500/20 bg-violet-500/10 text-violet-600 dark:text-violet-400">
-                            <FileText className="size-4.5" />
-                        </span>
-                        <div>
-                            <h2 className="font-[family-name:var(--font-brand)] text-base font-bold tracking-tight text-slate-900 sm:text-lg dark:text-white">
-                                Dokumen Cetak Biru &amp; Spesifikasi Teknis
-                            </h2>
-                            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                                Lembar dokumen resmi sasaran, ruang lingkup
-                                kerja, latar belakang, dan luaran proyek.
-                            </p>
-                        </div>
+        <div className="min-w-0 max-w-full space-y-6">
+            <div className="luxury-card relative space-y-4 rounded-3xl p-5 sm:p-6">
+                <div className="specular-top" />
+                <div className="flex items-start gap-3 sm:items-center">
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-violet-500/20 bg-violet-500/10 text-violet-600 dark:text-violet-400">
+                        <FileText className="size-4.5" />
+                    </span>
+                    <div>
+                        <h2 className="font-[family-name:var(--font-brand)] text-base font-bold tracking-tight text-slate-900 sm:text-lg dark:text-white">
+                            Dokumen Cetak Biru &amp; Spesifikasi Teknis
+                        </h2>
+                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                            Lembar dokumen resmi sasaran, ruang lingkup
+                            kerja, latar belakang, dan luaran proyek.
+                        </p>
                     </div>
                 </div>
 
-                <WordDocumentViewer
-                    content={detail?.objective || ''}
-                    label="1. Sasaran Utama & Key Results (Objectives)"
-                />
-
-                <WordDocumentViewer
-                    content={detail?.scope || ''}
-                    label="2. Ruang Lingkup Teknis (Scope of Work)"
-                />
-
-                <WordDocumentViewer
-                    content={detail?.background || ''}
-                    label="3. Latar Belakang Proyek & Masalah Bisnis"
-                />
-
-                <WordDocumentViewer
-                    content={detail?.deliverables || ''}
-                    label="4. Hasil Akhir & Deliverables"
-                />
-            </div>
-
-            {/* Right Column: Tautan Cepat & Tech Stack */}
-            <div className="min-w-0 space-y-5 lg:sticky lg:top-22 lg:col-span-4">
-                <div className="luxury-card relative space-y-4 rounded-3xl p-5 sm:p-6">
-                    <div className="specular-top" />
-                    <h3 className="flex items-center gap-2 font-[family-name:var(--font-brand)] text-sm font-bold text-slate-900 dark:text-white">
-                        <Sparkles className="size-4 text-amber-500" />
-                        Tautan Cepat &amp; Sumber Daya
-                    </h3>
+                {/* Compact Quick Links & Tech Stack Strip */}
+                <div className="flex flex-wrap items-center gap-2 border-t border-slate-200/75 pt-3.5 text-xs dark:border-slate-800/80">
+                    <span className="mr-1 inline-flex items-center gap-1.5 text-[11px] font-bold tracking-wider text-slate-500 uppercase dark:text-slate-400">
+                        <Sparkles className="size-3.5 shrink-0 text-amber-500" />
+                        Tautan Cepat:
+                    </span>
 
                     {detail?.live_demo_url ? (
                         <a
                             href={detail.live_demo_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center justify-between rounded-2xl border border-sky-200/80 bg-sky-50/80 p-3 text-xs text-slate-800 transition-colors hover:border-sky-500 dark:border-sky-800/60 dark:bg-sky-950/30 dark:text-slate-100"
+                            className="inline-flex items-center gap-1.5 rounded-full border border-sky-200/80 bg-sky-50/90 px-3 py-1 font-semibold text-sky-800 transition-colors hover:border-sky-500 dark:border-sky-800/70 dark:bg-sky-950/40 dark:text-sky-200"
                         >
-                            <span className="flex items-center gap-2 truncate font-bold">
-                                <Globe className="size-4 shrink-0 text-sky-500" />
-                                <span className="truncate">
-                                    Server Preview Staging
-                                </span>
-                            </span>
-                            <ExternalLink className="size-3.5 shrink-0 text-sky-500" />
+                            <Globe className="size-3.5 shrink-0 text-sky-500" />
+                            <span>Preview Staging</span>
+                            <ExternalLink className="size-3 shrink-0 opacity-75" />
                         </a>
                     ) : (
-                        <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-3 text-xs text-slate-400 italic dark:border-slate-800 dark:bg-[#080f20]">
-                            URL staging preview belum dikonfigurasi
-                        </div>
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-slate-200 bg-slate-50 px-3 py-1 text-slate-400 dark:border-slate-800 dark:bg-[#080f20] dark:text-slate-500">
+                            <Globe className="size-3.5 shrink-0 opacity-70" />
+                            <span>Staging belum diatur</span>
+                        </span>
+                    )}
+
+                    {onOpenAttachments && (
+                        <button
+                            type="button"
+                            onClick={onOpenAttachments}
+                            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1 font-semibold text-amber-700 transition-colors hover:bg-amber-500/15 dark:text-amber-300"
+                        >
+                            <Paperclip className="size-3.5 shrink-0" />
+                            <span>Lampiran ({attachmentCount})</span>
+                            <ArrowRight className="size-3 shrink-0" />
+                        </button>
                     )}
 
                     {hasTechStack && (
-                        <div className="space-y-2.5 border-t border-slate-100 pt-3 dark:border-slate-800/80">
-                            <span className="block text-[11px] font-bold tracking-wider text-slate-500 uppercase dark:text-slate-400">
-                                Arsitektur &amp; Teknologi (
-                                {detail.tech_stack?.length})
+                        <div className="flex w-full flex-wrap items-center gap-1.5 border-t border-slate-100 pt-2.5 dark:border-slate-800/70">
+                            <span className="mr-1 text-[10.5px] font-bold tracking-wider text-slate-400 uppercase dark:text-slate-500">
+                                Teknologi ({detail.tech_stack?.length}):
                             </span>
-                            <div className="flex flex-wrap gap-1.5">
-                                {detail.tech_stack?.map((tech, idx) => (
-                                    <span
-                                        key={idx}
-                                        className="rounded-lg border border-slate-200/80 bg-slate-100 px-2.5 py-1 font-mono text-[11px] font-semibold text-slate-700 dark:border-slate-700/80 dark:bg-slate-800/90 dark:text-slate-300"
-                                    >
-                                        {tech}
-                                    </span>
-                                ))}
-                            </div>
+                            {detail.tech_stack?.map((tech, idx) => (
+                                <span
+                                    key={idx}
+                                    className="rounded-lg border border-slate-200/80 bg-slate-100 px-2 py-0.5 font-mono text-[10.5px] font-semibold text-slate-700 dark:border-slate-700/80 dark:bg-slate-800/90 dark:text-slate-300"
+                                >
+                                    {tech}
+                                </span>
+                            ))}
                         </div>
                     )}
                 </div>
             </div>
+
+            <WordDocumentViewer
+                content={detail?.objective || ''}
+                label="1. Sasaran Utama & Key Results (Objectives)"
+            />
+
+            <WordDocumentViewer
+                content={detail?.scope || ''}
+                label="2. Ruang Lingkup Teknis (Scope of Work)"
+            />
+
+            <WordDocumentViewer
+                content={detail?.background || ''}
+                label="3. Latar Belakang Proyek & Masalah Bisnis"
+            />
+
+            <WordDocumentViewer
+                content={detail?.deliverables || ''}
+                label="4. Hasil Akhir & Deliverables"
+            />
         </div>
     );
 }
@@ -1512,6 +1525,8 @@ export function PortalAttachmentsModule({
     const [attachmentFilter, setAttachmentFilter] = useState<
         'all' | 'tasks' | 'general'
     >('all');
+    const [previewAttachment, setPreviewAttachment] =
+        useState<ClientAttachment | null>(null);
 
     const allAttachments = useMemo(() => {
         const map = new Map<number, ClientAttachment>();
@@ -1602,95 +1617,165 @@ export function PortalAttachmentsModule({
                           : 'Belum ada berkas lampiran yang diunggah di proyek ini.'}
                 </div>
             ) : (
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 sm:gap-5">
                     {filteredAttachments.map((att) => {
-                        const badge = getFileExtensionBadge(att.file_name);
+                        const styleMeta = getAttachmentStyleMeta(
+                            att.file_name,
+                            att.file_type,
+                        );
+                        const ext = getAttachmentExtension(
+                            att.file_name,
+                            att.file_type,
+                        ).toUpperCase();
                         const matchingTaskTitle =
                             att.task_title ||
                             project.tasks.find((t) => t.id === att.task_id)
                                 ?.title;
-                        const downloadUrl = resolveAttachmentUrl(att);
+                        const previewUrl = resolveAttachmentUrl(att);
+                        const downloadUrl = resolveAttachmentDownloadUrl(att);
 
                         return (
                             <div
                                 key={att.id}
-                                className="luxury-card luxury-card-interactive group relative flex flex-col justify-between gap-3 rounded-3xl p-4.5"
+                                className="luxury-card luxury-card-interactive group relative flex min-w-0 flex-col justify-between overflow-hidden rounded-3xl"
                             >
                                 <div className="specular-top" />
 
-                                <div className="min-w-0 space-y-2.5">
-                                    {att.task_id && matchingTaskTitle ? (
-                                        <div className="flex w-fit max-w-full items-center gap-1.5 rounded-md border border-indigo-500/20 bg-indigo-500/10 px-2.5 py-0.5 text-[10px] font-bold text-indigo-700 dark:text-indigo-300">
-                                            <CheckSquare className="size-2.5 shrink-0 text-indigo-500" />
-                                            <span className="truncate">
-                                                Bukti Tugas #{att.task_id}:{' '}
-                                                {matchingTaskTitle}
-                                            </span>
-                                        </div>
+                                {/* Visual Thumbnail / Format Preview Header */}
+                                <button
+                                    type="button"
+                                    onClick={() => setPreviewAttachment(att)}
+                                    className={`relative flex h-36 w-full cursor-pointer items-center justify-center overflow-hidden border-b border-slate-200/70 bg-gradient-to-br text-left sm:h-40 dark:border-slate-800/80 ${styleMeta.bannerClass}`}
+                                    title="Klik untuk membuka pratinjau berkas"
+                                >
+                                    {styleMeta.category === 'image' ? (
+                                        <img
+                                            src={previewUrl}
+                                            alt={att.file_name}
+                                            loading="lazy"
+                                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                        />
                                     ) : (
-                                        <div className="flex w-fit items-center gap-1.5 rounded-md bg-slate-100 px-2.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-                                            <Layers className="size-2.5 text-slate-400" />
-                                            <span>Dokumen Umum Proyek</span>
+                                        <div className="flex flex-col items-center justify-center gap-2 p-4">
+                                            <div
+                                                className={`flex size-14 items-center justify-center rounded-2xl border shadow-sm transition-transform duration-300 group-hover:scale-110 ${styleMeta.iconBgClass}`}
+                                            >
+                                                <styleMeta.Icon className="size-7" />
+                                            </div>
+                                            <span className="text-[10.5px] font-semibold text-slate-600 dark:text-slate-300">
+                                                {styleMeta.label}
+                                            </span>
                                         </div>
                                     )}
 
-                                    <div className="flex min-w-0 items-start gap-3">
-                                        <div
-                                            className={`flex size-10 shrink-0 items-center justify-center rounded-xl border font-mono text-[10px] font-black ${badge.toneClass}`}
+                                    <div className="pointer-events-none absolute inset-x-3 top-3 flex items-center justify-between gap-2">
+                                        <span
+                                            className={`rounded-full border px-2 py-0.5 text-[10px] font-extrabold tracking-wider shadow-xs backdrop-blur-md ${styleMeta.badgeClass}`}
                                         >
-                                            {badge.ext}
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <span
-                                                className="block truncate text-xs font-bold text-slate-900 transition-colors group-hover:text-cyan-600 dark:text-white dark:group-hover:text-cyan-400"
+                                            {ext || 'FILE'}
+                                        </span>
+                                        <span className="inline-flex items-center gap-1 rounded-full bg-slate-950/70 px-2.5 py-0.5 text-[10px] font-semibold text-white opacity-90 backdrop-blur-md transition-opacity duration-200 sm:opacity-0 sm:group-hover:opacity-100">
+                                            <Eye className="size-3 text-cyan-300" />
+                                            Pratinjau
+                                        </span>
+                                    </div>
+
+                                    {styleMeta.category === 'image' && (
+                                        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-slate-950/55 to-transparent" />
+                                    )}
+                                </button>
+
+                                <div className="flex flex-1 flex-col justify-between space-y-3 p-4.5">
+                                    <div className="min-w-0 space-y-2">
+                                        {att.task_id && matchingTaskTitle ? (
+                                            <div className="flex w-fit max-w-full items-center gap-1.5 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-2.5 py-0.5 text-[10px] font-bold text-indigo-700 dark:text-indigo-300">
+                                                <CheckSquare className="size-2.5 shrink-0 text-indigo-500" />
+                                                <span className="truncate">
+                                                    Tiket #{att.task_id}:{' '}
+                                                    {matchingTaskTitle}
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <div className="flex w-fit items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                                                <Layers className="size-2.5 text-slate-400" />
+                                                <span>Dokumen Umum Proyek</span>
+                                            </div>
+                                        )}
+
+                                        <div className="min-w-0">
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setPreviewAttachment(att)
+                                                }
+                                                className="block w-full cursor-pointer truncate text-left text-xs font-bold text-slate-900 transition-colors group-hover:text-cyan-600 sm:text-sm dark:text-white dark:group-hover:text-cyan-400"
                                                 title={att.file_name}
                                             >
                                                 {att.file_name}
-                                            </span>
-                                            <div className="mt-0.5 flex items-center gap-1 truncate text-[10.5px] text-slate-400">
-                                                <span>
+                                            </button>
+                                            <div className="mt-0.5 flex items-center gap-1.5 truncate text-[11px] text-slate-500 dark:text-slate-400">
+                                                <span className="font-medium">
                                                     {formatFileSize(
                                                         att.file_size,
                                                     )}
                                                 </span>
                                                 <span>•</span>
                                                 <span className="truncate">
-                                                    Oleh:{' '}
+                                                    Oleh{' '}
                                                     {att.uploader_name ??
                                                         'Tim Studio'}
                                                 </span>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="flex items-center justify-between border-t border-slate-100 pt-2.5 text-xs dark:border-slate-800/80">
-                                    <span className="text-[10.5px] text-slate-400">
-                                        {formatDate(att.created_at)}
-                                    </span>
+                                    <div className="flex items-center justify-between gap-2 border-t border-slate-100 pt-3 text-xs dark:border-slate-800/80">
+                                        <span className="truncate text-[11px] text-slate-400">
+                                            {formatDate(att.created_at)}
+                                        </span>
 
-                                    <Button
-                                        asChild
-                                        size="sm"
-                                        variant="outline"
-                                        className="no-print h-8 shrink-0 rounded-xl border-slate-200 bg-white px-3 text-xs text-slate-700 hover:border-cyan-500/40 hover:bg-cyan-50 dark:border-slate-700/80 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-cyan-950/30"
-                                    >
-                                        <a
-                                            href={downloadUrl}
-                                            download
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                        >
-                                            <Download className="mr-1.5 size-3.5 text-cyan-500" />
-                                            Unduh
-                                        </a>
-                                    </Button>
+                                        <div className="no-print flex shrink-0 items-center gap-1.5">
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setPreviewAttachment(att)
+                                                }
+                                                className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-xl border border-cyan-500/25 bg-cyan-500/10 px-2.5 text-[11px] font-semibold text-cyan-700 transition-colors hover:bg-cyan-500/20 dark:text-cyan-300"
+                                                title="Pratinjau Berkas"
+                                            >
+                                                <Eye className="size-3.5" />
+                                                <span>Lihat</span>
+                                            </button>
+                                            <Button
+                                                asChild
+                                                size="sm"
+                                                variant="outline"
+                                                className="h-8 shrink-0 rounded-xl border-slate-200 bg-white px-2.5 text-[11px] font-semibold text-slate-700 hover:border-cyan-500/40 hover:bg-cyan-50 dark:border-slate-700/80 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-cyan-950/30"
+                                            >
+                                                <a
+                                                    href={downloadUrl}
+                                                    download={att.file_name}
+                                                >
+                                                    <Download className="mr-1 size-3.5 text-cyan-500" />
+                                                    Unduh
+                                                </a>
+                                            </Button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         );
                     })}
                 </div>
             )}
+
+            <AttachmentPreviewModal
+                attachment={previewAttachment}
+                attachments={filteredAttachments}
+                tasks={project.tasks}
+                onClose={() => setPreviewAttachment(null)}
+                onSelectAttachment={setPreviewAttachment}
+            />
         </div>
     );
 }

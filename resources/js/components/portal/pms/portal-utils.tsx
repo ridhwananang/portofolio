@@ -192,6 +192,10 @@ export function resolveAvatarUrl(
 }
 
 export function resolveAttachmentUrl(att: ClientAttachment): string {
+    if (att.preview_url) {
+        return att.preview_url;
+    }
+
     if (att.file_url) {
         return att.file_url;
     }

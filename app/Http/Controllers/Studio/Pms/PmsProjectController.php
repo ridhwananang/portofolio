@@ -201,6 +201,10 @@ class PmsProjectController extends Controller
             ]);
         }
 
+        if ($project->project_order_id) {
+            $project->syncOrderPaymentsToFinances(auth()->id());
+        }
+
         PmsActivityLog::log(
             action: 'created',
             entityType: 'project',
@@ -416,6 +420,8 @@ class PmsProjectController extends Controller
                 ]);
             }
         }
+
+        $project->syncOrderPaymentsToFinances(auth()->id());
 
         PmsActivityLog::log(
             action: 'created',

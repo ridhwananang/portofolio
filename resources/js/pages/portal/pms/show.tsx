@@ -826,7 +826,10 @@ Dikelola secara profesional oleh Ridhwan Studio.`;
                 {/* 3. ACTIVE MODULE VIEW */}
                 <div className="animate-in duration-200 fade-in-0">
                     {activeTab === 'blueprint' && (
-                        <PortalBlueprintModule project={project} />
+                        <PortalBlueprintModule
+                            project={project}
+                            onOpenAttachments={() => setActiveTab('attachments')}
+                        />
                     )}
                     {activeTab === 'sprints' && (
                         <PortalSprintsModule

@@ -314,6 +314,10 @@ class EscrowService
                 ]);
             }
         }
+
+        if ($order->pmsProject) {
+            $order->pmsProject->syncOrderPaymentsToFinances();
+        }
     }
 
     /**

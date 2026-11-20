@@ -209,3 +209,140 @@ test('admin can upload avatar and update dynamic user profile', function () {
     expect($user->role_title)->toBe('Chief Technology Officer');
     \Illuminate\Support\Facades\Storage::disk('public')->assertExists($user->avatar);
 });
+
+test('finances index automatically displays projects with budgets and syncs linked paid orders', function () {
+    $quest = \App\Models\Quest::create([
+        'poster_id' => $this->admin->id,
+        'worker_id' => $this->admin->id,
+        'title' => 'IkhsanTani Portal',
+        'description' => 'Agri marketplace platform',
+        'reward_amount' => 12000000,
+        'fee_amount' => 0,
+        'total_amount' => 12000000,
+        'currency' => 'IDR',
+        'status' => \App\Enums\QuestStatus::OPEN,
+    ]);
+
+    $order = \App\Models\ProjectOrder::create([
+        'tracking_code' => 'PRJ-FINAUTO',
+        'client_name' => 'PT Maju Terus',
+        'client_email' => 'finance@maju.test',
+        'client_phone' => '081234567890',
+        'project_type' => 'fullstack_app',
+        'delivery_speed' => 'standard',
+        'total_amount' => 12000000,
+        'payment_scheme' => 'down_payment',
+        'dp_percentage' => 50,
+        'dp_amount' => 6000000,
+        'remaining_amount' => 6000000,
+        'payment_stage' => 'dp_paid',
+        'dp_paid_at' => now(),
+        'status' => 'in_progress',
+        'quest_id' => $quest->id,
+    ]);
+
+    $project = PmsProject::create([
+        'name' => 'IkhsanTani Portal',
+        'code' => 'PRJ-2026-001',
+        'client' => 'PT Maju Terus',
+        'budget' => 12000000,
+        'status' => 'in_progress',
+        'project_order_id' => $order->id,
+        'created_by' => $this->admin->id,
+    ]);
+
+    $response = $this->actingAs($this->admin)->get('/studio/pms/finances');
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('studio/pms/finances/index')
+        ->where('summary.total_budgets', 12000000)
+        ->where('summary.total_income', 6000000)
+        ->has('projectFinancials', 1)
+        ->where('projectFinancials.0.id', $project->id)
+        ->where('projectFinancials.0.name', 'IkhsanTani Portal')
+        ->where('projectFinancials.0.budget', 12000000)
+        ->where('projectFinancials.0.income', 6000000)
+    );
+});
+
+it('stores previews downloads and deletes project attachments using s3 disk', function () {
+    config(['filesystems.default' => 's3']);
+    \Illuminate\Support\Facades\Storage::fake('s3');
+
+    $project = \App\Models\Pms\PmsProject::create([
+        'name' => 'S3 Vault Test',
+        'code' => 'PRJ-S3-01',
+        'client' => 'Toko Ikhsan',
+        'budget' => 5000000,
+        'status' => 'in_progress',
+        'priority' => 'high',
+        'created_by' => $this->admin->id,
+    ]);
+
+    $file = \Illuminate\Http\UploadedFile::fake()->image('bukti-wireframe.png', 400, 300);
+
+    $uploadResponse = $this->actingAs($this->admin)->post('/studio/pms/attachments', [
+        'project_id' => $project->id,
+        'file' => $file,
+    ]);
+    $uploadResponse->assertRedirect();
+
+    $attachment = \App\Models\Pms\PmsAttachment::where('project_id', $project->id)->firstOrFail();
+    expect($attachment->file_name)->toBe('bukti-wireframe.png');
+    \Illuminate\Support\Facades\Storage::disk('s3')->assertExists($attachment->file_path);
+
+    $previewResponse = $this->actingAs($this->admin)->get("/studio/pms/attachments/{$attachment->id}/preview");
+    $previewResponse->assertOk();
+    expect($previewResponse->headers->get('content-disposition'))->toContain('inline');
+
+    $downloadResponse = $this->actingAs($this->admin)->get("/studio/pms/attachments/{$attachment->id}/download");
+    $downloadResponse->assertOk();
+    expect($downloadResponse->headers->get('content-disposition'))->toContain('attachment');
+    expect($downloadResponse->headers->get('content-disposition'))->toContain('bukti-wireframe.png');
+
+    $outsider = \App\Models\User::factory()->create(['is_admin' => false, 'status' => 'active']);
+    $this->actingAs($outsider)
+        ->get("/studio/pms/attachments/{$attachment->id}/preview")
+        ->assertForbidden();
+
+    $this->actingAs($this->admin)
+        ->delete("/studio/pms/attachments/{$attachment->id}")
+        ->assertRedirect();
+
+    \Illuminate\Support\Facades\Storage::disk('s3')->assertMissing($attachment->file_path);
+    $this->assertDatabaseMissing('pms_attachments', ['id' => $attachment->id]);
+});
+
+it('uploads multiple project attachments at once to s3 disk', function () {
+    config(['filesystems.default' => 's3']);
+    \Illuminate\Support\Facades\Storage::fake('s3');
+
+    $project = \App\Models\Pms\PmsProject::create([
+        'name' => 'Multi Upload Project',
+        'code' => 'PRJ-MLT-01',
+        'client' => 'Toko Ikhsan',
+        'budget' => 2500000,
+        'status' => 'in_progress',
+        'priority' => 'medium',
+        'created_by' => $this->admin->id,
+    ]);
+
+    $files = [
+        \Illuminate\Http\UploadedFile::fake()->image('wireframe-1.png', 200, 200),
+        \Illuminate\Http\UploadedFile::fake()->create('erd-schema.pdf', 120, 'application/pdf'),
+        \Illuminate\Http\UploadedFile::fake()->create('dataset-awal.csv', 40, 'text/csv'),
+    ];
+
+    $this->actingAs($this->admin)
+        ->post('/studio/pms/attachments', [
+            'project_id' => $project->id,
+            'files' => $files,
+        ])
+        ->assertRedirect();
+
+    $attachments = \App\Models\Pms\PmsAttachment::where('project_id', $project->id)->get();
+    expect($attachments)->toHaveCount(3);
+    foreach ($attachments as $att) {
+        \Illuminate\Support\Facades\Storage::disk('s3')->assertExists($att->file_path);
+    }
+});

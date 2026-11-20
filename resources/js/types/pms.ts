@@ -53,10 +53,16 @@ export interface PmsAttachment {
     file_name: string;
     file_path: string;
     file_url?: string | null;
+    preview_url?: string | null;
+    download_url?: string | null;
     file_size: number;
     file_type?: string | null;
     uploaded_by: number;
     uploader?: PmsUser;
+    task?: {
+        id: number;
+        title: string;
+    } | null;
     created_at: string;
 }
 

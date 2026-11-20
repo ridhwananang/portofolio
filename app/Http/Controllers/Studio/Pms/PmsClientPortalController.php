@@ -5,16 +5,22 @@ namespace App\Http\Controllers\Studio\Pms;
 use App\Http\Controllers\Controller;
 use App\Mail\PmsPortalInviteMail;
 use App\Mail\PmsProgressReportMail;
+use App\Models\Pms\PmsAttachment;
 use App\Models\Pms\PmsProject;
+use App\Services\Pms\PmsAttachmentStorage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PmsClientPortalController extends Controller
 {
+    public function __construct(private readonly PmsAttachmentStorage $attachmentStorage)
+    {
+    }
     /**
      * Display the confidential client portal page.
      */
@@ -96,6 +102,8 @@ class PmsClientPortalController extends Controller
             'file_name' => $att->file_name,
             'file_path' => $att->file_path,
             'file_url' => $att->file_url,
+            'preview_url' => route('portal.client.attachments.preview', ['token' => $token, 'attachment' => $att->id], false),
+            'download_url' => route('portal.client.attachments.download', ['token' => $token, 'attachment' => $att->id], false),
             'file_size' => $att->file_size,
             'file_type' => $att->file_type,
             'uploader_name' => $att->uploader?->name ?? 'Tim Studio',
@@ -447,6 +455,42 @@ class PmsClientPortalController extends Controller
             return back()->with('success', "Laporan progres berhasil dikirim ke {$validated['client_email']}.");
         } catch (\Throwable $e) {
             return back()->withErrors(['email' => 'Gagal mengirim email: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Stream an authorized project attachment inline for client preview.
+     */
+    public function previewAttachment(Request $request, string $token, PmsAttachment $attachment): StreamedResponse|RedirectResponse
+    {
+        $this->authorizePortalAttachmentAccess($request, $token, $attachment);
+
+        return $this->attachmentStorage->stream($attachment, 'inline');
+    }
+
+    /**
+     * Stream an authorized project attachment as download for client portal.
+     */
+    public function downloadAttachment(Request $request, string $token, PmsAttachment $attachment): StreamedResponse|RedirectResponse
+    {
+        $this->authorizePortalAttachmentAccess($request, $token, $attachment);
+
+        return $this->attachmentStorage->stream($attachment, 'attachment');
+    }
+
+    /**
+     * Verify portal token status, optional PIN session, and attachment ownership.
+     */
+    private function authorizePortalAttachmentAccess(Request $request, string $token, PmsAttachment $attachment): void
+    {
+        $project = PmsProject::where('portal_token', $token)->firstOrFail();
+
+        if (! $project->is_portal_active || (int) $attachment->project_id !== (int) $project->id) {
+            abort(404);
+        }
+
+        if (! empty($project->portal_pin) && ! $request->session()->get("portal_pms_verified_{$project->id}", false)) {
+            abort(403, 'Verifikasi PIN portal diperlukan untuk mengakses berkas.');
         }
     }
 

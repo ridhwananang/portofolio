@@ -162,7 +162,82 @@ class PmsProject extends Model
     public function getBudgetBurnRateAttribute(): float
     {
         $budget = (float) $this->budget;
-        if ($budget <= 0) return 0;
+        if ($budget <= 0) {
+            return 0;
+        }
+
         return round(($this->total_expense / $budget) * 100, 1);
+    }
+
+    /**
+     * Automatically sync verified DP and final payments from a linked ProjectOrder into PMS finances.
+     */
+    public function syncOrderPaymentsToFinances(?int $actorId = null): void
+    {
+        $order = $this->projectOrder;
+        if (! $order) {
+            return;
+        }
+
+        $categoryTag = "Order #{$order->tracking_code}";
+        $createdBy = $actorId ?? $this->created_by;
+
+        $isFullScheme = in_array($order->payment_scheme, ['full', 'full_payment'], true);
+
+        if ($order->isDpPaid()) {
+            $dpAmount = $isFullScheme
+                ? (float) $order->total_amount
+                : (float) ($order->dp_amount > 0 ? $order->dp_amount : $order->total_amount);
+
+            if ($dpAmount > 0) {
+                $dpTitle = $isFullScheme
+                    ? "Pelunasan Penuh Order #{$order->tracking_code}"
+                    : "Pembayaran DP Order #{$order->tracking_code}";
+
+                $exists = $this->finances()
+                    ->where('type', 'income')
+                    ->where('title', $dpTitle)
+                    ->exists();
+
+                if (! $exists) {
+                    $this->finances()->create([
+                        'type' => 'income',
+                        'title' => $dpTitle,
+                        'category' => $categoryTag,
+                        'amount' => $dpAmount,
+                        'transaction_date' => ($order->dp_paid_at ?? $order->created_at ?? now())->toDateString(),
+                        'notes' => "Otomatis tersinkronisasi dari pembayaran klien ({$order->client_name}).",
+                        'created_by' => $createdBy,
+                    ]);
+                }
+            }
+        }
+
+        if (! $isFullScheme && $order->isFullyPaid()) {
+            $finalAmount = (float) ($order->remaining_amount > 0
+                ? $order->remaining_amount
+                : max(0, (float) $order->total_amount - (float) $order->dp_amount));
+
+            if ($finalAmount > 0) {
+                $finalTitle = "Pelunasan Akhir Order #{$order->tracking_code}";
+
+                $exists = $this->finances()
+                    ->where('type', 'income')
+                    ->where('title', $finalTitle)
+                    ->exists();
+
+                if (! $exists) {
+                    $this->finances()->create([
+                        'type' => 'income',
+                        'title' => $finalTitle,
+                        'category' => $categoryTag,
+                        'amount' => $finalAmount,
+                        'transaction_date' => ($order->final_paid_at ?? now())->toDateString(),
+                        'notes' => "Otomatis tersinkronisasi dari pelunasan akhir klien ({$order->client_name}).",
+                        'created_by' => $createdBy,
+                    ]);
+                }
+            }
+        }
     }
 }

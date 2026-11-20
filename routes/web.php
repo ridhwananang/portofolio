@@ -21,10 +21,14 @@ Route::post('/track-project/{tracking_code}/revision', [ProjectOrderController::
 // Client Project Portal (Canonical clean URL + legacy /portal/pms alias)
 Route::get('/portal/{token}', [PmsClientPortalController::class, 'show'])->middleware('throttle:60,1')->name('portal.client.show');
 Route::post('/portal/{token}/verify-pin', [PmsClientPortalController::class, 'verifyPin'])->middleware('throttle:15,1')->name('portal.client.verify-pin');
+Route::get('/portal/{token}/attachments/{attachment}/preview', [PmsClientPortalController::class, 'previewAttachment'])->middleware('throttle:120,1')->name('portal.client.attachments.preview');
+Route::get('/portal/{token}/attachments/{attachment}/download', [PmsClientPortalController::class, 'downloadAttachment'])->middleware('throttle:60,1')->name('portal.client.attachments.download');
 
 // Legacy route alias so previously shared /portal/pms/{token} links remain valid
 Route::get('/portal/pms/{token}', [PmsClientPortalController::class, 'show'])->middleware('throttle:60,1')->name('portal.pms.show');
 Route::post('/portal/pms/{token}/verify-pin', [PmsClientPortalController::class, 'verifyPin'])->middleware('throttle:15,1')->name('portal.pms.verify-pin');
+Route::get('/portal/pms/{token}/attachments/{attachment}/preview', [PmsClientPortalController::class, 'previewAttachment'])->middleware('throttle:120,1')->name('portal.pms.attachments.preview');
+Route::get('/portal/pms/{token}/attachments/{attachment}/download', [PmsClientPortalController::class, 'downloadAttachment'])->middleware('throttle:60,1')->name('portal.pms.attachments.download');
 
 // Legal & Compliance Pages (Midtrans Requirements)
 Route::inertia('/terms-and-conditions', 'terms')->name('terms');

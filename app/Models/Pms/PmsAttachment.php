@@ -26,7 +26,21 @@ class PmsAttachment extends Model
 
     protected $appends = [
         'file_url',
+        'preview_url',
+        'download_url',
     ];
+
+    /**
+     * Resolve target storage disk for project attachments (S3 bucket when configured).
+     */
+    public static function storageDisk(): string
+    {
+        if (! app()->runningUnitTests() && filled(config('filesystems.disks.s3.bucket'))) {
+            return 's3';
+        }
+
+        return (string) config('filesystems.default', 'public');
+    }
 
     public function getFileUrlAttribute(): ?string
     {
@@ -38,7 +52,25 @@ class PmsAttachment extends Model
             return $this->file_path;
         }
 
-        return Storage::disk(config('filesystems.default'))->url($this->file_path);
+        return Storage::disk(static::storageDisk())->url($this->file_path);
+    }
+
+    public function getPreviewUrlAttribute(): ?string
+    {
+        if (! $this->id) {
+            return $this->file_url;
+        }
+
+        return "/studio/pms/attachments/{$this->id}/preview";
+    }
+
+    public function getDownloadUrlAttribute(): ?string
+    {
+        if (! $this->id) {
+            return $this->file_url;
+        }
+
+        return "/studio/pms/attachments/{$this->id}/download";
     }
 
     public function project(): BelongsTo

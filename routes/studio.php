@@ -113,6 +113,8 @@ $registerPmsRoutes = function () {
 
         // Attachments
         Route::post('attachments', [PmsAttachmentController::class, 'store'])->name('attachments.store');
+        Route::get('attachments/{attachment}/preview', [PmsAttachmentController::class, 'preview'])->name('attachments.preview');
+        Route::get('attachments/{attachment}/download', [PmsAttachmentController::class, 'download'])->name('attachments.download');
         Route::delete('attachments/{attachment}', [PmsAttachmentController::class, 'destroy'])->name('attachments.destroy');
 
         // Interactive Timeline & Gantt
