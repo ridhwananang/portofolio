@@ -1,13 +1,32 @@
-<?php
+﻿<?php
 
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProjectOrderController;
 use App\Http\Controllers\QuestController;
 use App\Http\Controllers\Studio\Pms\PmsClientPortalController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
+
+// Dedicated Aan Subdomain Experience (registered before main / route)
+Route::domain('aan.ridhwananang.id')->group(function () {
+    Route::get('/', fn () => Inertia::render('aan/index'))->name('aan.subdomain');
+});
+
+if (! app()->environment('production')) {
+    Route::domain('aan.localhost')->group(function () {
+        Route::get('/', fn () => Inertia::render('aan/index'))->name('aan.local.subdomain');
+    });
+
+    Route::domain('aan.portofolio.test')->group(function () {
+        Route::get('/', fn () => Inertia::render('aan/index'))->name('aan.herd.subdomain');
+    });
+}
 
 // Showcase Portofolio Publik (Cached High-Performance Engine)
 Route::get('/', [HomeController::class, 'index'])->name('home');
+
+// Direct path route for /aan (http://127.0.0.1:8000/aan)
+Route::inertia('/aan', 'aan/index')->name('aan.show');
 
 // Client Project Orders & Live Tracker (Public & Guest-friendly with Rate Limiting)
 Route::get('/layanan', [ProjectOrderController::class, 'calculator'])->name('services.calculator');

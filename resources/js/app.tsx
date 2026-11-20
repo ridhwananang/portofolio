@@ -1,4 +1,4 @@
-import { createInertiaApp } from '@inertiajs/react';
+﻿import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -19,6 +19,7 @@ createInertiaApp({
     layout: (name) => {
         switch (true) {
             case name === 'welcome':
+            case name === 'aan/index':
             case name === 'services-calculator':
             case name === 'project-tracker':
             case name === 'terms':

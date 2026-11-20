@@ -1,0 +1,84 @@
+﻿.aan-scope {
+  --font-display: "Bodoni Moda", Georgia, serif;
+  --font-serif: "Cormorant Garamond", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --bg-obsidian: #07070a;
+  --bg-velvet: #0e0e14;
+  --surface-glass: rgba(18, 18, 25, 0.72);
+  --border-gold: rgba(212, 175, 55, 0.24);
+  --border-subtle: rgba(245, 239, 230, 0.1);
+  --text-ivory: #f5efe6;
+  --text-muted: #a69f95;
+  --gold-champagne: #d4af37;
+  --gold-soft: #ead49b;
+  background: radial-gradient(
+      circle at 50% 0%,
+      rgba(212, 175, 55, 0.08) 0%,
+      transparent 52%
+    ),
+    var(--bg-obsidian);
+  color: var(--text-ivory);
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.aan-scope .font-luxury-display {
+  font-family: var(--font-display), Georgia, serif;
+}
+
+.aan-scope .font-editorial {
+  font-family: var(--font-serif), Georgia, serif;
+}
+
+.aan-scope .font-mono-precision {
+  font-family: var(--font-mono), ui-monospace, monospace;
+}
+
+.aan-scope .luxury-glass {
+  background: var(--surface-glass);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--border-subtle);
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.aan-scope .luxury-gold-ring {
+  border: 1px solid var(--border-gold);
+  box-shadow:
+    0 0 36px rgba(212, 175, 55, 0.12),
+    inset 0 0 24px rgba(212, 175, 55, 0.04);
+}
+
+.aan-scope .gold-gradient-text {
+  background: linear-gradient(135deg, #f8e7b8 0%, #d4af37 48%, #a67c2e 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@keyframes aan-subtle-pulse-ring {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 0.9;
+  }
+}
+
+.aan-scope .animate-pulse-ring {
+  animation: aan-subtle-pulse-ring 3.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aan-scope .animate-pulse-ring {
+    animation: none;
+  }
+}
