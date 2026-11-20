@@ -113,10 +113,10 @@ return null;
       >
         <div ref={containerRef} className="text-center sm:text-left">
           <p
-            className="font-editorial text-2xl font-normal italic leading-relaxed tracking-wide text-[#fbf3e4] sm:text-3xl lg:text-[2.15rem]"
+            className="font-editorial text-2xl font-normal italic leading-relaxed tracking-wide text-[#afa18a] sm:text-3xl lg:text-[2.15rem]"
             style={{
               textShadow:
-                "0 0 14px rgba(234, 212, 155, 0.62), 0 0 34px rgba(212, 175, 55, 0.38), 0 4px 22px rgba(0, 0, 0, 0.94)",
+                "0 0 10px rgba(175, 148, 96, 0.32), 0 0 24px rgba(130, 102, 56, 0.2), 0 4px 22px rgba(0, 0, 0, 0.96)",
             }}
           >
             {typedText}

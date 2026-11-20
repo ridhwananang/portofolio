@@ -258,7 +258,7 @@ export const SERANA_LYRIC_CUES: readonly LyricCue[] = [
     id: 123,
     text: "Untuk selalu sempurna",
     startMs: 143_000, // 3:52
-    endMs: 156_000, // 4:05
+    endMs: 148_500, // 3:57.5 (I LOVE YOU starts rising 3s after 3:52 -> 3:55)
     stanza: 2,
   },
 ] as const;

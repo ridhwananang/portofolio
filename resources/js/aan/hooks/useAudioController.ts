@@ -167,11 +167,29 @@ export function useAudioController(options: UseAudioControllerOptions) {
         if (fromGesture) {
           player.mute();
           player.playVideo();
-          player.pauseVideo();
 
-          if (!isMutedRef.current) {
-            player.unMute();
-          }
+          // Give YouTube iframe a short muted buffer slice inside gesture activation before pausing
+          window.setTimeout(() => {
+            try {
+              const isStoppedPlayer1 =
+                player === ytPlayerRef.current && !yt1ExpectPlayingRef.current;
+              const isStoppedPlayer2 =
+                player === ytSeranaPlayerRef.current &&
+                !yt2ExpectPlayingRef.current;
+
+              if (isStoppedPlayer1 || isStoppedPlayer2) {
+                player.pauseVideo();
+                player.seekTo(startSec, true);
+              }
+
+              if (!isMutedRef.current) {
+                player.unMute();
+                player.setVolume(90);
+              }
+            } catch {
+              // Ignore
+            }
+          }, 260);
         }
       } catch {
         // Ignore

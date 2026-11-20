@@ -78,24 +78,19 @@ export function FireworksCanvas({
     }
 
     if (mode === "feature") {
-      // Soften fireworks SFX smoothly near the end of the 5s overture (progress 0.68 -> 1.0)
-      if (progress < 0.68) {
-        setFireworksVolume(1);
+      // Soften fireworks SFX smoothly near the end of the 5s overture (progress 0.72 -> 1.0)
+      if (progress < 0.72) {
+        setFireworksVolume(0.85);
       } else {
-        const ramp = (progress - 0.68) / 0.32;
-        setFireworksVolume(1 - ramp * 0.84); // 1.0 -> 0.16
+        const ramp = (progress - 0.72) / 0.28;
+        setFireworksVolume(Math.max(0, 0.85 * (1 - ramp)));
       }
 
       return;
     }
 
-    // Background mode during the rose & song phase: stay quiet (0.14), fade to 0 in last 3s
-    if (remainingMs <= 3_000) {
-      const fade = Math.max(0, remainingMs / 3_000);
-      setFireworksVolume(0.14 * fade);
-    } else {
-      setFireworksVolume(0.14);
-    }
+    // Background mode during the rose & song phase: keep fireworks visual-only so Sadrah audio stays clean
+    setFireworksVolume(0);
   }, [active, mode, progress, remainingMs]);
 
   useEffect(() => {

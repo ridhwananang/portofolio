@@ -25,7 +25,7 @@ return;
             y: 0,
             scale: 1,
             duration: 13.5,
-            delay: 1.0,
+            delay: 0.15,
             ease: "sine.inOut",
           }
         );
@@ -37,7 +37,7 @@ return;
           {
             opacity: 1,
             duration: 8.0,
-            delay: 1.0,
+            delay: 0.15,
             ease: "sine.inOut",
           }
         );
@@ -51,7 +51,7 @@ return;
             scaleX: 1,
             opacity: 0.62,
             duration: 3.2,
-            delay: 9.0,
+            delay: 8.0,
             ease: "sine.out",
           }
         );

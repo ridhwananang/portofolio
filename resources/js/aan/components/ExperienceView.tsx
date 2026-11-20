@@ -62,7 +62,7 @@ function readSavedPrefs(): { cues: LyricCue[]; durationMs: number } {
 }
 
 export function ExperienceView() {
-  const [palette, setPalette] = useState<ExperiencePalette>(
+  const [palette] = useState<ExperiencePalette>(
     DEFAULT_LUXURY_PALETTE
   );
   const [cues, setCues] = useState<LyricCue[]>(() => readSavedPrefs().cues);
@@ -102,7 +102,7 @@ export function ExperienceView() {
   });
 
   const timeline = useTimelineEngine({
-    autoStart: true,
+    autoStart: false,
     botanicalDurationMs,
     seranaDurationMs: EXPERIENCE_TIMING.seranaDurationMs,
     onEnterFireworks: () => {
@@ -122,13 +122,6 @@ export function ExperienceView() {
     },
     getPreciseAudioMs: audio.getPrecisePlaybackMs,
   });
-
-  // Prepare audio immediately on initial page open
-  useEffect(() => {
-    unlockSoundEngine();
-    audio.prepareAudio();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Any first tap/click/keypress anywhere unlocks browser audio & Web Audio SFX
   useEffect(() => {
@@ -155,6 +148,7 @@ export function ExperienceView() {
     gestureUnlockedRef.current = true;
     unlockSoundEngine();
     audio.prepareAudio();
+    audio.unlockAndSync("countdown", 0);
     timeline.startExperience();
   }, [audio, timeline]);
 
@@ -213,14 +207,11 @@ export function ExperienceView() {
         </div>
       )}
 
-      {/* Optional Entry Curtain */}
+      {/* Luxury Entry Curtain ("Mulai" button unlocking automatic audio before 1-2-3 countdown) */}
       {timeline.phase === "idle" && (
         <EntryCurtain
-          audioStatus={audio.status}
           palette={palette}
-          onSelectPalette={setPalette}
-          onSelectCustomAudio={audio.setCustomAudioFile}
-          onResetYoutubeAudio={audio.useYoutubeMode}
+          audioReady={audio.status.ready}
           onStart={handleStart}
         />
       )}
@@ -290,7 +281,13 @@ export function ExperienceView() {
       />
 
       {/* Stage 5: Final "I LOVE YOU" Finale beneath the Love Constellation */}
-      <FinalLoveOverlay active={timeline.phase === "epilogue"} />
+      <FinalLoveOverlay
+        active={
+          (timeline.phase === "serana" &&
+            timeline.seranaElapsedMs >= 146_000) ||
+          timeline.phase === "epilogue"
+        }
+      />
     </main>
   );
 }

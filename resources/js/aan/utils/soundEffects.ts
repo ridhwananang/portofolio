@@ -10,8 +10,8 @@ let lastBurstSfxMs = 0;
 
 function getAudioContext(): AudioContext | null {
   if (typeof window === "undefined") {
-return null;
-}
+    return null;
+  }
 
   const AudioCtx =
     window.AudioContext ||
@@ -19,17 +19,17 @@ return null;
       .webkitAudioContext;
 
   if (!AudioCtx) {
-return null;
-}
+    return null;
+  }
 
   if (!sharedCtx) {
     sharedCtx = new AudioCtx();
     masterCompressor = sharedCtx.createDynamicsCompressor();
-    masterCompressor.threshold.setValueAtTime(-14, sharedCtx.currentTime);
-    masterCompressor.knee.setValueAtTime(18, sharedCtx.currentTime);
-    masterCompressor.ratio.setValueAtTime(6, sharedCtx.currentTime);
-    masterCompressor.attack.setValueAtTime(0.004, sharedCtx.currentTime);
-    masterCompressor.release.setValueAtTime(0.22, sharedCtx.currentTime);
+    masterCompressor.threshold.setValueAtTime(-16, sharedCtx.currentTime);
+    masterCompressor.knee.setValueAtTime(20, sharedCtx.currentTime);
+    masterCompressor.ratio.setValueAtTime(4, sharedCtx.currentTime);
+    masterCompressor.attack.setValueAtTime(0.005, sharedCtx.currentTime);
+    masterCompressor.release.setValueAtTime(0.25, sharedCtx.currentTime);
     masterCompressor.connect(sharedCtx.destination);
 
     fireworksGainNode = sharedCtx.createGain();
@@ -75,7 +75,7 @@ function getNoiseBuffer(ctx: AudioContext): AudioBuffer {
   const length = ctx.sampleRate * 1.5;
   const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
   const data = buffer.getChannelData(0);
-  // Slightly warmer pink-tinted random noise
+  // Warm pink-tinted random noise
   let b0 = 0;
   let b1 = 0;
   let b2 = 0;
@@ -85,7 +85,7 @@ function getNoiseBuffer(ctx: AudioContext): AudioBuffer {
     b0 = 0.99765 * b0 + white * 0.099046;
     b1 = 0.963 * b1 + white * 0.2965164;
     b2 = 0.57 * b2 + white * 1.0526913;
-    data[i] = Math.max(-1, Math.min(1, (b0 + b1 + b2 + white * 0.1848) * 0.22));
+    data[i] = Math.max(-1, Math.min(1, (b0 + b1 + b2 + white * 0.1848) * 0.18));
   }
 
   noiseBuffer = buffer;
@@ -97,11 +97,22 @@ export function unlockSoundEngine(): void {
   const ctx = getAudioContext();
 
   if (!ctx) {
-return;
-}
+    return;
+  }
 
   if (ctx.state === "suspended") {
     ctx.resume().catch(() => {});
+  }
+
+  // Play silent 1-sample buffer inside user gesture so Web Audio is unlocked across Safari/Chrome
+  try {
+    const silentBuffer = ctx.createBuffer(1, 1, ctx.sampleRate);
+    const src = ctx.createBufferSource();
+    src.buffer = silentBuffer;
+    src.connect(ctx.destination);
+    src.start(0);
+  } catch {
+    // Ignore
   }
 }
 
@@ -109,8 +120,8 @@ function withRunningContext(fn: (ctx: AudioContext) => void): void {
   const ctx = getAudioContext();
 
   if (!ctx) {
-return;
-}
+    return;
+  }
 
   if (ctx.state === "running") {
     fn(ctx);
@@ -143,7 +154,7 @@ export function playCountdownChime(step: number): void {
     subOsc.frequency.setValueAtTime(92, now);
     subOsc.frequency.exponentialRampToValueAtTime(38, now + 0.34);
     subGain.gain.setValueAtTime(0.001, now);
-    subGain.gain.linearRampToValueAtTime(0.32, now + 0.018);
+    subGain.gain.linearRampToValueAtTime(0.28, now + 0.018);
     subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
     subOsc.connect(subGain);
     subGain.connect(output);
@@ -183,137 +194,146 @@ export function playCountdownChime(step: number): void {
 }
 
 /**
- * Spatial ascending firework shell whistle/whoosh.
+ * Spatial ascending firework shell whistle/whoosh (never queued if AudioContext is suspended).
  */
 export function playFireworkLaunch(pan = 0): void {
-  if (fireworksVolumeLevel <= 0.015) {
-return;
-}
+  if (fireworksVolumeLevel <= 0.02) {
+    return;
+  }
+
+  const ctx = getAudioContext();
+
+  if (!ctx || ctx.state !== "running") {
+    return;
+  }
 
   const nowMs = performance.now();
 
-  if (nowMs - lastLaunchSfxMs < 160) {
-return;
-}
+  if (nowMs - lastLaunchSfxMs < 320) {
+    return;
+  }
 
   lastLaunchSfxMs = nowMs;
 
-  withRunningContext((ctx) => {
-    const now = ctx.currentTime;
-    const noise = ctx.createBufferSource();
-    noise.buffer = getNoiseBuffer(ctx);
+  const now = ctx.currentTime;
+  const noise = ctx.createBufferSource();
+  noise.buffer = getNoiseBuffer(ctx);
 
-    const filter = ctx.createBiquadFilter();
-    filter.type = "bandpass";
-    filter.Q.setValueAtTime(3.2, now);
-    filter.frequency.setValueAtTime(480, now);
-    filter.frequency.exponentialRampToValueAtTime(2200, now + 0.36);
+  const filter = ctx.createBiquadFilter();
+  filter.type = "bandpass";
+  filter.Q.setValueAtTime(2.6, now);
+  filter.frequency.setValueAtTime(420, now);
+  filter.frequency.exponentialRampToValueAtTime(1700, now + 0.34);
 
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.001, now);
-    gain.gain.linearRampToValueAtTime(0.095, now + 0.06);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.001, now);
+  gain.gain.linearRampToValueAtTime(0.06, now + 0.06);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
 
-    const panner = ctx.createStereoPanner();
-    panner.pan.setValueAtTime(Math.max(-0.85, Math.min(0.85, pan)), now);
+  const panner = ctx.createStereoPanner();
+  panner.pan.setValueAtTime(Math.max(-0.8, Math.min(0.8, pan)), now);
 
-    noise.connect(filter);
-    filter.connect(gain);
-    gain.connect(panner);
-    panner.connect(getFireworksOutput(ctx));
+  noise.connect(filter);
+  filter.connect(gain);
+  gain.connect(panner);
+  panner.connect(getFireworksOutput(ctx));
 
-    noise.start(now);
-    noise.stop(now + 0.44);
-  });
+  noise.start(now);
+  noise.stop(now + 0.4);
 }
 
 /**
- * Spatial firework aerial explosion: deep boom + distant crackling sparks.
+ * Spatial firework aerial explosion: warm deep boom + soft shimmering crackles.
  */
 export function playFireworkBurst(
   pattern: "chrysanthemum" | "willow" | "ring" | "double-peony",
   pan = 0
 ): void {
-  if (fireworksVolumeLevel <= 0.015) {
-return;
-}
+  if (fireworksVolumeLevel <= 0.02) {
+    return;
+  }
+
+  const ctx = getAudioContext();
+
+  if (!ctx || ctx.state !== "running") {
+    return;
+  }
 
   const nowMs = performance.now();
 
-  if (nowMs - lastBurstSfxMs < 110) {
-return;
-}
+  if (nowMs - lastBurstSfxMs < 240) {
+    return;
+  }
 
   lastBurstSfxMs = nowMs;
 
-  withRunningContext((ctx) => {
-    const now = ctx.currentTime;
-    const output = getFireworksOutput(ctx);
-    const panner = ctx.createStereoPanner();
-    panner.pan.setValueAtTime(Math.max(-0.85, Math.min(0.85, pan)), now);
-    panner.connect(output);
+  const now = ctx.currentTime;
+  const output = getFireworksOutput(ctx);
+  const panner = ctx.createStereoPanner();
+  panner.pan.setValueAtTime(Math.max(-0.8, Math.min(0.8, pan)), now);
+  panner.connect(output);
 
-    // 1. Low-end aerial pressure punch
-    const subOsc = ctx.createOscillator();
-    const subGain = ctx.createGain();
-    subOsc.type = "triangle";
-    subOsc.frequency.setValueAtTime(
-      pattern === "double-peony" ? 128 : 108,
-      now
-    );
-    subOsc.frequency.exponentialRampToValueAtTime(32, now + 0.3);
+  // 1. Low-end aerial pressure punch
+  const subOsc = ctx.createOscillator();
+  const subGain = ctx.createGain();
+  subOsc.type = "sine";
+  subOsc.frequency.setValueAtTime(
+    pattern === "double-peony" ? 116 : 96,
+    now
+  );
+  subOsc.frequency.exponentialRampToValueAtTime(34, now + 0.32);
 
-    subGain.gain.setValueAtTime(0.001, now);
-    subGain.gain.linearRampToValueAtTime(0.3, now + 0.01);
-    subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.34);
+  subGain.gain.setValueAtTime(0.001, now);
+  subGain.gain.linearRampToValueAtTime(0.24, now + 0.014);
+  subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.36);
 
-    subOsc.connect(subGain);
-    subGain.connect(panner);
-    subOsc.start(now);
-    subOsc.stop(now + 0.36);
+  subOsc.connect(subGain);
+  subGain.connect(panner);
+  subOsc.start(now);
+  subOsc.stop(now + 0.38);
 
-    // 2. Reverberant explosion roar
-    const boomNoise = ctx.createBufferSource();
-    boomNoise.buffer = getNoiseBuffer(ctx);
+  // 2. Reverberant explosion roar
+  const boomNoise = ctx.createBufferSource();
+  boomNoise.buffer = getNoiseBuffer(ctx);
 
-    const lp = ctx.createBiquadFilter();
-    lp.type = "lowpass";
-    lp.frequency.setValueAtTime(950, now);
-    lp.frequency.exponentialRampToValueAtTime(95, now + 0.72);
+  const lp = ctx.createBiquadFilter();
+  lp.type = "lowpass";
+  lp.frequency.setValueAtTime(760, now);
+  lp.frequency.exponentialRampToValueAtTime(90, now + 0.72);
 
-    const boomGain = ctx.createGain();
-    boomGain.gain.setValueAtTime(0.001, now);
-    boomGain.gain.linearRampToValueAtTime(0.42, now + 0.015);
-    boomGain.gain.exponentialRampToValueAtTime(0.001, now + 0.78);
+  const boomGain = ctx.createGain();
+  boomGain.gain.setValueAtTime(0.001, now);
+  boomGain.gain.linearRampToValueAtTime(0.28, now + 0.02);
+  boomGain.gain.exponentialRampToValueAtTime(0.001, now + 0.76);
 
-    boomNoise.connect(lp);
-    lp.connect(boomGain);
-    boomGain.connect(panner);
-    boomNoise.start(now);
-    boomNoise.stop(now + 0.8);
+  boomNoise.connect(lp);
+  lp.connect(boomGain);
+  boomGain.connect(panner);
+  boomNoise.start(now);
+  boomNoise.stop(now + 0.78);
 
-    // 3. Staggered high-frequency sparkling crackles
-    const crackleCount = pattern === "willow" ? 8 : 5;
+  // 3. Soft shimmering bandpass crackles (clean, non-clipping)
+  const crackleCount = pattern === "willow" ? 4 : 2;
 
-    for (let i = 0; i < crackleCount; i++) {
-      const delay = 0.09 + Math.random() * (pattern === "willow" ? 0.58 : 0.38);
-      const t = now + delay;
-      const pop = ctx.createBufferSource();
-      pop.buffer = getNoiseBuffer(ctx);
+  for (let i = 0; i < crackleCount; i++) {
+    const delay = 0.1 + Math.random() * (pattern === "willow" ? 0.5 : 0.32);
+    const t = now + delay;
+    const pop = ctx.createBufferSource();
+    pop.buffer = getNoiseBuffer(ctx);
 
-      const hp = ctx.createBiquadFilter();
-      hp.type = "highpass";
-      hp.frequency.setValueAtTime(2400 + Math.random() * 1800, t);
+    const bp = ctx.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.Q.setValueAtTime(1.8, t);
+    bp.frequency.setValueAtTime(2200 + Math.random() * 1400, t);
 
-      const popGain = ctx.createGain();
-      popGain.gain.setValueAtTime(0.001, t);
-      popGain.gain.linearRampToValueAtTime(0.055 + Math.random() * 0.04, t + 0.005);
-      popGain.gain.exponentialRampToValueAtTime(0.0008, t + 0.065);
+    const popGain = ctx.createGain();
+    popGain.gain.setValueAtTime(0.001, t);
+    popGain.gain.linearRampToValueAtTime(0.028 + Math.random() * 0.018, t + 0.008);
+    popGain.gain.exponentialRampToValueAtTime(0.0008, t + 0.075);
 
-      pop.connect(hp);
-      hp.connect(popGain);
-      popGain.connect(panner);
-      pop.start(t, Math.random() * 0.5, 0.08);
-    }
-  });
+    pop.connect(bp);
+    bp.connect(popGain);
+    popGain.connect(panner);
+    pop.start(t, Math.random() * 0.5, 0.085);
+  }
 }
